@@ -94,10 +94,47 @@ const SPECS: &[Spec] = &[
     Spec {
         kind: Kind::Settings,
         name: "settings",
-        width: 700,
-        height: 560,
+        // Must match SettingsWindow's own size. When these drifted apart the
+        // reference image was a cropped window: the LayoutError branch never
+        // fired, so the gate passed while showing half a settings page.
+        width: 800,
+        height: 700,
     },
 ];
+
+/// Make the render independent of whatever the machine's config happens to say.
+///
+/// A component that reads the live preferences (the Settings window reads the
+/// active keyboard layout and locale) produces a *different image* on a
+/// machine where someone switched to AZERTY. That is fine in production and
+/// fatal for a visual-regression reference: the gate would then fail or pass
+/// depending on who ran it. So the render points the config at a fixed
+/// throwaway directory with the documented defaults in it.
+///
+/// `settings.json` is written rather than left empty, because an absent
+/// `prefs.json` would fall through to the *system* files instead.
+fn pin_state_to_defaults() {
+    let dir = std::env::temp_dir().join("hcs-gui-shots-state");
+    let _ = std::fs::create_dir_all(&dir);
+    std::env::set_var("XDG_CONFIG_HOME", &dir);
+    let prefs = serde_json::json!({
+        "theme": "obsidian",
+        "brand_theme": "obsidian",
+        "keyboard": "de",
+        "locale": "en",
+        "reduce_motion": "false",
+        "scale": "100",
+    });
+    if let Ok(body) = serde_json::to_string_pretty(&prefs) {
+        let _ = std::fs::write(dir.join("hcs/prefs.json"), body);
+    }
+    // The Settings window also reads a theme.json; an empty preset list would
+    // leave the theme buttons unlabelled.
+    let theme = serde_json::json!({ "theme": "obsidian" });
+    if let Ok(body) = serde_json::to_string_pretty(&theme) {
+        let _ = std::fs::write(dir.join("hcs/theme.json"), body);
+    }
+}
 
 /// Create and render one view. Each arm builds its component and renders it
 /// straight away, which is what the harness requires.
@@ -176,6 +213,7 @@ fn main() -> anyhow::Result<()> {
     }
 
     hcs_ui::install_headless()?;
+    pin_state_to_defaults();
     let mut written = 0usize;
     for spec in SPECS {
         if let Some(filter) = &only {

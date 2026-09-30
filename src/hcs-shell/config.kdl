@@ -77,30 +77,35 @@ spawn-at-startup "/usr/share/hcs/session/start-session.sh"
 
 // --- bindings ---------------------------------------------------------------
 binds {
-    // --- launcher / omnibar -------------------------------------------------
-    Mod+Space        { spawn "hcs-search"; }
-    Mod+Alt+Space    { spawn "quickshell" "-p" "/usr/share/hcs/shell/control_drawer.qml"; }
-    Mod+Return       { spawn "hcs-chat"; }
+    // --- launcher ----------------------------------------------------------
+    // Mod+Space is the layout switch, not the omnibar. The HCS key is a
+    // modifier, so a bare Mod press cannot be bound, and the most valuable
+    // single combo is spent on the one thing that is not a window.
+    Mod+Return       { spawn "quickshell" "-p" "/usr/share/hcs/shell/start_menu.qml"; }
+    Mod+Space        { spawn "hcs" "settings" "next-keyboard"; }
+    Mod+O            { spawn "hcs-search"; }
+    Mod+Alt+O        { spawn "quickshell" "-p" "/usr/share/hcs/shell/control_drawer.qml"; }
     Mod+Slash        { spawn "quickshell" "-p" "/usr/share/hcs/shell/cheatsheet.qml"; }
     F1               { spawn "quickshell" "-p" "/usr/share/hcs/shell/cheatsheet.qml"; }
 
     // --- apps ---------------------------------------------------------------
+    Mod+K            { spawn "hcs-chat" "--gui"; }
     Mod+I            { spawn "hcs-chat" "--gui" "--tab" "image"; }
     Mod+M            { spawn "hcs-monitor" "--gui"; }
     Mod+T            { spawn "hcs-term"; }
-    Mod+E            { spawn "hcs-fm"; }
+    Mod+F            { spawn "hcs-fm"; }
+    Mod+N            { spawn "hcs-notes"; }
     Mod+Comma        { spawn "hcs-settings"; }
     Mod+U            { spawn "hcs-update" "--gui"; }
     Mod+Shift+R      { spawn "hcs-rag-ingest" "--gui"; }
-    Mod+Shift+N      { spawn "hcs-notes"; }
     Mod+Shift+S      { spawn "hcs-shot" "--region"; }
     Print            { spawn "hcs-shot" "--screen"; }
 
     // --- shell surfaces -----------------------------------------------------
-    Mod+E            { spawn "quickshell" "-p" "/usr/share/hcs/shell/control_center.qml"; }
-    Mod+N            { spawn "quickshell" "-p" "/usr/share/hcs/shell/notification_center.qml"; }
+    Mod+E            { spawn "quickshell" "-p" "/usr/share/hcs/shell/snap_flyout.qml"; }
+    Mod+Alt+C        { spawn "quickshell" "-p" "/usr/share/hcs/shell/control_center.qml"; }
+    Mod+Shift+N      { spawn "quickshell" "-p" "/usr/share/hcs/shell/notification_center.qml"; }
     Mod+W            { spawn "quickshell" "-p" "/usr/share/hcs/shell/widgets.qml"; }
-    Mod+Z            { spawn "quickshell" "-p" "/usr/share/hcs/shell/snap_flyout.qml"; }
     Mod+Tab          { spawn "quickshell" "-p" "/usr/share/hcs/shell/taskview.qml"; }
     Mod+Alt+S        { spawn "quickshell" "-p" "/usr/share/hcs/shell/stage.qml"; }
 
@@ -110,7 +115,11 @@ binds {
     Mod+Right        { focus-column-right; }
     Mod+Shift+Left   { move-column-left; }
     Mod+Shift+Right  { move-column-right; }
-    Mod+Alt+T        { spawn "hcs" "window" "mode" "toggle"; }
+    Mod+1            { focus-workspace 1; }
+    Mod+2            { focus-workspace 2; }
+    Mod+3            { focus-workspace 3; }
+    Mod+4            { focus-workspace 4; }
+    Mod+Alt+F        { spawn "hcs" "window" "mode" "toggle"; }
     Mod+Alt+H        { spawn "hcs" "theme" "set" "high_contrast"; }
     Mod+Alt+M        { spawn "hcs" "settings" "reduce-motion" "toggle"; }
     Mod+Plus         { spawn "hcs" "settings" "scale" "up"; }
@@ -120,11 +129,10 @@ binds {
     Mod+Alt+T        { spawn "hcs" "security" "tor" "toggle"; }
     Mod+V            { spawn "quickshell" "-p" "/usr/share/hcs/shell/clipboard.qml"; }
     Mod+Alt+A        { spawn "hcs" "privacy" "amnesic" "toggle"; }
-    Mod+J            { spawn "hcs" "recall"; }
+    Mod+R            { spawn "hcs" "recall"; }
     Mod+Alt+V        { spawn "hcs" "security" "vault"; }
 
     // --- AI -----------------------------------------------------------------
-    Mod+K            { spawn "hcs-chat" "--gui"; }
     Mod+Shift+K      { spawn "hcs" "ask" "--selection"; }
     Mod+Shift+F      { spawn "hcs" "rag" "query"; }
 }

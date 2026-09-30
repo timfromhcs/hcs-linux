@@ -1745,6 +1745,7 @@ dependencies = [
  "hcs-search",
  "hcs-ui",
  "image",
+ "serde_json",
  "slint",
 ]
 

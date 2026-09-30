@@ -20,6 +20,7 @@ hcs-search = { path = "../hcs-search" }
 hcs-diagnose = { path = "../hcs-diagnose" }
 
 anyhow.workspace = true
+serde_json.workspace = true
 image = { version = "0.25", default-features = false, features = ["png"] }
 slint = { version = "1.18.1", default-features = false, features = [
     "compat-1-2",

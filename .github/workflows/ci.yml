@@ -245,6 +245,11 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Set up Rust
+        # The binding gate asks the real `hcs --help` which subcommands exist,
+        # so the CLI has to be buildable in this job.
+        uses: dtolnay/rust-toolchain@stable
+
       - name: Install Payload Tools
         run: sudo apt-get update && sudo apt-get install -y squashfs-tools
 
@@ -284,6 +289,16 @@ jobs:
       - name: Session bootstrap is valid shell
         run: bash -n config/includes.chroot/usr/share/hcs/session/start-session.sh
 
+      - name: Every shell binding resolves
+        # niri refuses to start on a config with a duplicate binding, and the v2
+        # config had two (Mod+E and Mod+Alt+T). Nothing else catches that, so the
+        # session simply never came up. This also proves every `spawn "hcs" …`
+        # target is a real subcommand and every QML surface is staged.
+        run: |
+          set -euo pipefail
+          python scripts/verify_bindings.py
+          bash scripts/sync_shell.sh --check
+
       - name: ISO build script is valid shell
         run: bash -n scripts/build_iso.sh && bash -n scripts/verify_payload.sh
 
@@ -320,8 +335,9 @@ jobs:
         run: |
           set -euo pipefail
           cargo build --quiet --bin hcs --bin hcs-actions
-          echo "$PWD/target/debug" >> "$GITHUB_PATH"
-          cargo run --quiet --bin hcs -- actions validate
+          export PATH="$PWD/target/debug:$PATH"
+          hcs actions validate
+          command -v hcs-actions
           cargo run --quiet --bin hcs-actions -- describe privacy.tor.toggle --json > /tmp/t.json
           python3 -c "
           import json,sys

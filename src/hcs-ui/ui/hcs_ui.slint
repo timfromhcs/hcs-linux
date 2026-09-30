@@ -734,8 +734,8 @@ export component DocsWindow inherits Window {
 
 
 export component SettingsWindow inherits Window {
-    width: 700px;
-    height: 560px;
+    width: 800px;
+    height: 700px;
     background: #0d1117;
 
     in property <bool> theme-titanium: false;
@@ -746,56 +746,104 @@ export component SettingsWindow inherits Window {
 
     in property <string> selected-theme: "obsidian";
     in property <string> selected-wallpaper: "neural_glass_dark.png";
+    in property <string> keyboard-layout: "de (QWERTZ)";
+    in property <string> interface-language: "English";
     in property <bool> tor-default: true;
     in property <bool> clipboard-redaction: true;
-    in property <string> shortcuts: "Super            Start Menu\nSuper+D          Show Desktop\nSuper+Q          Close Window\nAlt+Tab          Window Switcher\nSuper+Return     HCS Chat\nSuper+Space      Search\nSuper+I          Image Studio\nSuper+T          Terminal\nSuper+Alt+T      Tor Killswitch\nSuper+V          Redacted Clipboard";
+    in property <string> shortcuts: "HCS             Start Menu\nHCS+Return      Start Menu\nHCS+Space       Cycle Keyboard Layout\nHCS+/           Cheatsheet\nHCS+Q           Close Window\nAlt+Tab         Window Switcher\nHCS+Left/Right  Focus Window\nHCS+K           HCS Chat\nHCS+M           Monitor\nHCS+I           Image Studio\nHCS+T           Terminal\nHCS+F           File Manager\nHCS+E           Snap Layouts\nHCS+Tab         Task View\nHCS+Alt+T       Tor Killswitch\nHCS+V           Redacted Clipboard";
     in property <string> third-party: "Slint 1.18.1 - Royalty-free License 2.0\nDebian 13 Trixie base\nllama.cpp (MIT)\nNiri (GPL-3.0), Quickshell (LGPL-3.0)\nCalamares (GPL-3.0), Qwen models";
     in property <string> save-log: "Changes apply to newly started GUI apps.";
     callback pick-theme(string);
     callback pick-wallpaper(string);
+    callback pick-keyboard-layout(string);
+    callback pick-interface-language(string);
     callback save();
     callback about();
 
-    AppHeader { x: 0; y: 0; width: 700px; app-title: "HCS Settings"; subtitle: "system"; p: root.palette; }
+    AppHeader { x: 0; y: 0; width: 800px; app-title: "HCS Settings"; subtitle: "system"; p: root.palette; }
 
-    // --- Theme
+    // --- Theme. Four presets, and High Contrast is not optional decoration: it
+    // is the preset that makes the UI readable at WCAG AAA, so it gets the same
+    // button as the three brand themes.
     GlassCard { x: 16px; y: 60px; width: 200px; height: 60px; p: root.palette;
         card-title: "Theme"; card-value: root.selected-theme; value-color: root.palette.accent; }
-    PillButton { x: 232px; y: 68px; width: 140px; p: root.palette;
+    PillButton { x: 232px; y: 68px; width: 130px; p: root.palette;
         label: "Obsidian"; primary: root.selected-theme == "obsidian";
         clicked => { root.pick-theme("obsidian"); } }
-    PillButton { x: 384px; y: 68px; width: 140px; p: root.palette;
+    PillButton { x: 372px; y: 68px; width: 130px; p: root.palette;
         label: "Titanium"; primary: root.selected-theme == "titanium";
         clicked => { root.pick-theme("titanium"); } }
-    PillButton { x: 536px; y: 68px; width: 148px; p: root.palette;
+    PillButton { x: 512px; y: 68px; width: 130px; p: root.palette;
         label: "Stealth"; primary: root.selected-theme == "stealth";
         clicked => { root.pick-theme("stealth"); } }
+    PillButton { x: 652px; y: 68px; width: 132px; p: root.palette;
+        label: "High Contrast"; primary: root.selected-theme == "high_contrast";
+        clicked => { root.pick-theme("high_contrast"); } }
 
     // --- Wallpaper
-    GlassCard { x: 16px; y: 136px; width: 200px; height: 60px; p: root.palette;
+    GlassCard { x: 16px; y: 132px; width: 200px; height: 60px; p: root.palette;
         card-title: "Wallpaper"; card-value: "3 available"; value-color: root.palette.accent-alt; }
-    PillButton { x: 232px; y: 144px; width: 150px; p: root.palette;
+    PillButton { x: 232px; y: 140px; width: 170px; p: root.palette;
         label: "Neural Glass"; primary: root.selected-wallpaper == "neural_glass_dark.png";
         clicked => { root.pick-wallpaper("neural_glass_dark.png"); } }
-    PillButton { x: 394px; y: 144px; width: 130px; p: root.palette;
+    PillButton { x: 412px; y: 140px; width: 150px; p: root.palette;
         label: "Titanium"; primary: root.selected-wallpaper == "frosted_titanium.png";
         clicked => { root.pick-wallpaper("frosted_titanium.png"); } }
-    PillButton { x: 536px; y: 144px; width: 148px; p: root.palette;
+    PillButton { x: 572px; y: 140px; width: 150px; p: root.palette;
         label: "Stealth"; primary: root.selected-wallpaper == "cybernetic_stealth.png";
         clicked => { root.pick-wallpaper("cybernetic_stealth.png"); } }
 
+    // --- Keyboard. The HCS key sits where the Windows key sits, and it is a
+    // modifier, so no layout can move it. QWERTZ is the default.
+    GlassCard { x: 16px; y: 204px; width: 200px; height: 60px; p: root.palette;
+        card-title: "Keyboard"; card-value: root.keyboard-layout; value-color: root.palette.accent; }
+    PillButton { x: 232px; y: 212px; width: 110px; p: root.palette;
+        label: "QWERTZ"; primary: root.keyboard-layout == "de (QWERTZ)";
+        clicked => { root.pick-keyboard-layout("de"); } }
+    PillButton { x: 352px; y: 212px; width: 110px; p: root.palette;
+        label: "EN-US"; primary: root.keyboard-layout == "us (QWERTY)";
+        clicked => { root.pick-keyboard-layout("us"); } }
+    PillButton { x: 472px; y: 212px; width: 110px; p: root.palette;
+        label: "FR"; primary: root.keyboard-layout == "fr (AZERTY)";
+        clicked => { root.pick-keyboard-layout("fr"); } }
+    PillButton { x: 592px; y: 212px; width: 110px; p: root.palette;
+        label: "ES"; primary: root.keyboard-layout == "es (QWERTY)";
+        clicked => { root.pick-keyboard-layout("es"); } }
+    PillButton { x: 712px; y: 212px; width: 72px; p: root.palette;
+        label: "More"; primary: false;
+        clicked => { root.pick-keyboard-layout("cycle"); } }
+
+    // --- Interface language, deliberately separate from the keyboard layout.
+    GlassCard { x: 16px; y: 276px; width: 200px; height: 60px; p: root.palette;
+        card-title: "Language"; card-value: root.interface-language; value-color: root.palette.accent-alt; }
+    PillButton { x: 232px; y: 284px; width: 110px; p: root.palette;
+        label: "English"; primary: root.interface-language == "English";
+        clicked => { root.pick-interface-language("en"); } }
+    PillButton { x: 352px; y: 284px; width: 110px; p: root.palette;
+        label: "Deutsch"; primary: root.interface-language == "Deutsch";
+        clicked => { root.pick-interface-language("de"); } }
+    PillButton { x: 472px; y: 284px; width: 110px; p: root.palette;
+        label: "Francais"; primary: root.interface-language == "Francais";
+        clicked => { root.pick-interface-language("fr"); } }
+    PillButton { x: 592px; y: 284px; width: 110px; p: root.palette;
+        label: "Espanol"; primary: root.interface-language == "Espanol";
+        clicked => { root.pick-interface-language("es"); } }
+    PillButton { x: 712px; y: 284px; width: 72px; p: root.palette;
+        label: "More"; primary: false;
+        clicked => { root.pick-interface-language("cycle"); } }
+
     // --- Privacy
-    Toggle { x: 16px; y: 212px; p: root.palette; label: "Tor transparent proxy by default"; checked: root.tor-default; }
-    Toggle { x: 320px; y: 212px; p: root.palette; label: "Redacted clipboard"; checked: root.clipboard-redaction; }
+    Toggle { x: 16px; y: 348px; p: root.palette; label: "Tor transparent proxy by default"; checked: root.tor-default; }
+    Toggle { x: 320px; y: 348px; p: root.palette; label: "Redacted clipboard"; checked: root.clipboard-redaction; }
 
     // --- Shortcuts
-    LogView { x: 16px; y: 254px; width: 340px; height: 246px; p: root.palette; log-text: root.shortcuts; }
+    LogView { x: 16px; y: 390px; width: 380px; height: 246px; p: root.palette; log-text: root.shortcuts; }
 
     // --- About / third party
-    LogView { x: 368px; y: 254px; width: 316px; height: 200px; p: root.palette; log-text: root.third-party; }
-    PillButton { x: 368px; y: 466px; width: 150px; p: root.palette; label: "Speichern"; primary: true;
+    LogView { x: 408px; y: 390px; width: 376px; height: 200px; p: root.palette; log-text: root.third-party; }
+    PillButton { x: 408px; y: 602px; width: 180px; p: root.palette; label: "Save"; primary: true;
         clicked => { root.save(); } }
-    PillButton { x: 534px; y: 466px; width: 150px; p: root.palette; label: "About Slint";
+    PillButton { x: 604px; y: 602px; width: 180px; p: root.palette; label: "About Slint";
         clicked => { root.about(); } }
-    StatusRow { x: 16px; y: 514px; width: 340px; p: root.palette; name: "status"; state: root.save-log; }
+    StatusRow { x: 16px; y: 650px; width: 380px; p: root.palette; name: "status"; state: root.save-log; }
 }

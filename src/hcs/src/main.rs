@@ -366,6 +366,8 @@ enum SettingsCommands {
     Keyboard,
     /// Switch keyboard layout: de | us | fr | es | it | gb
     SetKeyboard { layout: String },
+    /// Switch to the next layout in the registry (what HCS+Space is bound to)
+    NextKeyboard,
     /// Set the interface locale
     Locale { code: String },
     /// Reduce-motion preference
@@ -948,6 +950,21 @@ fn settings_cmd(sub: SettingsCommands) -> Result<()> {
             hcs_theme::set_keyboard(&layout)
                 .with_context(|| format!("unknown keyboard layout '{layout}'"))?;
             println!("[OK] Keyboard layout set to {layout} (takes effect immediately).");
+            Ok(())
+        }
+        SettingsCommands::NextKeyboard => {
+            // What HCS+Space does. QWERTZ is first, so the cycle is
+            // de -> us -> fr -> es -> it -> gb -> de.
+            let registry = hcs_theme::keyboard_layouts();
+            let current = hcs_theme::active_keyboard();
+            let pos = registry
+                .iter()
+                .position(|(c, _)| *c == current)
+                .map(|i| (i + 1) % registry.len())
+                .unwrap_or(0);
+            let (code, label) = registry[pos];
+            hcs_theme::set_keyboard(code)?;
+            println!("[OK] Keyboard layout: {label} ({code}).");
             Ok(())
         }
         SettingsCommands::Locale { code } => {

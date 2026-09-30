@@ -1,6 +1,6 @@
 {
   "mode": "regress",
-  "theme": "obsidian",
+  "theme": "high_contrast",
   "platform": "windows",
   "total": 9,
   "passed": 9,
@@ -14,64 +14,64 @@
   },
   "results": [
     {
-      "file": "chat-image-studio-obsidian.png",
-      "reference": "qa\\expected\\gui\\windows\\chat-image-studio-obsidian.png",
+      "file": "chat-high_contrast.png",
+      "reference": "qa\\expected\\gui\\windows\\chat-high_contrast.png",
       "mean_diff": 0.0,
       "changed_pct": 0.0,
       "status": "PASS"
     },
     {
-      "file": "chat-obsidian.png",
-      "reference": "qa\\expected\\gui\\windows\\chat-obsidian.png",
+      "file": "chat-image-studio-high_contrast.png",
+      "reference": "qa\\expected\\gui\\windows\\chat-image-studio-high_contrast.png",
       "mean_diff": 0.0,
       "changed_pct": 0.0,
       "status": "PASS"
     },
     {
-      "file": "control-obsidian.png",
-      "reference": "qa\\expected\\gui\\windows\\control-obsidian.png",
+      "file": "control-high_contrast.png",
+      "reference": "qa\\expected\\gui\\windows\\control-high_contrast.png",
       "mean_diff": 0.0,
       "changed_pct": 0.0,
       "status": "PASS"
     },
     {
-      "file": "diagnose-obsidian.png",
-      "reference": "qa\\expected\\gui\\windows\\diagnose-obsidian.png",
+      "file": "diagnose-high_contrast.png",
+      "reference": "qa\\expected\\gui\\windows\\diagnose-high_contrast.png",
       "mean_diff": 0.0,
       "changed_pct": 0.0,
       "status": "PASS"
     },
     {
-      "file": "docs-obsidian.png",
-      "reference": "qa\\expected\\gui\\windows\\docs-obsidian.png",
+      "file": "docs-high_contrast.png",
+      "reference": "qa\\expected\\gui\\windows\\docs-high_contrast.png",
       "mean_diff": 0.0,
       "changed_pct": 0.0,
       "status": "PASS"
     },
     {
-      "file": "foundation-gallery-obsidian.png",
-      "reference": "qa\\expected\\gui\\windows\\foundation-gallery-obsidian.png",
+      "file": "foundation-gallery-high_contrast.png",
+      "reference": "qa\\expected\\gui\\windows\\foundation-gallery-high_contrast.png",
       "mean_diff": 0.0,
       "changed_pct": 0.0,
       "status": "PASS"
     },
     {
-      "file": "monitor-obsidian.png",
-      "reference": "qa\\expected\\gui\\windows\\monitor-obsidian.png",
+      "file": "monitor-high_contrast.png",
+      "reference": "qa\\expected\\gui\\windows\\monitor-high_contrast.png",
       "mean_diff": 0.0,
       "changed_pct": 0.0,
       "status": "PASS"
     },
     {
-      "file": "search-obsidian.png",
-      "reference": "qa\\expected\\gui\\windows\\search-obsidian.png",
+      "file": "search-high_contrast.png",
+      "reference": "qa\\expected\\gui\\windows\\search-high_contrast.png",
       "mean_diff": 0.0,
       "changed_pct": 0.0,
       "status": "PASS"
     },
     {
-      "file": "settings-obsidian.png",
-      "reference": "qa\\expected\\gui\\windows\\settings-obsidian.png",
+      "file": "settings-high_contrast.png",
+      "reference": "qa\\expected\\gui\\windows\\settings-high_contrast.png",
       "mean_diff": 0.0,
       "changed_pct": 0.0,
       "status": "PASS"

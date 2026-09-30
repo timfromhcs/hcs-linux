@@ -8,7 +8,7 @@ ISO_PATH ?= $(DIST_DIR)/$(ISO_NAME)
 # The v2 gate names. `make gate-all` runs every one of them; see
 # docs/V2_STABLE_RELEASE_MASTER_PLAN.md §7.1. The lettered targets exist so a
 # single gate can be run in isolation while debugging.
-.PHONY: all help fetch native test iso verify qa gui a11y payload models sbom \
+.PHONY: all help fetch native test iso verify qa gui a11y payload models sbom bindings \
         gate-static gate-security gate-supply gate-stress gate-all clean
 
 all: native test
@@ -26,6 +26,7 @@ help:
 	@echo "make a11y        - Accessibility gate: focus order, WCAG contrast, motion"
 	@echo "make payload     - ISO payload contract (every required file present)"
 	@echo "make models      - Report which starter models may be baked into the ISO"
+	@echo "make bindings    - Every shell key binding resolves to a real command"
 	@echo "make sbom        - Generate SPDX SBOM and third-party notices"
 	@echo "make gate-all    - Every release gate, in order"
 	@echo "make clean       - Remove build artifacts and temporary caches"
@@ -84,6 +85,10 @@ payload:
 models:
 	python3 scripts/stage_starter_models.py --check
 
+bindings:
+	python3 scripts/verify_bindings.py
+	bash scripts/sync_shell.sh --check
+
 sbom:
 	python3 scripts/generate_sbom.py
 
@@ -108,7 +113,7 @@ gate-stress:
 # Every gate. `make iso` is included because the payload contract can only be
 # checked against a built image, and v1 shipped a payload that had silently lost
 # its launchers, icons and manuals.
-gate-all: gate-static gate-security gate-supply gui a11y iso verify payload gate-stress
+gate-all: gate-static gate-security gate-supply bindings gui a11y iso verify payload gate-stress
 	@echo ""
 	@echo "=================================================="
 	@echo "  ALL GATES GREEN — see qa/reports/ for evidence"
