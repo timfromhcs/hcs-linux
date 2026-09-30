@@ -3,11 +3,19 @@
 //! no GPU, no display and no Wayland compositor (CI, VirtualBox gates).
 //!
 //! Plan: docs/GUI_BUILD_PLAN.md §4 steps 2-3.
+//!
+//! Each component gets its **own** window adapter. Returning a shared adapter
+//! would silently render only the most recently created component, which shows
+//! up as an all-black PNG for every other view.
 
+use slint::platform::software_renderer::{MinimalSoftwareWindow, PremultipliedRgbaColor};
 use slint::platform::{set_platform, Platform, PlatformError, WindowAdapter};
+use std::cell::RefCell;
 use std::path::Path;
 use std::rc::Rc;
 use thiserror::Error;
+
+pub use slint::platform::software_renderer::RepaintBufferType;
 
 #[derive(Debug, Error)]
 pub enum RenderError {
@@ -17,44 +25,49 @@ pub enum RenderError {
     InvalidSize { width: u32, height: u32 },
     #[error("io error: {0}")]
     Io(String),
+    #[error("no headless window available for this component")]
+    NoWindow,
 }
 
-/// Re-export of the software renderer's window type so the render tool and
-/// app crates can name it without depending on `slint`'s internals directly.
-pub use slint::platform::software_renderer::{
-    MinimalSoftwareWindow, PremultipliedRgbaColor, RepaintBufferType,
-};
+thread_local! {
+    /// The window adapter created for the most recently constructed component.
+    static LAST_WINDOW: RefCell<Option<Rc<MinimalSoftwareWindow>>> = const { RefCell::new(None) };
+}
 
 /// Minimal display-less platform backed by the software renderer.
-pub struct HeadlessPlatform {
-    window: Rc<MinimalSoftwareWindow>,
-}
+pub struct HeadlessPlatform;
 
 impl Platform for HeadlessPlatform {
     fn create_window_adapter(&self) -> Result<Rc<dyn WindowAdapter>, PlatformError> {
-        Ok(self.window.clone())
+        let w = MinimalSoftwareWindow::new(RepaintBufferType::NewBuffer);
+        LAST_WINDOW.with(|c| *c.borrow_mut() = Some(w.clone()));
+        Ok(w)
     }
     fn duration_since_start(&self) -> core::time::Duration {
         core::time::Duration::from_millis(0)
     }
 }
 
-impl HeadlessPlatform {
-    /// Install the headless platform. Must be called at most once per process.
-    pub fn install() -> Result<Rc<MinimalSoftwareWindow>, RenderError> {
-        let window = MinimalSoftwareWindow::new(RepaintBufferType::NewBuffer);
-        set_platform(Box::new(HeadlessPlatform {
-            window: window.clone(),
-        }))
-        .map_err(|e| RenderError::Platform(format!("{e}")))?;
-        Ok(window)
+/// Install the headless platform. Must be called at most once per process,
+/// before any component is created.
+pub fn install() -> Result<(), RenderError> {
+    match set_platform(Box::new(HeadlessPlatform)) {
+        Ok(()) => Ok(()),
+        // Already installed (e.g. by Slint's testing backend): harmless.
+        Err(_) => Ok(()),
     }
 }
 
-/// Render any Slint component into a PNG file.
+/// The window adapter belonging to the most recently created component.
+pub fn last_window() -> Result<Rc<MinimalSoftwareWindow>, RenderError> {
+    LAST_WINDOW
+        .with(|c| c.borrow().clone())
+        .ok_or(RenderError::NoWindow)
+}
+
+/// Render a component to a PNG using the headless software renderer.
 pub fn render_to_png<C: slint::ComponentHandle>(
     component: &C,
-    window: &Rc<MinimalSoftwareWindow>,
     width: u32,
     height: u32,
     out: &Path,
@@ -65,16 +78,17 @@ pub fn render_to_png<C: slint::ComponentHandle>(
     if let Some(p) = out.parent() {
         std::fs::create_dir_all(p).map_err(|e| RenderError::Io(e.to_string()))?;
     }
+    let window = last_window()?;
 
     // Size must be set through the WindowAdapter trait: the inherent
     // MinimalSoftwareWindow::set_size shadows it and does not dispatch the
     // Resized event, which leaves the scene unlaid-out (blank render).
     let size = slint::WindowSize::Logical(slint::LogicalSize::new(width as f32, height as f32));
-    WindowAdapter::set_size(&**window, size.clone());
+    WindowAdapter::set_size(&*window, size.clone());
     component
         .show()
         .map_err(|e| RenderError::Platform(format!("{e}")))?;
-    WindowAdapter::set_size(&**window, size);
+    WindowAdapter::set_size(&*window, size);
 
     let px = (width as usize) * (height as usize);
     let mut buf: Vec<PremultipliedRgbaColor> = vec![
@@ -87,7 +101,7 @@ pub fn render_to_png<C: slint::ComponentHandle>(
         px
     ];
 
-    // First pass lays out and paints; a second pass settles lazy bindings.
+    // First pass lays out and paints; further passes settle lazy bindings.
     for _ in 0..3 {
         window.draw_if_needed(|renderer| {
             renderer.render(&mut buf, width as usize);

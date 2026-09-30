@@ -1,12 +1,12 @@
-// HCS Linux — Neural Glass GUI kit (single .slint file on purpose).
+// HCS Linux â€” Neural Glass GUI kit (single .slint file on purpose).
 //
 // Slint's include_modules!() only includes the *last* file produced by the
 // build script, so all shared types must live in one file. This file is the
 // public Slint library hcs_ui: the palette type, the three presets, every
 // shared widget, and the foundation gallery window.
 //
-// Plan: docs/GUI_BUILD_PLAN.md §2 P0// HCS Linux â€” colour palette type for the Neural Glass theme.
-// Plan: docs/GUI_BUILD_PLAN.md Â§2 P0
+// Plan: docs/GUI_BUILD_PLAN.md Â§2 P0// HCS Linux Ã¢â‚¬â€ colour palette type for the Neural Glass theme.
+// Plan: docs/GUI_BUILD_PLAN.md Ã‚Â§2 P0
 //
 // The palette is a *struct* rather than a Slint global so that Rust can build
 // and set it at runtime (theme switching) while widgets stay pure/testable.
@@ -26,8 +26,8 @@ export struct Palette {
     danger: color,
 }
 
-// HCS Linux Ã¢â‚¬â€ shared Neural Glass widgets, used by every GUI app.
-// Plan: docs/GUI_BUILD_PLAN.md Ã‚Â§2 P0
+// HCS Linux ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â shared Neural Glass widgets, used by every GUI app.
+// Plan: docs/GUI_BUILD_PLAN.md Ãƒâ€šÃ‚Â§2 P0
 //
 // Slint syntax notes: explicit geometry + `vertical-alignment` (needs an
 // explicit height) instead of QML-style anchors, so the headless software
@@ -168,6 +168,9 @@ export component GlassCard inherits Rectangle {
         font-size: 22px;
         font-weight: 700;
         vertical-alignment: center;
+        // Long values (model ids, profile names) must wrap instead of
+        // overflowing the card.
+        wrap: word-wrap;
     }
 }
 
@@ -592,7 +595,7 @@ export component GalleryTile inherits Rectangle {
     }
 }
 
-// HCS Linux â€” widget gallery. Compiles the shared widget set into a real
+// HCS Linux Ã¢â‚¬â€ widget gallery. Compiles the shared widget set into a real
 // component so P0 has a reference render and the widgets are exercised in CI.
 
 
@@ -649,4 +652,128 @@ export component WidgetGallery inherits Window {
 
     GalleryTile { x: 16px; y: 508px; width: 80px; height: 36px; p: root.palette; caption: "render-042"; }
     GalleryTile { x: 104px; y: 508px; width: 80px; height: 36px; p: root.palette; caption: "render-043"; }
+}
+// HCS Linux â€” Native offline documentation viewer (P3, v1.3.0).
+// No webview, no browser embed: markdown is parsed in Rust (pulldown-cmark)
+// and rendered as plain styled text.
+
+
+
+export component DocsWindow inherits Window {
+    width: 820px;
+    height: 600px;
+    background: #0d1117;
+
+    in property <bool> theme-titanium: false;
+    in property <bool> theme-stealth: false;
+    in property <Palette> palette: root.theme-stealth ? Presets.stealth : (root.theme-titanium ? Presets.titanium : Presets.obsidian);
+    in property <string> theme-name: root.palette.theme-name;
+
+    in property <string> manual-list: "01 Getting Started\n02 AI Brain Guide\n03 CPU Image Studio\n04 Security Pentest\n05 Tor Anonymity\n06 Developer Manual";
+    in property <string> current-title: "HCS Linux Documentation";
+    in property <string> rendered: "Select a manual on the left.\n\nAll manuals are stored offline at /usr/share/hcs/docs/manuals and rendered natively (no browser, no network).";
+    in property <string> current-file: "index";
+    in property <int> manual-count: 6;
+    callback open(string);
+    callback explain();
+
+    AppHeader { x: 0; y: 0; width: 820px; app-title: "HCS Docs"; subtitle: "offline manuals"; p: root.palette; }
+
+    // Manual list
+    LogView { x: 16px; y: 60px; width: 240px; height: 300px; p: root.palette; log-text: root.manual-list; }
+
+    PillButton { x: 16px; y: 372px; width: 112px; p: root.palette; label: "01 Getting";
+        clicked => { root.open("01_getting_started"); } }
+    PillButton { x: 140px; y: 372px; width: 112px; p: root.palette; label: "02 Brain";
+        clicked => { root.open("02_ai_brain_guide"); } }
+    PillButton { x: 16px; y: 412px; width: 112px; p: root.palette; label: "03 Image";
+        clicked => { root.open("03_cpu_image_studio"); } }
+    PillButton { x: 140px; y: 412px; width: 112px; p: root.palette; label: "04 Security";
+        clicked => { root.open("04_security_pentest"); } }
+    PillButton { x: 16px; y: 452px; width: 112px; p: root.palette; label: "05 Tor";
+        clicked => { root.open("05_tor_anonymity"); } }
+    PillButton { x: 140px; y: 452px; width: 112px; p: root.palette; label: "06 Dev";
+        clicked => { root.open("06_developer_manual"); } }
+
+    // Rendered manual
+    GlassCard { x: 272px; y: 60px; width: 532px; height: 60px; p: root.palette;
+        card-title: "Manual"; card-value: root.current-title; value-color: root.palette.accent; }
+    LogView { x: 272px; y: 132px; width: 532px; height: 348px; p: root.palette; log-text: root.rendered; }
+
+    PillButton { x: 272px; y: 492px; width: 150px; p: root.palette; label: "Explain with Brain"; primary: true;
+        pill-color: root.palette.accent-alt; clicked => { root.explain(); } }
+    GlassCard { x: 434px; y: 492px; width: 190px; height: 44px; p: root.palette;
+        card-title: "Manuals"; card-value: root.manual-count + " offline"; value-color: root.palette.text-primary; }
+    StatusRow { x: 636px; y: 500px; width: 168px; p: root.palette; name: "network"; state: "offline"; }
+}
+
+// HCS Linux â€” Settings GUI (P3, v1.3.0).
+// Theme, wallpaper and keyboard-shortcut configuration.
+
+
+
+export component SettingsWindow inherits Window {
+    width: 700px;
+    height: 560px;
+    background: #0d1117;
+
+    in property <bool> theme-titanium: false;
+    in property <bool> theme-stealth: false;
+    in property <Palette> palette: root.theme-stealth ? Presets.stealth : (root.theme-titanium ? Presets.titanium : Presets.obsidian);
+    in property <string> theme-name: root.palette.theme-name;
+
+    in property <string> selected-theme: "obsidian";
+    in property <string> selected-wallpaper: "neural_glass_dark.png";
+    in property <bool> tor-default: true;
+    in property <bool> clipboard-redaction: true;
+    in property <string> shortcuts: "Super            Start Menu\nSuper+D          Show Desktop\nSuper+Q          Close Window\nAlt+Tab          Window Switcher\nSuper+Return     HCS Chat\nSuper+Space      Search\nSuper+I          Image Studio\nSuper+T          Terminal\nSuper+Alt+T      Tor Killswitch\nSuper+V          Redacted Clipboard";
+    in property <string> third-party: "Slint 1.18.1 - Royalty-free License 2.0\nDebian 13 Trixie base\nllama.cpp (MIT)\nNiri (GPL-3.0), Quickshell (LGPL-3.0)\nCalamares (GPL-3.0), Qwen models";
+    in property <string> save-log: "Changes apply to newly started GUI apps.";
+    callback pick-theme(string);
+    callback pick-wallpaper(string);
+    callback save();
+    callback about();
+
+    AppHeader { x: 0; y: 0; width: 700px; app-title: "HCS Settings"; subtitle: "system"; p: root.palette; }
+
+    // --- Theme
+    GlassCard { x: 16px; y: 60px; width: 200px; height: 60px; p: root.palette;
+        card-title: "Theme"; card-value: root.selected-theme; value-color: root.palette.accent; }
+    PillButton { x: 232px; y: 68px; width: 140px; p: root.palette;
+        label: "Obsidian"; primary: root.selected-theme == "obsidian";
+        clicked => { root.pick-theme("obsidian"); } }
+    PillButton { x: 384px; y: 68px; width: 140px; p: root.palette;
+        label: "Titanium"; primary: root.selected-theme == "titanium";
+        clicked => { root.pick-theme("titanium"); } }
+    PillButton { x: 536px; y: 68px; width: 148px; p: root.palette;
+        label: "Stealth"; primary: root.selected-theme == "stealth";
+        clicked => { root.pick-theme("stealth"); } }
+
+    // --- Wallpaper
+    GlassCard { x: 16px; y: 136px; width: 200px; height: 60px; p: root.palette;
+        card-title: "Wallpaper"; card-value: "3 available"; value-color: root.palette.accent-alt; }
+    PillButton { x: 232px; y: 144px; width: 150px; p: root.palette;
+        label: "Neural Glass"; primary: root.selected-wallpaper == "neural_glass_dark.png";
+        clicked => { root.pick-wallpaper("neural_glass_dark.png"); } }
+    PillButton { x: 394px; y: 144px; width: 130px; p: root.palette;
+        label: "Titanium"; primary: root.selected-wallpaper == "frosted_titanium.png";
+        clicked => { root.pick-wallpaper("frosted_titanium.png"); } }
+    PillButton { x: 536px; y: 144px; width: 148px; p: root.palette;
+        label: "Stealth"; primary: root.selected-wallpaper == "cybernetic_stealth.png";
+        clicked => { root.pick-wallpaper("cybernetic_stealth.png"); } }
+
+    // --- Privacy
+    Toggle { x: 16px; y: 212px; p: root.palette; label: "Tor transparent proxy by default"; checked: root.tor-default; }
+    Toggle { x: 320px; y: 212px; p: root.palette; label: "Redacted clipboard"; checked: root.clipboard-redaction; }
+
+    // --- Shortcuts
+    LogView { x: 16px; y: 254px; width: 340px; height: 246px; p: root.palette; log-text: root.shortcuts; }
+
+    // --- About / third party
+    LogView { x: 368px; y: 254px; width: 316px; height: 200px; p: root.palette; log-text: root.third-party; }
+    PillButton { x: 368px; y: 466px; width: 150px; p: root.palette; label: "Speichern"; primary: true;
+        clicked => { root.save(); } }
+    PillButton { x: 534px; y: 466px; width: 150px; p: root.palette; label: "About Slint";
+        clicked => { root.about(); } }
+    StatusRow { x: 16px; y: 514px; width: 340px; p: root.palette; name: "status"; state: root.save-log; }
 }

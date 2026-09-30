@@ -1,0 +1,10 @@
+﻿[Desktop Entry]
+Type=Application
+Name=Diagnose
+Comment=System triage and self-healing
+Exec=hcs-diagnose --gui
+Icon=/usr/share/icons/hcs/hcs-diagnose.svg
+Terminal=false
+Categories=System;Utility;
+Keywords=HCS;AI;Neural Glass;
+StartupNotify=true

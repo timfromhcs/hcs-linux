@@ -1,9 +1,12 @@
 use clap::Parser;
-use serde_json::json;
+use hcs_ui::ThemePreset;
 
 #[derive(Parser, Debug)]
-#[command(name = "hcs-diagnose")]
-#[command(about = "HCS Linux Autonomous System Diagnostic & Self-Healing Agent")]
+#[command(
+    name = "hcs-diagnose",
+    about = "HCS Linux Autonomous System Diagnostic & Self-Healing Agent",
+    version
+)]
 struct Cli {
     /// Autonomously apply verified non-destructive fixes
     #[arg(long)]
@@ -11,24 +14,23 @@ struct Cli {
     /// Output raw JSON report
     #[arg(short, long)]
     json: bool,
+    /// Launch the Neural Glass GUI
+    #[arg(long)]
+    gui: bool,
+    /// Theme preset for the GUI: obsidian (default), titanium, stealth
+    #[arg(long, default_value = "obsidian")]
+    theme: String,
 }
 
 fn main() {
     let cli = Cli::parse();
+    let report = hcs_diagnose::report::DiagnosticReport::sample();
 
-    let report = json!({
-        "timestamp": chrono::Utc::now().to_rfc3339(),
-        "diagnostics": {
-            "kernel": { "status": "OK", "oom_events": 0, "kernel_panics": 0 },
-            "systemd": { "failed_units": 0, "status": "ALL_HEALTHY" },
-            "modeld": { "resident_model": "hcs-controller", "ram_margin_mb": 6612, "status": "HEALTHY" },
-            "network": { "default_gateway": "10.0.2.2", "tor_daemon": "available", "status": "OK" },
-            "storage": { "root_free_gb": 18.4, "status": "OK" }
-        },
-        "issues_detected": 0,
-        "recommended_actions": [],
-        "overall_health": "OPTIMAL"
-    });
+    if cli.gui {
+        let theme = ThemePreset::from_str_opt(&cli.theme).unwrap_or(ThemePreset::Obsidian);
+        hcs_diagnose::gui::run(theme, cli.apply).expect("hcs-diagnose GUI");
+        return;
+    }
 
     if cli.json {
         println!("{}", serde_json::to_string_pretty(&report).unwrap());
@@ -56,9 +58,12 @@ fn main() {
     println!("   Inference Latency     : 18 ms (Qwen3-0.6B AVX2)");
     println!("--------------------------------------------------------------------------------");
     println!(" [AUTONOMOUS SELF-HEALING ACTION]");
-    println!("   Status                : System is operating in OPTIMAL state.");
+    println!(
+        "   Status                : System is operating in {} state.",
+        report.overall_health
+    );
     if cli.apply {
-        println!("   Action Applied        : Verified system integrity. No repair necessary.");
+        println!("   Action Applied        : {}", report.verify_and_apply());
     } else {
         println!("   Recommendations       : None. All quality gates passing.");
     }

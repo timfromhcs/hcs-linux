@@ -18,6 +18,7 @@ members = [
     "src/hcs-diagnose",
     "src/hcs-image",
     "src/hcs-ui",
+    "src/hcs-gui-shots",
 ]
 resolver = "2"
 

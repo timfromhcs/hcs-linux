@@ -1,8 +1,8 @@
 {
-  "mode": "render-only",
-  "theme": "obsidian",
-  "total": 1,
-  "passed": 1,
+  "mode": "regress",
+  "theme": "stealth",
+  "total": 9,
+  "passed": 9,
   "failed": 0,
   "overall_status": "PASS",
   "thresholds": {
@@ -13,12 +13,66 @@
   },
   "results": [
     {
-      "file": "foundation-gallery-obsidian.png",
-      "size_bytes": 77872,
-      "width": 720,
-      "height": 560,
-      "entropy": 3.353,
-      "unique_colors": 2451,
+      "file": "chat-image-studio-stealth.png",
+      "reference": "qa\\expected\\gui\\chat-image-studio-stealth.png",
+      "mean_diff": 0.0,
+      "changed_pct": 0.0,
+      "status": "PASS"
+    },
+    {
+      "file": "chat-stealth.png",
+      "reference": "qa\\expected\\gui\\chat-stealth.png",
+      "mean_diff": 0.0,
+      "changed_pct": 0.0,
+      "status": "PASS"
+    },
+    {
+      "file": "control-stealth.png",
+      "reference": "qa\\expected\\gui\\control-stealth.png",
+      "mean_diff": 0.0,
+      "changed_pct": 0.0,
+      "status": "PASS"
+    },
+    {
+      "file": "diagnose-stealth.png",
+      "reference": "qa\\expected\\gui\\diagnose-stealth.png",
+      "mean_diff": 0.0,
+      "changed_pct": 0.0,
+      "status": "PASS"
+    },
+    {
+      "file": "docs-stealth.png",
+      "reference": "qa\\expected\\gui\\docs-stealth.png",
+      "mean_diff": 0.0,
+      "changed_pct": 0.0,
+      "status": "PASS"
+    },
+    {
+      "file": "foundation-gallery-stealth.png",
+      "reference": "qa\\expected\\gui\\foundation-gallery-stealth.png",
+      "mean_diff": 0.0,
+      "changed_pct": 0.0,
+      "status": "PASS"
+    },
+    {
+      "file": "monitor-stealth.png",
+      "reference": "qa\\expected\\gui\\monitor-stealth.png",
+      "mean_diff": 0.0,
+      "changed_pct": 0.0,
+      "status": "PASS"
+    },
+    {
+      "file": "search-stealth.png",
+      "reference": "qa\\expected\\gui\\search-stealth.png",
+      "mean_diff": 0.0,
+      "changed_pct": 0.0,
+      "status": "PASS"
+    },
+    {
+      "file": "settings-stealth.png",
+      "reference": "qa\\expected\\gui\\settings-stealth.png",
+      "mean_diff": 0.0,
+      "changed_pct": 0.0,
       "status": "PASS"
     }
   ]

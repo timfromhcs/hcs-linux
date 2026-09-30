@@ -1654,13 +1654,20 @@ version = "1.0.1"
 dependencies = [
  "anyhow",
  "clap",
+ "hcs-image",
  "hcs-memory",
  "hcs-modeld",
  "hcs-security",
  "hcs-settings",
+ "hcs-ui",
  "hcsd",
+ "i-slint-backend-testing",
+ "image",
  "serde",
  "serde_json",
+ "slint",
+ "slint-build",
+ "tempfile",
  "tokio",
 ]
 
@@ -1672,8 +1679,12 @@ dependencies = [
  "clap",
  "hcs-security",
  "hcs-settings",
+ "hcs-ui",
+ "hcsd",
  "serde",
  "serde_json",
+ "slint",
+ "slint-build",
 ]
 
 [[package]]
@@ -1681,11 +1692,27 @@ name = "hcs-diagnose"
 version = "1.0.1"
 dependencies = [
  "anyhow",
- "chrono",
  "clap",
+ "hcs-ui",
  "serde",
  "serde_json",
- "tokio",
+ "slint",
+ "slint-build",
+]
+
+[[package]]
+name = "hcs-gui-shots"
+version = "1.0.1"
+dependencies = [
+ "anyhow",
+ "hcs-chat",
+ "hcs-control",
+ "hcs-diagnose",
+ "hcs-monitor",
+ "hcs-search",
+ "hcs-ui",
+ "image",
+ "slint",
 ]
 
 [[package]]
@@ -1773,11 +1800,12 @@ name = "hcs-monitor"
 version = "1.0.1"
 dependencies = [
  "anyhow",
- "chrono",
  "clap",
+ "hcs-ui",
  "serde",
  "serde_json",
- "tokio",
+ "slint",
+ "slint-build",
 ]
 
 [[package]]
@@ -1800,8 +1828,9 @@ dependencies = [
  "anyhow",
  "clap",
  "hcs-memory",
- "serde",
- "serde_json",
+ "hcs-ui",
+ "slint",
+ "slint-build",
 ]
 
 [[package]]
@@ -1834,7 +1863,9 @@ name = "hcs-ui"
 version = "1.0.1"
 dependencies = [
  "anyhow",
+ "hcs-image",
  "image",
+ "pulldown-cmark 0.12.2",
  "serde",
  "serde_json",
  "slint",
@@ -2016,7 +2047,7 @@ dependencies = [
  "icu_decimal",
  "icu_locale_core",
  "icu_provider",
- "pulldown-cmark",
+ "pulldown-cmark 0.13.4",
  "resvg",
  "skrifa",
 ]
@@ -3655,6 +3686,18 @@ checksum = "3d595e54a326bc53c1c197b32d295e14b169e3cfeaa8dc82b529f947fba6bcf5"
 
 [[package]]
 name = "pulldown-cmark"
+version = "0.12.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f86ba2052aebccc42cbbb3ed234b8b13ce76f75c3551a303cb2bcffcff12bb14"
+dependencies = [
+ "bitflags 2.13.2",
+ "memchr",
+ "pulldown-cmark-escape",
+ "unicase",
+]
+
+[[package]]
+name = "pulldown-cmark"
 version = "0.13.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e9f068eba8e7071c5f9511831b44f32c740d5adf574e990f946ddb53db2f314e"
@@ -3663,6 +3706,12 @@ dependencies = [
  "memchr",
  "unicase",
 ]
+
+[[package]]
+name = "pulldown-cmark-escape"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "007d8adb5ddab6f8e3f491ac63566a7d5002cc7ed73901f72057943fa71ae1ae"
 
 [[package]]
 name = "pxfm"

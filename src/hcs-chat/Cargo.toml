@@ -5,15 +5,40 @@ edition.workspace = true
 authors.workspace = true
 license.workspace = true
 
+[lib]
+name = "hcs_chat"
+path = "src/lib.rs"
+
+[[bin]]
+name = "hcs-chat"
+path = "src/main.rs"
+
 [dependencies]
 hcsd = { path = "../hcsd" }
 hcs-memory = { path = "../hcs-memory" }
 hcs-modeld = { path = "../hcs-modeld" }
 hcs-settings = { path = "../hcs-settings" }
 hcs-security = { path = "../hcs-security" }
+hcs-ui = { path = "../hcs-ui" }
+hcs-image = { path = "../hcs-image" }
 
 tokio.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 clap.workspace = true
 anyhow.workspace = true
+slint = { version = "1.18.1", default-features = false, features = [
+    "compat-1-2",
+    "renderer-software",
+    "software-renderer-systemfonts",
+    "backend-winit",
+    "std",
+] }
+
+[dev-dependencies]
+tempfile.workspace = true
+image = { version = "0.25", default-features = false, features = ["png"] }
+i-slint-backend-testing = "1.18.1"
+
+[build-dependencies]
+slint-build = { version = "1.18.1", features = ["experimental-module-builds"] }

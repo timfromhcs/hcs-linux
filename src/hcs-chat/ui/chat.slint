@@ -1,0 +1,135 @@
+// HCS Linux — HCS Chat + CPU Image Studio GUI (P1, v1.1.0).
+// One .slint file per crate is required: include_modules!() only includes the
+// last build-script output, so a crate must compile exactly one .slint entry.
+// Shared widgets come from the sibling hcs-ui kit by file path.
+
+import { Palette, Presets } from "hcs_ui.slint";
+import { AppHeader, GlassCard, PillButton, SliderRow, ModelBadge, RamBar,
+         TorShield, LogView, StatusRow, GalleryTile } from "hcs_ui.slint";
+
+export component ChatWindow inherits Window {
+    width: 860px;
+    height: 620px;
+    background: #0d1117;
+
+    in property <bool> theme-titanium: false;
+    in property <bool> theme-stealth: false;
+    in property <Palette> palette: root.theme-stealth ? Presets.stealth : (root.theme-titanium ? Presets.titanium : Presets.obsidian);
+    in property <string> theme-name: root.palette.theme-name;
+
+    // Chat state (owned by Rust; see src/gui.rs)
+    in property <string> model-id: "hcs-assistant";
+    in property <string> model-ram: "1450 MB";
+    in property <float> ram-used: 2200;
+    in property <bool> busy: false;
+    in property <string> transcript: "HCS Brain (Qwen3-1.7B)\n\nHallo. Ich bin dein lokaler Assistent. Alle Inferenzen laufen auf dieser CPU.";
+    in-out property <string> composer: "";
+    in-out property <int> tab-index: 0;
+
+    // Image Studio state
+    in property <string> prompt: "a sleek futuristic cybernetic workstation";
+    in property <string> negative-prompt: "blurry, low-res, watermark";
+    in-out property <float> steps: 6;
+    in-out property <float> cfg: 1.8;
+    in-out property <int> seed: -1;
+    in-out property <float> resolution: 512;
+    in property <string> img2img-path: "";
+    in property <string> output-path: "render.png";
+    in property <string> last-log: "[OK] RAM gate PASS (free 5859 MB)\n[OK] exec /usr/lib/hcs/sd-cpp -M sd15-lcm-q4_0.gguf\n[OK] 512x512 steps=6 cfg=1.8 threads=16\n[OK] output -> render.png (weights deallocated)";
+    callback send();
+    callback generate();
+    callback cancel();
+    callback new-tab(int);
+
+    AppHeader { x: 0; y: 0; width: 860px; app-title: "HCS Chat"; subtitle: "chat"; p: root.palette; }
+
+    PillButton { x: 16px; y: 56px; width: 120px; p: root.palette; label: "Chat";
+        primary: root.tab-index == 0; clicked => { root.new-tab(0); } }
+    PillButton { x: 146px; y: 56px; width: 150px; p: root.palette; label: "Image Studio";
+        primary: root.tab-index == 1; clicked => { root.new-tab(1); } }
+    ModelBadge { x: 300px; y: 56px; p: root.palette; model: root.model-id; ram: root.model-ram; }
+    TorShield { x: 506px; y: 56px; p: root.palette; isolated: true; }
+    PillButton { x: 650px; y: 56px; width: 194px; p: root.palette; label: "Explain with Brain"; pill-color: root.palette.accent-alt; }
+
+    // ================= Tab 0: Chat =================
+    Rectangle {
+        x: 0; y: 100px; width: 860px; height: 500px;
+        visible: root.tab-index == 0;
+
+        LogView { x: 16px; y: 0; width: 828px; height: 372px; p: root.palette; log-text: root.transcript; }
+
+        GlassCard { x: 16px; y: 388px; width: 200px; height: 76px; p: root.palette;
+            card-title: "RAM (idle 6144 MB)"; card-value: root.ram-used + " MB"; value-color: root.palette.accent; }
+        GlassCard { x: 232px; y: 388px; width: 200px; height: 76px; p: root.palette;
+            card-title: "State"; card-value: root.busy ? "inferring" : "idle";
+            value-color: root.busy ? root.palette.warn : root.palette.success; }
+
+        Rectangle {
+            x: 448px; y: 388px; width: 396px; height: 76px; border-radius: 14px;
+            background: root.palette.surface-alt; border-width: 1px; border-color: root.palette.border-soft;
+            Text { x: 14px; y: 10px; width: 368px; height: 16px;
+                text: "Message"; color: root.palette.text-muted; font-size: 11px; }
+            Text { x: 14px; y: 30px; width: 368px; height: 38px;
+                text: root.composer == "" ? "Type here, then press Senden..." : root.composer;
+                color: root.composer == "" ? root.palette.text-muted : root.palette.text-primary;
+                font-size: 12px; wrap: word-wrap; }
+        }
+        PillButton { x: 448px; y: 472px; width: 130px; p: root.palette; label: "Senden"; primary: true;
+            enabled: root.composer != "" && !root.busy; clicked => { root.send(); } }
+        PillButton { x: 590px; y: 472px; width: 120px; p: root.palette; label: "Leeren";
+            clicked => { root.composer = ""; } }
+        StatusRow { x: 720px; y: 480px; width: 124px; p: root.palette; name: "hcsd"; state: "live"; }
+    }
+
+    // ================= Tab 1: Image Studio =================
+    Rectangle {
+        x: 0; y: 100px; width: 860px; height: 500px;
+        visible: root.tab-index == 1;
+
+        GlassCard { x: 16px; y: 0; width: 200px; height: 72px; p: root.palette;
+            card-title: "Engine"; card-value: "SD 1.5 LCM"; value-color: root.palette.accent; }
+        GlassCard { x: 232px; y: 0; width: 200px; height: 72px; p: root.palette;
+            card-title: "Quantization"; card-value: "Q4_0"; value-color: root.palette.accent-alt; }
+        GlassCard { x: 448px; y: 0; width: 200px; height: 72px; p: root.palette;
+            card-title: "Disk"; card-value: "1.6 GB"; value-color: root.palette.text-primary; }
+        GlassCard { x: 664px; y: 0; width: 180px; height: 72px; p: root.palette;
+            card-title: "Peak RSS"; card-value: "2.2 GB"; value-color: root.palette.warn; }
+
+        SliderRow { x: 16px; y: 88px; width: 400px; p: root.palette;
+            label: "Sampling steps (LCM 1-8)"; value: root.steps; min: 1; max: 8; step: 1;
+            dragged(f) => { root.steps = round(f * 7.0) + 1.0; } }
+        SliderRow { x: 16px; y: 136px; width: 400px; p: root.palette;
+            label: "Guidance scale (1.0-2.5)"; value: root.cfg; min: 1.0; max: 2.5; step: 0.1;
+            dragged(f) => { root.cfg = 1.0 + f * 1.5; } }
+        SliderRow { x: 16px; y: 184px; width: 400px; p: root.palette;
+            label: "Resolution"; value: root.resolution; min: 256; max: 768; step: 256; unit: "px";
+            dragged(f) => { root.resolution = round(f * 2.0) * 256.0 + 256.0; } }
+
+        GlassCard { x: 440px; y: 88px; width: 404px; height: 72px; p: root.palette;
+            card-title: "Prompt"; card-value: root.prompt; }
+        GlassCard { x: 440px; y: 172px; width: 404px; height: 72px; p: root.palette;
+            card-title: "Negative prompt"; card-value: root.negative-prompt; }
+
+        PillButton { x: 440px; y: 258px; width: 130px; p: root.palette; label: "Generieren"; primary: true;
+            clicked => { root.generate(); } }
+        PillButton { x: 582px; y: 258px; width: 120px; p: root.palette; label: "Abbrechen";
+            clicked => { root.cancel(); } }
+        PillButton { x: 714px; y: 258px; width: 130px; p: root.palette; label: "img2img waehlen"; }
+
+        RamBar { x: 16px; y: 238px; width: 400px; p: root.palette;
+            label: "Budget (peak 8192 MB)"; used-mb: 3100; budget-mb: 8192; fill-color: root.palette.warn; }
+
+        Text { x: 16px; y: 288px; width: 400px; height: 18px;
+            text: "Single Heavy Model Rule: 4B-Reasoner vor dem Rendern entladen.";
+            color: root.palette.warn; font-size: 11px; }
+        Text { x: 16px; y: 312px; width: 400px; height: 18px;
+            text: "Gallery (on-demand, weights werden freigegeben)";
+            color: root.palette.text-muted; font-size: 11px; }
+        GalleryTile { x: 16px; y: 334px; width: 120px; height: 90px; p: root.palette; caption: "render-042"; }
+        GalleryTile { x: 148px; y: 334px; width: 120px; height: 90px; p: root.palette; caption: "render-043"; }
+        GalleryTile { x: 280px; y: 334px; width: 120px; height: 90px; p: root.palette; caption: "render-044"; }
+
+        LogView { x: 440px; y: 302px; width: 404px; height: 122px; p: root.palette;
+            log-text: root.last-log; }
+    }
+}

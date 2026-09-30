@@ -88,9 +88,9 @@ fn headless_render_produces_non_blank_png() {
     // the CI job and the release gate.
     let dir = tempfile::tempdir().expect("tempdir");
     let out = dir.path().join("gallery.png");
-    let window = hcs_ui::HeadlessPlatform::install().expect("headless platform");
+    hcs_ui::install_headless().expect("headless platform");
     let g = WidgetGallery::new().expect("gallery");
-    hcs_ui::render_to_png(&g, &window, 720, 560, &out).expect("render");
+    hcs_ui::render_to_png(&g, 720, 560, &out).expect("render");
 
     let img = image::open(&out).expect("png");
     let rgb = img.to_rgb8();
@@ -113,10 +113,10 @@ fn headless_render_produces_non_blank_png() {
 fn headless_render_rejects_zero_size() {
     let dir = tempfile::tempdir().expect("tempdir");
     let out = dir.path().join("bad.png");
-    let window = hcs_ui::HeadlessPlatform::install().expect("headless platform");
+    hcs_ui::install_headless().expect("headless platform");
     let g = WidgetGallery::new().expect("gallery");
-    let err = hcs_ui::render_to_png(&g, &window, 0, 100, &out).unwrap_err();
-    assert!(matches!(err, hcs_ui::RenderError::InvalidSize { .. }));
+    hcs_ui::render_to_png(&g, 0, 100, &out)
+        .expect_err("zero width must be rejected");
 }
 
 #[test]

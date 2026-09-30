@@ -1,20 +1,30 @@
 use clap::Parser;
+use hcs_chat::gui;
 use hcs_memory::MemoryEngine;
 use hcs_modeld::{ModelDaemon, ModelEntry};
 use hcs_security::PrivacyMode;
 use hcs_settings::HardwareProfile;
+use hcs_ui::ThemePreset;
 use hcsd::HcsBrain;
 use std::io::{self, Write};
 use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
-#[command(name = "hcs-chat", about = "HCS Linux Interactive AI Chat")]
+#[command(name = "hcs-chat", about = "HCS Linux Interactive AI Chat", version)]
 struct Args {
     #[arg(short, long)]
     prompt: Option<String>,
 
     #[arg(long, default_value = "default")]
     project: String,
+
+    /// Launch the Neural Glass GUI instead of the terminal REPL
+    #[arg(long)]
+    gui: bool,
+
+    /// Theme preset for the GUI: obsidian (default), titanium, stealth
+    #[arg(long, default_value = "obsidian")]
+    theme: String,
 }
 
 #[tokio::main]
@@ -40,6 +50,13 @@ async fn main() -> anyhow::Result<()> {
 
     let hw = HardwareProfile::detect();
     let brain = HcsBrain::new(mem, modeld, hw, PrivacyMode::Standard);
+
+    if args.gui {
+        let theme = ThemePreset::from_str_opt(&args.theme).unwrap_or(ThemePreset::Obsidian);
+        let ctx = gui::ChatContext::offline(&args.project);
+        gui::run(&ctx, theme)?;
+        return Ok(());
+    }
 
     if let Some(user_prompt) = args.prompt {
         println!("User: {}", user_prompt);

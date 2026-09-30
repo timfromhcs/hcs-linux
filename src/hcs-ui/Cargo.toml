@@ -19,6 +19,8 @@ serde.workspace = true
 serde_json.workspace = true
 anyhow.workspace = true
 thiserror.workspace = true
+hcs-image = { path = "../hcs-image" }
+pulldown-cmark = { version = "0.12", default-features = false, features = ["simd", "html"] }
 image = { version = "0.25", default-features = false, features = ["png"] }
 
 [build-dependencies]

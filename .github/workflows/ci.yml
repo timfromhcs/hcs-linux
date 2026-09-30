@@ -86,17 +86,23 @@ jobs:
           sudo apt-get install -y fonts-dejavu-core
 
       - name: GUI Unit Tests
-        run: cargo test -p hcs-ui
+        run: cargo test -p hcs-ui -p hcs-chat -p hcs-monitor -p hcs-control -p hcs-search -p hcs-diagnose
 
       - name: GUI Headless Render Audit
         # Renders every view with the software renderer (no GPU/display needed)
         # and rejects blank frames via entropy + unique-colour count.
-        run: python scripts/verify_gui.py --render-only
+        run: |
+          python scripts/verify_gui.py --render-only --theme obsidian
+          python scripts/verify_gui.py --render-only --theme titanium
+          python scripts/verify_gui.py --render-only --theme stealth
 
       - name: GUI Visual Regression
-        # Diffs renders against qa/expected/gui/. First run on a new view must
-        # use `python scripts/verify_gui.py --update` and the images reviewed.
-        run: python scripts/verify_gui.py --regress
+        # Diffs renders against qa/expected/gui/. A new view must be added there
+        # with `python scripts/verify_gui.py --update` and the images reviewed.
+        run: |
+          python scripts/verify_gui.py --regress --theme obsidian
+          python scripts/verify_gui.py --regress --theme titanium
+          python scripts/verify_gui.py --regress --theme stealth
 
       - name: GUI RAM Budget Audit
         # <= 250 MB RSS per GUI app (plan §3); measures real /proc RSS.
@@ -136,14 +142,14 @@ jobs:
           WAYLAND_DISPLAY: wayland-0
         run: |
           set +e
-          timeout 20 cargo run -q -p hcs-ui --bin hcs-gui-render -- \
-            --gui-render foundation-gallery --out-dir target/gui-wayland
+          timeout 20 cargo run -q -p hcs-gui-shots --bin hcs-gui-shots -- \
+            --out-dir target/gui-wayland --view chat
           code=$?
           if [ $code -ne 0 ] && [ $code -ne 124 ]; then
             echo "GUI Wayland launch failed with exit $code"
             exit 1
           fi
-          test -f target/gui-wayland/foundation-gallery-obsidian.png
+          test -f target/gui-wayland/chat-obsidian.png
           echo "[OK] GUI app rendered on headless Wayland"
 
   iso-integration:

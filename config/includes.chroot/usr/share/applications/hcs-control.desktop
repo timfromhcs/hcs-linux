@@ -1,0 +1,10 @@
+﻿[Desktop Entry]
+Type=Application
+Name=Control Center
+Comment=Tor shield, AI profile and vault
+Exec=hcs-control --gui
+Icon=/usr/share/icons/hcs/hcs-security.svg
+Terminal=false
+Categories=System;Utility;
+Keywords=HCS;AI;Neural Glass;
+StartupNotify=true

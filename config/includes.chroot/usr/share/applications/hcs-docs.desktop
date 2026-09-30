@@ -1,0 +1,10 @@
+﻿[Desktop Entry]
+Type=Application
+Name=HCS Docs
+Comment=Offline documentation viewer
+Exec=hcs-docs
+Icon=/usr/share/icons/hcs/hcs-docs.svg
+Terminal=false
+Categories=System;Utility;Documentation;
+Keywords=HCS;docs;manual;
+StartupNotify=true

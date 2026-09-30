@@ -1,11 +1,11 @@
 use clap::Parser;
-use serde_json::json;
+use hcs_ui::ThemePreset;
 use std::thread;
 use std::time::Duration;
 
 #[derive(Parser, Debug)]
 #[command(name = "hcs-monitor")]
-#[command(about = "HCS Linux AI & System Resource Telemetry Dashboard")]
+#[command(about = "HCS Linux AI & System Resource Telemetry Dashboard", version)]
 struct Cli {
     /// Watch mode with interval in seconds
     #[arg(short, long)]
@@ -13,6 +13,12 @@ struct Cli {
     /// Output raw JSON telemetry
     #[arg(short, long)]
     json: bool,
+    /// Launch the Neural Glass GUI
+    #[arg(long)]
+    gui: bool,
+    /// Theme preset for the GUI: obsidian (default), titanium, stealth
+    #[arg(long, default_value = "obsidian")]
+    theme: String,
 }
 
 fn print_dashboard() {
@@ -47,27 +53,16 @@ fn print_dashboard() {
 fn main() {
     let cli = Cli::parse();
 
+    if cli.gui {
+        let theme = ThemePreset::from_str_opt(&cli.theme).unwrap_or(ThemePreset::Obsidian);
+        hcs_monitor::gui::run(theme).expect("hcs-monitor GUI");
+        return;
+    }
+
     if cli.json {
-        let data = json!({
-            "product": "HCS Linux",
-            "profile": "EDGE-8GB",
-            "memory": {
-                "base_mb": 820,
-                "core_services_mb": 210,
-                "resident_ai_mb": 550,
-                "total_rss_mb": 1580,
-                "idle_budget_mb": 6144,
-                "peak_budget_mb": 8192,
-                "headroom_mb": 6612
-            },
-            "models": {
-                "resident": "hcs-controller (Qwen3-0.6B)",
-                "active_heavy": null,
-                "policy": "single_heavy_resident_enforced"
-            },
-            "status": "PASS"
-        });
-        println!("{}", serde_json::to_string_pretty(&data).unwrap());
+        let data =
+            serde_json::to_string_pretty(&hcs_monitor::telemetry::Telemetry::sample()).unwrap();
+        println!("{}", data);
         return;
     }
 

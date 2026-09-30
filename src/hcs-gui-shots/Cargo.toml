@@ -1,0 +1,30 @@
+[package]
+name = "hcs-gui-shots"
+description = "Dev-only tool: headless renders every HCS GUI view for the visual-regression gate"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+publish = false
+
+[[bin]]
+name = "hcs-gui-shots"
+path = "src/main.rs"
+
+[dependencies]
+hcs-ui = { path = "../hcs-ui" }
+hcs-chat = { path = "../hcs-chat" }
+hcs-monitor = { path = "../hcs-monitor" }
+hcs-control = { path = "../hcs-control" }
+hcs-search = { path = "../hcs-search" }
+hcs-diagnose = { path = "../hcs-diagnose" }
+
+anyhow.workspace = true
+image = { version = "0.25", default-features = false, features = ["png"] }
+slint = { version = "1.18.1", default-features = false, features = [
+    "compat-1-2",
+    "renderer-software",
+    "software-renderer-systemfonts",
+    "backend-winit",
+    "std",
+] }

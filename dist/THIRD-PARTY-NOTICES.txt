@@ -53,6 +53,14 @@ Notes:     Native Rust JSON-RPC stdio implementation for filesystem, bash sandbo
 
 ------------------------------------------------------------
 
+Component: slint
+Version:   1.18.1
+Upstream:  https://github.com/slint-ui/slint
+License:   GPL-3.0-only OR LicenseRef-Slint-Royalty-free-2.0 OR LicenseRef-Slint-Software-3.0
+Notes:     Declared GUI toolkit for all HCS app GUIs (docs/GUI_BUILD_PLAN.md). Tri-licensed; HCS Linux elects the Royalty-free License 2.0 (LicenseRef-Slint-Royalty-free-2.0) because GPLv3 would impose copyleft on the whole Apache-2.0 work. The Royalty-free license requires disclosing the use of Slint: every GUI app renders hcs_ui::disclosure() in its About dialog and the Settings app lists Slint under third-party components. Verifies pinned by Cargo.lock.
+
+------------------------------------------------------------
+
 Model ID:  hcs-controller
 Repository: https://huggingface.co/Qwen/Qwen3-0.6B
 Filename:   qwen3-0.6b-q4_k_m.gguf

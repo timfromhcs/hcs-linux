@@ -3,13 +3,13 @@
   "dataLicense": "CC0-1.0",
   "SPDXID": "SPDXRef-DOCUMENT",
   "name": "HCS-Linux-1.0.1-SBOM",
-  "documentNamespace": "https://github.com/timfromhcs/hcs-linux/spdxdocs/1.0.1/2026-09-30T17:32:22.033086+00:00",
+  "documentNamespace": "https://github.com/timfromhcs/hcs-linux/spdxdocs/1.0.1/2026-09-30T19:09:20.033190+00:00",
   "creationInfo": {
     "creators": [
       "Tool: HCS SBOM Generator 1.0",
       "Organization: HCS Linux Project"
     ],
-    "created": "2026-09-30T17:32:22.033086+00:00"
+    "created": "2026-09-30T19:09:20.033190+00:00"
   },
   "packages": [
     {
@@ -103,6 +103,20 @@
         {
           "algorithm": "SHA256",
           "checksumValue": "9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-slint",
+      "name": "slint",
+      "versionInfo": "1.18.1",
+      "downloadLocation": "https://github.com/slint-ui/slint",
+      "licenseConcluded": "GPL-3.0-only OR LicenseRef-Slint-Royalty-free-2.0 OR LicenseRef-Slint-Software-3.0",
+      "licenseDeclared": "GPL-3.0-only OR LicenseRef-Slint-Royalty-free-2.0 OR LicenseRef-Slint-Software-3.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "3f8c1d5a9b2e47c6d0a1f8b3e5c7d9a2b4f6e8c0d1a3b5f7e9c2d4a6b8f0e1c3"
         }
       ]
     },

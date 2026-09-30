@@ -4,12 +4,28 @@ version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
-repository.workspace = true
+
+[lib]
+name = "hcs_diagnose"
+path = "src/lib.rs"
+
+[[bin]]
+name = "hcs-diagnose"
+path = "src/main.rs"
 
 [dependencies]
-tokio.workspace = true
+hcs-ui = { path = "../hcs-ui" }
+slint = { version = "1.18.1", default-features = false, features = [
+    "compat-1-2",
+    "renderer-software",
+    "software-renderer-systemfonts",
+    "backend-winit",
+    "std",
+] }
+clap.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-clap.workspace = true
-chrono.workspace = true
 anyhow.workspace = true
+
+[build-dependencies]
+slint-build = { version = "1.18.1", features = ["experimental-module-builds"] }

@@ -51,7 +51,7 @@ def sh(cmd: list[str]) -> subprocess.CompletedProcess:
 
 
 def render(theme: str, extra: list[str] | None = None) -> bool:
-    cmd = [CARGO, "run", "-q", "-p", "hcs-ui", "--bin", "hcs-gui-render",
+    cmd = [CARGO, "run", "-q", "-p", "hcs-gui-shots", "--bin", "hcs-gui-shots",
            "--", "--out-dir", str(GUI_DIR), "--theme", theme]
     if extra:
         cmd += extra
@@ -171,7 +171,7 @@ def main() -> int:
     args = ap.parse_args()
 
     if args.list:
-        p = sh([CARGO, "run", "-q", "-p", "hcs-ui", "--bin", "hcs-gui-render", "--", "--list"])
+        p = sh([CARGO, "run", "-q", "-p", "hcs-gui-shots", "--bin", "hcs-gui-shots", "--", "--list"])
         print(p.stdout.strip() or p.stderr.strip())
         return p.returncode
 

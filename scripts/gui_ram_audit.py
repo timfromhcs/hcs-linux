@@ -51,10 +51,10 @@ class App:
 def inventory() -> list[App]:
     """GUI apps that expose a headless mode (--gui-offscreen or --ram-report)."""
     apps = [
-        App("hcs-ui-gallery", "hcs-ui", ["--gui-render", "foundation-gallery",
-                                         "--out-dir", "target/ram-audit",
-                                         "--hold-seconds", "6"],
-            "foundation widget kit (proxy for GUI baseline)"),
+        App("hcs-gui-shots", "hcs-gui-shots",
+            ["--out-dir", "target/ram-audit", "--hold-seconds", "6"],
+            "all GUI views built and rendered headlessly (foundation, chat, "
+            "monitor, control, search, diagnose, docs, settings)"),
     ]
     # App crates register themselves here as the phases land.
     for extra in json.loads(_extra_apps_json() or "[]"):

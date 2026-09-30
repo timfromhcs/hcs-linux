@@ -1,0 +1,10 @@
+﻿[Desktop Entry]
+Type=Application
+Name=AI Chat
+Comment=Local AI chat and CPU Image Studio
+Exec=hcs-chat --gui
+Icon=/usr/share/icons/hcs/hcs-chat.svg
+Terminal=false
+Categories=System;Utility;
+Keywords=HCS;AI;Neural Glass;
+StartupNotify=true

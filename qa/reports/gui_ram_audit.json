@@ -1,18 +1,16 @@
 {
   "apps": [
     {
-      "app": "hcs-ui-gallery",
-      "crate": "hcs-ui",
-      "note": "foundation widget kit (proxy for GUI baseline)",
+      "app": "hcs-gui-shots",
+      "crate": "hcs-gui-shots",
+      "note": "all GUI views built and rendered headlessly (foundation, chat, monitor, control, search, diagnose, docs, settings)",
       "args": [
-        "--gui-render",
-        "foundation-gallery",
         "--out-dir",
         "target/ram-audit",
         "--hold-seconds",
         "6"
       ],
-      "peak_rss_mb": 11.3,
+      "peak_rss_mb": 11.2,
       "budget_mb": 250,
       "status": "PASS"
     }

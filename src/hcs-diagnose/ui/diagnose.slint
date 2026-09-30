@@ -1,0 +1,61 @@
+// HCS Linux — Autonomous Diagnostic & Self-Healing GUI (P3, v1.3.0).
+
+import { Palette, Presets } from "hcs_ui.slint";
+import { AppHeader, GlassCard, PillButton, StatusRow, RamBar, LogView } from "hcs_ui.slint";
+
+export component DiagnoseWindow inherits Window {
+    width: 760px;
+    height: 540px;
+    background: #0d1117;
+
+    in property <bool> theme-titanium: false;
+    in property <bool> theme-stealth: false;
+    in property <Palette> palette: root.theme-stealth ? Presets.stealth : (root.theme-titanium ? Presets.titanium : Presets.obsidian);
+    in property <string> theme-name: root.palette.theme-name;
+
+    in property <string> overall-health: "OPTIMAL";
+    in property <string> kernel: "7.0.0-generic amd64";
+    in property <int> oom-events: 0;
+    in property <int> failed-units: 0;
+    in property <string> ram-margin: "6612 MB";
+    in property <string> storage: "18.4 GB free";
+    in property <string> inference-latency: "18 ms";
+    in property <string> mcp-transport: "Functional";
+    in property <int> issue-count: 0;
+    in property <string> action-log: "System is operating in OPTIMAL state.";
+    in property <bool> applied: false;
+    callback run-diagnostics();
+    callback apply-fixes();
+
+    AppHeader { x: 0; y: 0; width: 760px; app-title: "HCS Diagnose"; subtitle: "triage"; p: root.palette; }
+
+    GlassCard { x: 16px; y: 60px; width: 232px; height: 76px; p: root.palette;
+        card-title: "Overall health"; card-value: root.overall-health;
+        value-color: root.overall-health == "OPTIMAL" ? root.palette.success : root.palette.warn; }
+    GlassCard { x: 264px; y: 60px; width: 232px; height: 76px; p: root.palette;
+        card-title: "Issues detected"; card-value: root.issue-count; value-color: root.palette.text-primary; }
+    GlassCard { x: 512px; y: 60px; width: 232px; height: 76px; p: root.palette;
+        card-title: "Failed units"; card-value: root.failed-units; value-color: root.palette.success; }
+
+    // Triage cards
+    StatusRow { x: 16px; y: 152px; width: 340px; p: root.palette; name: "kernel"; state: root.kernel; }
+    StatusRow { x: 16px; y: 176px; width: 340px; p: root.palette; name: "OOM killer events"; state: root.oom-events; ok: root.oom-events == 0; }
+    StatusRow { x: 16px; y: 200px; width: 340px; p: root.palette; name: "storage"; state: root.storage; }
+    StatusRow { x: 16px; y: 224px; width: 340px; p: root.palette; name: "RAM margin"; state: root.ram-margin; }
+    StatusRow { x: 16px; y: 248px; width: 340px; p: root.palette; name: "inference latency"; state: root.inference-latency; }
+    StatusRow { x: 16px; y: 272px; width: 340px; p: root.palette; name: "MCP stdio"; state: root.mcp-transport; }
+
+    RamBar { x: 380px; y: 152px; width: 364px; p: root.palette;
+        label: "RAM margin vs idle budget"; used-mb: 1580; budget-mb: 6144; fill-color: root.palette.success; }
+
+    PillButton { x: 380px; y: 200px; width: 170px; p: root.palette; label: "Diagnose ausfuehren"; primary: true;
+        clicked => { root.run-diagnostics(); } }
+    PillButton { x: 574px; y: 200px; width: 170px; p: root.palette; label: "Fixes anwenden";
+        enabled: !root.applied; clicked => { root.apply-fixes(); } }
+
+    // Log tail
+    LogView { x: 380px; y: 248px; width: 364px; height: 132px; p: root.palette;
+        log-text: root.action-log; }
+    LogView { x: 16px; y: 310px; width: 340px; height: 210px; p: root.palette;
+        log-text: "hcsd.service          Active (running) - PID 412\nhcs-modeld.service    Active (running) - PID 413\nhcs-memory.service    Active - SQLite open\nhcs-security.service  Active - Tor SOCKS 9050\n\nZRAM swap             4096 MB active (lz4, 0% used)\nMemory FTS5 latency   0.12 ms\nInference latency     18 ms (Qwen3-0.6B AVX2)"; }
+}

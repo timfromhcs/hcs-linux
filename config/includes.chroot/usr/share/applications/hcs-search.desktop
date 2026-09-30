@@ -1,0 +1,10 @@
+﻿[Desktop Entry]
+Type=Application
+Name=Search
+Comment=Spotlight hybrid search
+Exec=hcs-search --gui
+Icon=/usr/share/icons/hcs/hcs-search.svg
+Terminal=false
+Categories=System;Utility;
+Keywords=HCS;AI;Neural Glass;
+StartupNotify=true

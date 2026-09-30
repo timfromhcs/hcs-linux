@@ -14,7 +14,132 @@ use std::rc::Rc;
 slint::include_modules!();
 
 pub mod harness;
-pub use harness::{render_to_png, HeadlessPlatform, RenderError};
+pub use harness::{
+    install as install_headless, last_window, render_to_png, HeadlessPlatform, RenderError,
+};
+
+pub mod image_studio;
+pub use image_studio::{render_request_from_ui, ImageStudioState};
+
+pub mod docs;
+pub mod settings;
+
+/// Raw 8-bit colour values for a theme preset. Kept as plain data so it can
+/// cross crate boundaries; the generated `Palette` struct is crate-local.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct PaletteValues {
+    pub theme_name: &'static str,
+    pub surface: (u8, u8, u8),
+    pub surface_alt: (u8, u8, u8),
+    pub surface_raised: (u8, u8, u8),
+    pub accent: (u8, u8, u8),
+    pub accent_alt: (u8, u8, u8),
+    pub text_primary: (u8, u8, u8),
+    pub text_muted: (u8, u8, u8),
+    pub border_soft: (u8, u8, u8),
+    pub success: (u8, u8, u8),
+    pub warn: (u8, u8, u8),
+    pub danger: (u8, u8, u8),
+}
+
+pub fn rgb((r, g, b): (u8, u8, u8)) -> slint::Color {
+    slint::Color::from_rgb_u8(r, g, b)
+}
+
+/// Colour values for a preset (mirrors the .slint `Presets` global).
+pub fn palette_values(preset: ThemePreset) -> PaletteValues {
+    match preset {
+        ThemePreset::Obsidian => PaletteValues {
+            theme_name: "obsidian",
+            surface: (0x0d, 0x11, 0x17),
+            surface_alt: (0x16, 0x1b, 0x22),
+            surface_raised: (0x1e, 0x29, 0x3b),
+            accent: (0x38, 0xbd, 0xf8),
+            accent_alt: (0x81, 0x8c, 0xf8),
+            text_primary: (0xe2, 0xe8, 0xf0),
+            text_muted: (0x84, 0x94, 0xa8),
+            border_soft: (0x1f, 0x29, 0x37),
+            success: (0x34, 0xd3, 0x99),
+            warn: (0xfb, 0xbf, 0x24),
+            danger: (0xf8, 0x71, 0x71),
+        },
+        ThemePreset::Titanium => PaletteValues {
+            theme_name: "titanium",
+            surface: (0xe2, 0xe8, 0xf0),
+            surface_alt: (0xcb, 0xd5, 0xe1),
+            surface_raised: (0xf1, 0xf5, 0xf9),
+            accent: (0x02, 0x84, 0xc7),
+            accent_alt: (0x4f, 0x46, 0xe5),
+            text_primary: (0x0f, 0x17, 0x2a),
+            text_muted: (0x47, 0x55, 0x69),
+            border_soft: (0x94, 0xa3, 0xb8),
+            success: (0x05, 0x96, 0x69),
+            warn: (0xb4, 0x53, 0x09),
+            danger: (0xb9, 0x1c, 0x1c),
+        },
+        ThemePreset::Stealth => PaletteValues {
+            theme_name: "stealth",
+            surface: (0x0f, 0x0f, 0x16),
+            surface_alt: (0x17, 0x17, 0x1f),
+            surface_raised: (0x23, 0x23, 0x2e),
+            accent: (0xc0, 0x84, 0xfc),
+            accent_alt: (0x81, 0x8c, 0xf8),
+            text_primary: (0xe5, 0xe7, 0xeb),
+            text_muted: (0x6b, 0x72, 0x80),
+            border_soft: (0x2a, 0x2a, 0x35),
+            success: (0x34, 0xd3, 0x99),
+            warn: (0xfb, 0xbf, 0x24),
+            danger: (0xf8, 0x71, 0x71),
+        },
+    }
+}
+
+/// Build the crate-local generated `Palette` from a [`PaletteValues`].
+///
+/// The generated `Palette` type is emitted into every crate that imports the
+/// kit by file path, so the struct literal must be written in the calling
+/// crate (where `Palette` is in scope).
+#[macro_export]
+macro_rules! hcs_palette {
+    ($v:expr) => {
+        Palette {
+            theme_name: $v.theme_name.into(),
+            surface: $crate::rgb($v.surface),
+            surface_alt: $crate::rgb($v.surface_alt),
+            surface_raised: $crate::rgb($v.surface_raised),
+            accent: $crate::rgb($v.accent),
+            accent_alt: $crate::rgb($v.accent_alt),
+            text_primary: $crate::rgb($v.text_primary),
+            text_muted: $crate::rgb($v.text_muted),
+            border_soft: $crate::rgb($v.border_soft),
+            success: $crate::rgb($v.success),
+            warn: $crate::rgb($v.warn),
+            danger: $crate::rgb($v.danger),
+        }
+    };
+}
+
+/// Apply a theme preset to a window: sets the palette *and* the two toggles.
+///
+/// This must be called explicitly. A Slint `Palette` that is never assigned is
+/// default-constructed with transparent colours, which renders an all-black
+/// window — exactly the failure the blank-frame check in
+/// `scripts/verify_gui.py` exists to catch.
+///
+/// Usage (from a module where the generated `Palette` is in scope):
+/// ```ignore
+/// hcs_ui::apply_hcs_theme!(win, ThemePreset::Obsidian);
+/// ```
+#[macro_export]
+macro_rules! apply_hcs_theme {
+    ($win:expr, $preset:expr) => {{
+        let (titanium, stealth) = $crate::preset_flags($preset);
+        $win.set_theme_titanium(titanium);
+        $win.set_theme_stealth(stealth);
+        $win.set_palette($crate::hcs_palette!($crate::palette_values($preset)));
+        $win.set_theme_name($preset.as_str().into());
+    }};
+}
 
 // `include_modules!()` above brings the generated types (`AppFrame`, `Palette`,
 // `Presets`, `WidgetGallery`, ...) into the crate root, so app crates and the
@@ -104,6 +229,17 @@ macro_rules! theme_target {
 }
 
 theme_target!(WidgetGallery);
+
+/// Build the foundation gallery with a theme already applied.
+///
+/// The render tool cannot theme a window itself: the generated `Palette` type
+/// is crate-local, so the palette must be assigned in the crate that owns the
+/// component.
+pub fn build_gallery_themed(theme: ThemePreset) -> Result<WidgetGallery, slint::PlatformError> {
+    let w = WidgetGallery::new()?;
+    apply_hcs_theme!(w, theme);
+    Ok(w)
+}
 
 /// Read the persisted theme preset (defaults to Obsidian).
 pub fn load_theme() -> ThemePreset {
