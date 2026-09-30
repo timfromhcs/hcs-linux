@@ -124,7 +124,10 @@ mod tests {
     #[test]
     fn test_secret_redaction() {
         let fake_gh = format!("ghp_{}", "ABCDEF123456789012345678901234567890");
-        let input = format!("My github token is {} and email is user@example.com", fake_gh);
+        let input = format!(
+            "My github token is {} and email is user@example.com",
+            fake_gh
+        );
         let cleaned = SecretRedactor::redact(&input);
         assert!(!cleaned.contains("ABCDEF"));
         assert!(!cleaned.contains("user@example.com"));
