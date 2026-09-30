@@ -92,7 +92,7 @@ fi
 /bin/busybox clear
 cat << 'BANNER'
 ================================================================================
-                           HCS LINUX 0.1.0-alpha.1                              
+                            HCS LINUX ${VERSION}
              AI-Native, Privacy-Oriented, CPU-First Operating System            
 ================================================================================
 
@@ -135,6 +135,14 @@ cp -rf "${REPO_ROOT}/src/hcs-shell/"* "${ROOTFS_DIR}/usr/share/hcs/shell/" 2>/de
 cp -rf "${REPO_ROOT}/config/installer/calamares/"* "${ROOTFS_DIR}/etc/calamares/" 2>/dev/null || true
 cp -rf "${REPO_ROOT}/config/models" "${ROOTFS_DIR}/etc/hcs/" 2>/dev/null || true
 cp -rf "${REPO_ROOT}/config/includes.chroot/etc/hcs/"* "${ROOTFS_DIR}/etc/hcs/" 2>/dev/null || true
+
+# Install HCS helper scripts (tracked canonical copies)
+for script in hcs-tor-switch hcs-docs hcs-welcome; do
+    if [ -f "${REPO_ROOT}/config/includes.chroot/usr/share/hcs/scripts/${script}" ]; then
+        cp -f "${REPO_ROOT}/config/includes.chroot/usr/share/hcs/scripts/${script}" "${ROOTFS_DIR}/usr/bin/${script}"
+        chmod 755 "${ROOTFS_DIR}/usr/bin/${script}"
+    fi
+done
 
 # 3. Create compressed SquashFS root
 echo "[3/5] Compressing root filesystem into SquashFS..."
@@ -185,7 +193,7 @@ terminal_output gfxterm
 set menu_color_normal=light-gray/black
 set menu_color_highlight=cyan/black
 
-menuentry "HCS Linux 0.1.0-alpha.1 Live Desktop" {
+menuentry "HCS Linux ${VERSION} Live Desktop" {
     linux /live/vmlinuz boot=live console=tty1 console=tty0 video=1024x768 init=/sbin/init
     initrd /live/initrd.img
 }

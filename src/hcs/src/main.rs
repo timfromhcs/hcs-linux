@@ -11,7 +11,7 @@ use std::path::PathBuf;
 #[derive(Parser, Debug)]
 #[command(name = "hcs")]
 #[command(about = "HCS Linux Unified Developer & AI Agent CLI")]
-#[command(version = "0.1.0-alpha.1")]
+#[command(version)]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
@@ -192,7 +192,7 @@ async fn main() -> anyhow::Result<()> {
                 let record = TaskLedgerRecord::new(
                     &task,
                     "qwen3-0.6b",
-                    "v0.1.0-alpha.1",
+                    "v1.0.0",
                     "Task verified successfully.",
                     outcome,
                     usage,
@@ -337,7 +337,7 @@ async fn main() -> anyhow::Result<()> {
             match sub {
                 UpdateCommands::Check => {
                     println!("Checking upstream updates on '{}'...", config.branch);
-                    let status = mgr.check_status("0.1.0-alpha.1", "0.1.0-alpha.1");
+                    let status = mgr.check_status("1.0.0", "1.0.0");
                     println!("Status: {}", status.status);
                 }
                 UpdateCommands::Sync => {

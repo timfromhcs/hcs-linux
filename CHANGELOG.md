@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-09-30
+
+### Added
+- Windows-like Neural Glass bottom taskbar (`taskbar.qml`), Silicon Valley Start Menu
+  (`start_menu.qml`) and Super+/ cheatsheet HUD (`cheatsheet.qml`).
+- Wallpaper suite (Obsidian Neural Gradient, Frosted Titanium, Cybernetic Stealth),
+  Plymouth flicker-free monogram theme, Image/Docs/Tor SVG icons.
+- Offline CPU image generation crate `hcs-image` (SD 1.5 LCM Q4, txt2img/img2img,
+  strict on-demand RAM gate) plus `hcs image` and `hcs dev` CLI workflows.
+- Full Debian-13-native security arsenal, fail-closed nftables Tor transparent proxy
+  (`hcs-tor-switch`, TransPort 9040 / DNSPort 9053, zero DNS leaks) and HITL-gated
+  `hcs agent run --role pentester`.
+- Offline `hcs-docs` portal (6 manuals), `cheatsheet.json`, `hcs-welcome` onboarding tour.
+- Calamares OEM branding slideshow, LUKS2 (AES-XTS-512) partition module, HW AI-profile
+  provisioning (`EDGE-8GB` / `LOWRAM-4GB` / `WORKSTATION-16GB`).
+- Production ISO `HCS-Linux-1.0.0-amd64.iso` with SPDX SBOM, SHA256SUMS and manifests.
+
 ## [0.1.0-alpha.1] - 2026-09-30
 
 ### Added

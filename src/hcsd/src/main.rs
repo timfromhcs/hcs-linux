@@ -9,11 +9,7 @@ use tracing::{info, Level};
 use tracing_subscriber::FmtSubscriber;
 
 #[derive(Parser, Debug)]
-#[command(
-    name = "hcsd",
-    version = "0.1.0-alpha.1",
-    about = "HCS Linux Core Brain Daemon"
-)]
+#[command(name = "hcsd", version, about = "HCS Linux Core Brain Daemon")]
 struct Args {
     #[arg(short, long, default_value = "config/models/registry.yaml")]
     registry: PathBuf,
@@ -36,7 +32,10 @@ async fn main() -> anyhow::Result<()> {
     tracing::subscriber::set_global_default(subscriber)?;
 
     let args = Args::parse();
-    info!("Starting HCS Linux Brain Daemon (hcsd) v0.1.0-alpha.1...");
+    info!(
+        "Starting HCS Linux Brain Daemon (hcsd) v{}...",
+        env!("CARGO_PKG_VERSION")
+    );
 
     let hw = HardwareProfile::detect();
     info!(

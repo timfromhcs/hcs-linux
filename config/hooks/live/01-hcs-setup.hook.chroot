@@ -28,7 +28,17 @@ DataDirectory /var/lib/tor
 EOF
 fi
 
-# 5. Clean APT Caches (Reproducibility & ISO Size Reduction)
+# 5. Install HCS helper scripts (tracked canonical copies under /usr/share/hcs/scripts)
+if [ -d /usr/share/hcs/scripts ]; then
+    for script in hcs-tor-switch hcs-docs hcs-welcome; do
+        if [ -f "/usr/share/hcs/scripts/${script}" ]; then
+            cp -f "/usr/share/hcs/scripts/${script}" "/usr/bin/${script}"
+            chmod 755 "/usr/bin/${script}"
+        fi
+    done
+fi
+
+# 6. Clean APT Caches (Reproducibility & ISO Size Reduction)
 apt-get clean || true
 rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 

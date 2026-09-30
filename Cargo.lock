@@ -343,7 +343,7 @@ dependencies = [
 
 [[package]]
 name = "hcs"
-version = "0.1.0-alpha.1"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -361,7 +361,7 @@ dependencies = [
 
 [[package]]
 name = "hcs-agents"
-version = "0.1.0-alpha.1"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -378,7 +378,7 @@ dependencies = [
 
 [[package]]
 name = "hcs-chat"
-version = "0.1.0-alpha.1"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -394,7 +394,7 @@ dependencies = [
 
 [[package]]
 name = "hcs-control"
-version = "0.1.0-alpha.1"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -406,7 +406,7 @@ dependencies = [
 
 [[package]]
 name = "hcs-diagnose"
-version = "0.1.0-alpha.1"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -418,7 +418,7 @@ dependencies = [
 
 [[package]]
 name = "hcs-image"
-version = "0.1.0-alpha.1"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -435,7 +435,7 @@ dependencies = [
 
 [[package]]
 name = "hcs-installer"
-version = "0.1.0-alpha.1"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -445,7 +445,7 @@ dependencies = [
 
 [[package]]
 name = "hcs-mcp"
-version = "0.1.0-alpha.1"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -464,7 +464,7 @@ dependencies = [
 
 [[package]]
 name = "hcs-memory"
-version = "0.1.0-alpha.1"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -481,7 +481,7 @@ dependencies = [
 
 [[package]]
 name = "hcs-modeld"
-version = "0.1.0-alpha.1"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -498,7 +498,7 @@ dependencies = [
 
 [[package]]
 name = "hcs-monitor"
-version = "0.1.0-alpha.1"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -510,7 +510,7 @@ dependencies = [
 
 [[package]]
 name = "hcs-rag-ingest"
-version = "0.1.0-alpha.1"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -523,7 +523,7 @@ dependencies = [
 
 [[package]]
 name = "hcs-search"
-version = "0.1.0-alpha.1"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -534,7 +534,7 @@ dependencies = [
 
 [[package]]
 name = "hcs-security"
-version = "0.1.0-alpha.1"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "regex",
@@ -547,7 +547,7 @@ dependencies = [
 
 [[package]]
 name = "hcs-settings"
-version = "0.1.0-alpha.1"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "serde",
@@ -559,7 +559,7 @@ dependencies = [
 
 [[package]]
 name = "hcs-updater"
-version = "0.1.0-alpha.1"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -576,7 +576,7 @@ dependencies = [
 
 [[package]]
 name = "hcsd"
-version = "0.1.0-alpha.1"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "chrono",
