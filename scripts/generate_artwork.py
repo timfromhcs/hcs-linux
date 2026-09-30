@@ -77,7 +77,7 @@ def generate_grub_splash(output_path: Path):
     draw.line([(0, 80), (width, 80)], fill=(56, 189, 248), width=2)
 
     # Title
-    draw.text((48, 24), "HCS LINUX 0.1.0-alpha.1", fill=(56, 189, 248))
+    draw.text((48, 24), "HCS LINUX 1.0.0", fill=(56, 189, 248))
     draw.text((48, 48), "Neural Glass | Wayland Cognitive Desktop", fill=(148, 163, 184))
 
     # Boot Menu Card Frame

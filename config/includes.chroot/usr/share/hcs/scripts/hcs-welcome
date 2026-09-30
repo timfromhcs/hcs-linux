@@ -1,0 +1,11 @@
+#!/bin/bash
+# hcs-welcome — First-Boot onboarding tour (Master Plan Pillar 1)
+# Introduces AI agents, Tor privacy toggle, offline docs.
+set -euo pipefail
+echo "=== Welcome to HCS Linux v1.0.0 Stable ==="
+echo "1. AI Brain: press Super+Return (HCS Chat) — resident Qwen3-0.6B, on-demand 1.7B/4B."
+echo "2. Privacy: click TOR SHIELD in the taskbar tray (or Super+Alt+T)."
+echo "3. Docs: open Start Menu → HCS Docs (fully offline) or run: hcs-docs"
+echo "4. Hotkeys: press Super+/ (or F1) for the cheatsheet HUD."
+echo "5. Create: Image Studio (Super+I), Code Studio, Security Lab."
+xdg-open /usr/share/hcs/docs/index.html 2>/dev/null || echo "Docs: /usr/share/hcs/docs/index.html"

@@ -1,0 +1,15 @@
+{
+  "model": "sd15-lcm",
+  "variant": "q4_0",
+  "engine": "stable-diffusion.cpp (AVX2/AVX-512, pure CPU)",
+  "checkpoint_gguf": "/usr/share/hcs/models/sd15-lcm-q4_0.gguf",
+  "disk_footprint_gb": 1.6,
+  "peak_rss_gb": 2.2,
+  "default_resolution": "512x512",
+  "supported_resolutions": ["256x256", "512x512", "512x768", "768x512"],
+  "steps": {"min": 1, "max": 8, "default": 6},
+  "cfg_scale": {"min": 1.0, "max": 2.5, "default": 1.8},
+  "backend": "/usr/lib/hcs/sd-cpp",
+  "lifecycle": "on-demand only (never resident); allocate -> mmap -> infer -> save PNG -> deallocate",
+  "single_heavy_model_rule": "unload 4B reasoner before image inference"
+}

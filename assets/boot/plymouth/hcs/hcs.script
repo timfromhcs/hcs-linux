@@ -1,0 +1,20 @@
+# HCS Plymouth script: glowing monogram cross-fade (flicker-free)
+# Spec: V1_STABLE_RELEASE_MASTER_PLAN Pillar 2
+Window.SetBackgroundTopColor(0.043, 0.059, 0.090);
+Window.SetBackgroundBottomColor(0.043, 0.059, 0.090);
+logo = Image("hcs-mark.png");
+logo_sprite = Sprite(logo);
+logo_sprite.SetPosition(Window.GetX() + Window.GetWidth() / 2 - 64, Window.GetY() + Window.GetHeight() / 2 - 64, 10000);
+progress = 0;
+fun progress_callback(duration, progress) {
+    if (progress > 1) progress = 1;
+    logo_sprite.SetOpacity(progress);
+}
+Plymouth.SetBootProgressFunction(progress_callback);
+fun quit_callback() {
+    # smooth cross-fade into Wayland desktop (compositor takes over)
+    for (i = 10; i >= 0; i--) {
+        logo_sprite.SetOpacity(i / 10);
+    }
+}
+Plymouth.SetQuitFunction(quit_callback);

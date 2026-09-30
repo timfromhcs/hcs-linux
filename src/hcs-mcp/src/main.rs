@@ -7,7 +7,7 @@ use std::path::PathBuf;
 #[derive(Parser, Debug)]
 #[command(name = "hcs-mcp")]
 #[command(about = "HCS Linux Native Model Context Protocol (MCP) Server & Hub")]
-#[command(version = "0.1.0-alpha.1")]
+#[command(version)]
 struct Cli {
     #[command(subcommand)]
     command: Commands,

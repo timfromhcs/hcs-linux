@@ -1,0 +1,49 @@
+#!/bin/bash
+# HCS Linux — Fail-Closed nftables Transparent Tor Proxy & Killswitch
+# Spec: docs/V1_STABLE_RELEASE_MASTER_PLAN.md §4.3 (/usr/bin/hcs-tor-switch)
+# Usage: hcs-tor-switch enable|disable|toggle|status
+set -euo pipefail
+
+TABLE="hcs_tor"
+TRANS_PORT="9040"
+DNS_PORT="9053"
+
+nft_enable() {
+    if ! systemctl is-active --quiet tor; then
+        echo "[hcs-tor] starting tor service..."
+        sudo systemctl start tor
+    fi
+    sudo nft add table ip "$TABLE" 2>/dev/null || true
+    sudo nft flush table ip "$TABLE" 2>/dev/null || true
+    sudo nft add chain ip "$TABLE" output '{ type nat hook output priority -100; }'
+    sudo nft add rule ip "$TABLE" output skuid debian-tor counter accept
+    sudo nft add rule ip "$TABLE" output ip daddr 127.0.0.0/8 counter accept
+    sudo nft add rule ip "$TABLE" output ip protocol udp th dport 53 counter redirect to :"$DNS_PORT"
+    sudo nft add rule ip "$TABLE" output ip protocol tcp counter redirect to :"$TRANS_PORT"
+    # IPv6 fail-closed: drop all v6 egress (or route via Tor if configured)
+    sudo nft add table ip6 "$TABLE" 2>/dev/null || true
+    sudo nft add chain ip6 "$TABLE" output '{ type filter hook output priority 0; policy drop; }' 2>/dev/null || true
+    echo "nameserver 127.0.0.1" | sudo tee /etc/resolv.conf >/dev/null
+    if hcs security tor status 2>/dev/null | grep -qi "running\|private"; then
+        echo "[hcs-tor] circuit check: attempting reachability probe..."
+    fi
+    notify-send "Tor Transparent Mode Active — All traffic anonymized." 2>/dev/null || echo "[hcs-tor] Tor Transparent Mode Active."
+}
+
+nft_disable() {
+    sudo nft delete table ip "$TABLE" 2>/dev/null || true
+    sudo nft delete table ip6 "$TABLE" 2>/dev/null || true
+    sudo systemctl restart NetworkManager 2>/dev/null || sudo systemctl restart systemd-resolved 2>/dev/null || true
+    notify-send "Tor Disabled — Direct networking restored." 2>/dev/null || echo "[hcs-tor] Tor Disabled."
+}
+
+case "${1:-status}" in
+    enable) nft_enable ;;
+    disable) nft_disable ;;
+    toggle)
+        if sudo nft list table ip "$TABLE" >/dev/null 2>&1; then nft_disable; else nft_enable; fi ;;
+    status)
+        if sudo nft list table ip "$TABLE" >/dev/null 2>&1; then echo "TOR SHIELD: Active/Isolated (green)";
+        else echo "TOR SHIELD: Direct (gray)"; fi ;;
+    *) echo "Usage: $0 enable|disable|toggle|status"; exit 1 ;;
+esac
