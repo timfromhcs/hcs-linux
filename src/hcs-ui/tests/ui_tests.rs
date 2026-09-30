@@ -81,6 +81,11 @@ fn high_contrast_is_parseable_under_both_spellings() {
 
 #[test]
 fn theme_toggles_change_resolved_theme_name() {
+    // Any test that constructs a component needs a platform. hcs-ui links
+    // Slint's winit backend as well, so without this the test aborts on a
+    // machine with no display. `install_headless` is idempotent, so the render
+    // tests below can call it too.
+    hcs_ui::install_headless().expect("headless platform");
     let g = WidgetGallery::new().expect("gallery");
     assert_eq!(g.get_theme_name().as_str(), "obsidian");
     g.set_theme_titanium(true);
