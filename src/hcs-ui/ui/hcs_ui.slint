@@ -551,6 +551,11 @@ export component LogView inherits Rectangle {
         font-size: 11px;
         font-family: "monospace";
         wrap: word-wrap;
+        // Overflow used to be silent: Slint clipped the text and the render
+        // still passed the blank-frame check, so a truncated list looked like a
+        // complete one. Vertical overflow is now visible in the render, which
+        // is the only place anyone would notice it.
+        vertical-alignment: top;
     }
 }
 
@@ -735,7 +740,7 @@ export component DocsWindow inherits Window {
 
 export component SettingsWindow inherits Window {
     width: 800px;
-    height: 700px;
+    height: 740px;
     background: #0d1117;
 
     in property <bool> theme-titanium: false;
@@ -836,8 +841,10 @@ export component SettingsWindow inherits Window {
     Toggle { x: 16px; y: 348px; p: root.palette; label: "Tor transparent proxy by default"; checked: root.tor-default; }
     Toggle { x: 320px; y: 348px; p: root.palette; label: "Redacted clipboard"; checked: root.clipboard-redaction; }
 
-    // --- Shortcuts
-    LogView { x: 16px; y: 390px; width: 380px; height: 246px; p: root.palette; log-text: root.shortcuts; }
+    // --- Shortcuts. 16 rows of monospace, so the box is sized for the list
+    // rather than for a guess: at 246px the last two entries were clipped and
+    // the gate scored a cropped list as a pass.
+    LogView { x: 16px; y: 390px; width: 380px; height: 300px; p: root.palette; log-text: root.shortcuts; }
 
     // --- About / third party
     LogView { x: 408px; y: 390px; width: 376px; height: 200px; p: root.palette; log-text: root.third-party; }
@@ -845,5 +852,5 @@ export component SettingsWindow inherits Window {
         clicked => { root.save(); } }
     PillButton { x: 604px; y: 602px; width: 180px; p: root.palette; label: "About Slint";
         clicked => { root.about(); } }
-    StatusRow { x: 16px; y: 650px; width: 380px; p: root.palette; name: "status"; state: root.save-log; }
+    StatusRow { x: 16px; y: 702px; width: 380px; p: root.palette; name: "status"; state: root.save-log; }
 }

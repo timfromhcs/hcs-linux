@@ -98,7 +98,7 @@ const SPECS: &[Spec] = &[
         // reference image was a cropped window: the LayoutError branch never
         // fired, so the gate passed while showing half a settings page.
         width: 800,
-        height: 700,
+        height: 740,
     },
 ];
 
