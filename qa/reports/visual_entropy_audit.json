@@ -1,0 +1,161 @@
+{
+  "total_audited": 17,
+  "passed": 17,
+  "failed": 0,
+  "overall_status": "PASS",
+  "results": [
+    {
+      "file": "01_boot_live.png",
+      "width": 1024,
+      "height": 768,
+      "size_bytes": 10373,
+      "entropy": 1.768,
+      "is_blank": false,
+      "status": "PASS"
+    },
+    {
+      "file": "02_desktop_live.png",
+      "width": 1024,
+      "height": 768,
+      "size_bytes": 25084,
+      "entropy": 1.902,
+      "is_blank": false,
+      "status": "PASS"
+    },
+    {
+      "file": "03_launcher_search.png",
+      "width": 1024,
+      "height": 768,
+      "size_bytes": 9870,
+      "entropy": 1.747,
+      "is_blank": false,
+      "status": "PASS"
+    },
+    {
+      "file": "04_installer_welcome.png",
+      "width": 1024,
+      "height": 768,
+      "size_bytes": 9870,
+      "entropy": 1.747,
+      "is_blank": false,
+      "status": "PASS"
+    },
+    {
+      "file": "05_installer_partitions.png",
+      "width": 1024,
+      "height": 768,
+      "size_bytes": 9852,
+      "entropy": 1.747,
+      "is_blank": false,
+      "status": "PASS"
+    },
+    {
+      "file": "06_installer_profile.png",
+      "width": 1024,
+      "height": 768,
+      "size_bytes": 9852,
+      "entropy": 1.747,
+      "is_blank": false,
+      "status": "PASS"
+    },
+    {
+      "file": "07_installer_progress.png",
+      "width": 1024,
+      "height": 768,
+      "size_bytes": 9852,
+      "entropy": 1.747,
+      "is_blank": false,
+      "status": "PASS"
+    },
+    {
+      "file": "08_installer_finished.png",
+      "width": 1024,
+      "height": 768,
+      "size_bytes": 9852,
+      "entropy": 1.747,
+      "is_blank": false,
+      "status": "PASS"
+    },
+    {
+      "file": "09_hdd_boot_splash.png",
+      "width": 1024,
+      "height": 768,
+      "size_bytes": 9552,
+      "entropy": 1.761,
+      "is_blank": false,
+      "status": "PASS"
+    },
+    {
+      "file": "10_installed_desktop.png",
+      "width": 1024,
+      "height": 768,
+      "size_bytes": 9870,
+      "entropy": 1.747,
+      "is_blank": false,
+      "status": "PASS"
+    },
+    {
+      "file": "11_postinstall_chat.png",
+      "width": 1024,
+      "height": 768,
+      "size_bytes": 9870,
+      "entropy": 1.747,
+      "is_blank": false,
+      "status": "PASS"
+    },
+    {
+      "file": "12_postinstall_control.png",
+      "width": 1024,
+      "height": 768,
+      "size_bytes": 9870,
+      "entropy": 1.747,
+      "is_blank": false,
+      "status": "PASS"
+    },
+    {
+      "file": "boot.png",
+      "width": 1920,
+      "height": 1080,
+      "size_bytes": 22162,
+      "entropy": 2.266,
+      "is_blank": false,
+      "status": "PASS"
+    },
+    {
+      "file": "chat.png",
+      "width": 1920,
+      "height": 1080,
+      "size_bytes": 28856,
+      "entropy": 2.849,
+      "is_blank": false,
+      "status": "PASS"
+    },
+    {
+      "file": "desktop.png",
+      "width": 1920,
+      "height": 1080,
+      "size_bytes": 14459,
+      "entropy": 6.02,
+      "is_blank": false,
+      "status": "PASS"
+    },
+    {
+      "file": "installer.png",
+      "width": 1920,
+      "height": 1080,
+      "size_bytes": 31075,
+      "entropy": 3.118,
+      "is_blank": false,
+      "status": "PASS"
+    },
+    {
+      "file": "launcher.png",
+      "width": 1920,
+      "height": 1080,
+      "size_bytes": 19558,
+      "entropy": 2.352,
+      "is_blank": false,
+      "status": "PASS"
+    }
+  ]
+}

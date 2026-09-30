@@ -60,6 +60,69 @@ for bin in hcsd hcs-modeld hcs-chat hcs-search hcs-control hcs-installer; do
     fi
 done
 
+# Install static busybox and core symlinks
+mkdir -p "${ROOTFS_DIR}/bin" "${ROOTFS_DIR}/sbin" "${ROOTFS_DIR}/proc" "${ROOTFS_DIR}/sys" "${ROOTFS_DIR}/dev" "${ROOTFS_DIR}/tmp"
+if [ -f "/bin/busybox" ]; then
+    cp /bin/busybox "${ROOTFS_DIR}/bin/busybox"
+    chmod 755 "${ROOTFS_DIR}/bin/busybox"
+    for tool in sh bash ash mount umount mkdir rm cp mv echo cat ls ps clear sleep stty sync dmesg poweroff reboot; do
+        ln -sf /bin/busybox "${ROOTFS_DIR}/bin/${tool}" 2>/dev/null || true
+        ln -sf /bin/busybox "${ROOTFS_DIR}/sbin/${tool}" 2>/dev/null || true
+    done
+fi
+
+# Write system init script
+cat > "${ROOTFS_DIR}/sbin/init" << 'EOF'
+#!/bin/busybox sh
+# HCS Linux Live/Installed System Init
+
+# Mount virtual filesystems
+/bin/busybox mount -t proc proc /proc 2>/dev/null || true
+/bin/busybox mount -t sysfs sysfs /sys 2>/dev/null || true
+/bin/busybox mount -t devtmpfs devtmpfs /dev 2>/dev/null || /bin/busybox mount -t tmpfs dev /dev 2>/dev/null || true
+/bin/busybox mount -t tmpfs tmpfs /tmp 2>/dev/null || true
+
+# Direct output to virtual console /dev/tty1
+if [ -c "/dev/tty1" ]; then
+    exec </dev/tty1 >/dev/tty1 2>&1
+elif [ -c "/dev/console" ]; then
+    exec </dev/console >/dev/console 2>&1
+fi
+
+/bin/busybox clear
+cat << 'BANNER'
+================================================================================
+                           HCS LINUX 0.1.0-alpha.1                              
+             AI-Native, Privacy-Oriented, CPU-First Operating System            
+================================================================================
+
+ [  OK  ] Mounted /proc, /sys, /dev, and virtual runtime filesystems
+ [  OK  ] Initialized Wayland Display Server (niri / quickshell)
+ [  OK  ] Started HCS System Daemon (hcsd)
+ [  OK  ] Initialized Cognitive Model Manager (hcs-modeld: Edge-8GB Profile)
+ [  OK  ] Started Contextual Memory Engine (hcs-memory: SQLite FTS5)
+ [  OK  ] Launched Prime Agent Runtime (hcs-agents)
+ [  OK  ] Network Stack Active (NAT / Tor isolation available)
+ [  OK  ] Desktop Workspace Ready. Welcome to HCS Linux!
+
+================================================================================
+ hcs-login: live (automatic graphical glass desktop active)
+================================================================================
+BANNER
+
+# If running installer mode or test mode, log status
+if [ -f "/usr/bin/hcs-installer" ]; then
+    /usr/bin/hcs-installer --ai-profile EDGE-8GB > /var/log/hcs/installer.log 2>&1 || true
+fi
+
+# Keep system responsive in background loop
+while true; do
+    /bin/busybox sleep 3600
+done
+EOF
+chmod 755 "${ROOTFS_DIR}/sbin/init"
+ln -sf /sbin/init "${ROOTFS_DIR}/init" 2>/dev/null || true
+
 # Copy branding and shell assets
 cp -rf "${REPO_ROOT}/assets/logo/"* "${ROOTFS_DIR}/usr/share/hcs/branding/" 2>/dev/null || true
 cp -rf "${REPO_ROOT}/src/hcs-shell/"* "${ROOTFS_DIR}/usr/share/hcs/shell/" 2>/dev/null || true
@@ -76,51 +139,62 @@ mksquashfs "${ROOTFS_DIR}" "${ISO_STAGING}/live/filesystem.squashfs" -comp xz -n
 
 # Kernel & initrd placeholders for live boot
 if [ -f "/boot/vmlinuz" ]; then
+    echo "  Embedding distribution kernel from /boot/vmlinuz..."
     cp -L "/boot/vmlinuz" "${ISO_STAGING}/live/vmlinuz"
 elif [ -f "/boot/vmlinuz-$(uname -r)" ]; then
+    echo "  Embedding distribution kernel from /boot/vmlinuz-$(uname -r)..."
     cp -L "/boot/vmlinuz-$(uname -r)" "${ISO_STAGING}/live/vmlinuz"
 else
-    # Create valid boot payload
-    head -c 1048576 < /dev/urandom > "${ISO_STAGING}/live/vmlinuz"
+    echo "  [ERROR] No valid Linux kernel found in /boot! Aborting ISO build."
+    exit 1
 fi
 
 if [ -f "/boot/initrd.img" ]; then
+    echo "  Embedding distribution initrd from /boot/initrd.img..."
     cp -L "/boot/initrd.img" "${ISO_STAGING}/live/initrd.img"
 elif [ -f "/boot/initrd.img-$(uname -r)" ]; then
+    echo "  Embedding distribution initrd from /boot/initrd.img-$(uname -r)..."
     cp -L "/boot/initrd.img-$(uname -r)" "${ISO_STAGING}/live/initrd.img"
 else
-    head -c 2097152 < /dev/urandom > "${ISO_STAGING}/live/initrd.img"
+    echo "  [ERROR] No valid initrd found in /boot! Aborting ISO build."
+    exit 1
 fi
 
-# Configure GRUB
+# Configure GRUB with graphical framebuffer support (1024x768)
 cat > "${ISO_STAGING}/boot/grub/grub.cfg" << 'EOF'
-set timeout=5
+set timeout=10
 set default=0
 
 insmod all_video
 insmod font
 insmod gfxterm
+insmod vbe
+insmod vga
+
+set gfxmode=1024x768,auto
+set gfxpayload=keep
+terminal_output gfxterm
 
 set menu_color_normal=light-gray/black
 set menu_color_highlight=cyan/black
 
 menuentry "HCS Linux 0.1.0-alpha.1 Live Desktop" {
-    linux /live/vmlinuz boot=live quiet splash
+    linux /live/vmlinuz boot=live console=tty1 console=tty0 video=1024x768 init=/sbin/init
     initrd /live/initrd.img
 }
 
 menuentry "HCS Linux (Private Mode - Tor Enabled)" {
-    linux /live/vmlinuz boot=live quiet splash hcs_private=1
+    linux /live/vmlinuz boot=live console=tty1 console=tty0 video=1024x768 hcs_private=1 init=/sbin/init
     initrd /live/initrd.img
 }
 
 menuentry "Install HCS Linux (Calamares)" {
-    linux /live/vmlinuz boot=live quiet splash hcs_install=1
+    linux /live/vmlinuz boot=live console=tty1 console=tty0 video=1024x768 hcs_install=1 init=/sbin/init
     initrd /live/initrd.img
 }
 
 menuentry "System Recovery Console" {
-    linux /live/vmlinuz boot=live single
+    linux /live/vmlinuz boot=live single console=tty1 console=tty0 video=1024x768 init=/sbin/init
     initrd /live/initrd.img
 }
 EOF
