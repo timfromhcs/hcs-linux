@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="chatBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e1b4b" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+    <linearGradient id="chatBorderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#818cf8" />
+      <stop offset="100%" stop-color="#38bdf8" />
+    </linearGradient>
+    <linearGradient id="chatBubbleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5" />
+      <stop offset="100%" stop-color="#06b6d4" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background rounded card -->
+  <rect x="8" y="8" width="112" height="112" rx="26" fill="url(#chatBgGrad)" stroke="url(#chatBorderGrad)" stroke-width="2.5" />
+
+  <!-- Chat bubble silhouette -->
+  <path d="M34 38 C34 30, 42 24, 54 24 L74 24 C86 24, 94 30, 94 38 L94 62 C94 70, 86 76, 74 76 L52 76 L36 90 L38 76 C35 73, 34 68, 34 62 Z"
+        fill="url(#chatBubbleGrad)" opacity="0.3" stroke="url(#chatBorderGrad)" stroke-width="2" stroke-linejoin="round" />
+
+  <!-- Neural synapses inside bubble -->
+  <line x1="48" y1="46" x2="64" y2="38" stroke="#38bdf8" stroke-width="2.5" />
+  <line x1="64" y1="38" x2="80" y2="48" stroke="#818cf8" stroke-width="2.5" />
+  <line x1="48" y1="46" x2="64" y2="60" stroke="#818cf8" stroke-width="2.5" />
+  <line x1="64" y1="60" x2="80" y2="48" stroke="#c084fc" stroke-width="2.5" />
+  <line x1="64" y1="38" x2="64" y2="60" stroke="#38bdf8" stroke-width="2" stroke-dasharray="3 2" />
+
+  <circle cx="48" cy="46" r="4.5" fill="#38bdf8" />
+  <circle cx="64" cy="38" r="5" fill="#f8fafc" stroke="#38bdf8" stroke-width="2" />
+  <circle cx="80" cy="48" r="4.5" fill="#c084fc" />
+  <circle cx="64" cy="60" r="4.5" fill="#34d399" />
+</svg>

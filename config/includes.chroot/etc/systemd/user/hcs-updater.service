@@ -1,0 +1,12 @@
+[Unit]
+Description=HCS Linux Continuous GitHub Updater
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/hcs-updater check
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target

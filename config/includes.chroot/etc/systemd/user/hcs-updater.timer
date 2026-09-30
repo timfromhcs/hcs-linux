@@ -1,0 +1,11 @@
+[Unit]
+Description=Timer for HCS Linux Continuous GitHub Updater
+After=network-online.target
+
+[Timer]
+OnBootSec=10min
+OnUnitActiveSec=4h
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -1,5 +1,6 @@
 // HCS Linux - Niri Wayland Compositor Configuration
-// Design: Modern glass aesthetics, scrollable columns, smooth animations
+// Aesthetic: Modern glass aesthetics, scrollable columns, smooth spring physics
+// Adheres to GEMINI.md Section 36-60
 
 output "eDP-1" {
     mode "1920x1080@60.000"
@@ -29,11 +30,12 @@ spawn-at-startup "hcsd"
 
 binds {
     Mod+Return { spawn "hcs-chat"; }
-    Mod+Space { spawn "hcs-search"; }
-    Mod+C { spawn "hcs-control" "status"; }
-    Mod+Q { close-window; }
-    Mod+Left  { focus-column-left; }
-    Mod+Right { focus-column-right; }
+    Mod+Space  { spawn "hcs-search"; }
+    Mod+C      { spawn "hcs-control" "status"; }
+    Mod+T      { spawn "x-terminal-emulator"; }
+    Mod+Q      { close-window; }
+    Mod+Left   { focus-column-left; }
+    Mod+Right  { focus-column-right; }
     Mod+Shift+Left  { move-column-left; }
     Mod+Shift+Right { move-column-right; }
 }

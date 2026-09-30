@@ -1,0 +1,25 @@
+[package]
+name = "hcs"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "hcs"
+path = "src/main.rs"
+
+[dependencies]
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+clap.workspace = true
+chrono.workspace = true
+anyhow.workspace = true
+
+hcs-agents = { path = "../hcs-agents" }
+hcs-memory = { path = "../hcs-memory" }
+hcs-modeld = { path = "../hcs-modeld" }
+hcs-security = { path = "../hcs-security" }
+hcs-updater = { path = "../hcs-updater" }

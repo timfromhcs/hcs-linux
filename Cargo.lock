@@ -342,6 +342,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "hcs"
+version = "0.1.0-alpha.1"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "clap",
+ "hcs-agents",
+ "hcs-memory",
+ "hcs-modeld",
+ "hcs-security",
+ "hcs-updater",
+ "serde",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
 name = "hcs-agents"
 version = "0.1.0-alpha.1"
 dependencies = [
@@ -464,6 +481,23 @@ dependencies = [
  "tempfile",
  "thiserror",
  "tracing",
+]
+
+[[package]]
+name = "hcs-updater"
+version = "0.1.0-alpha.1"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "clap",
+ "hex",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "sha2",
+ "tempfile",
+ "thiserror",
+ "tokio",
 ]
 
 [[package]]

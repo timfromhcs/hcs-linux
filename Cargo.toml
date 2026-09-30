@@ -10,6 +10,8 @@ members = [
     "src/hcs-search",
     "src/hcs-installer",
     "src/hcs-control",
+    "src/hcs-updater",
+    "src/hcs",
 ]
 resolver = "2"
 
