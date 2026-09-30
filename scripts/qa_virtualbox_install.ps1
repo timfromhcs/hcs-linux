@@ -5,7 +5,7 @@ Adheres to GEMINI.md Sections 47, 64, 120, 121, 122 and docs/VISUAL_QA_INSTALL_P
 #>
 
 param(
-    [string]$IsoPath = "dist\HCS-Linux-0.1.0-alpha.1-amd64.iso",
+    [string]$IsoPath = "dist\HCS-Linux-1.0.0-amd64.iso",
     [string]$VmName = "HCS-Linux-QA-Installed",
     [int]$MemoryMB = 8192,
     [int]$CpuCount = 4,
@@ -153,17 +153,17 @@ $startType = if ($Headless) { "headless" } else { "gui" }
 & $VBoxManagePath startvm $VmName --type $startType
 Start-Sleep -Seconds 5
 
-$capturedStages += Capture-StageWithHealing "01_boot_live.png" "GRUB2 Live Bootloader Splash" 3
-$capturedStages += Capture-StageWithHealing "02_desktop_live.png" "Wayland Glass Desktop Baseline" 14
-$capturedStages += Capture-StageWithHealing "03_launcher_search.png" "Fast Search & Launcher Modal" 5
+$capturedStages += Capture-StageWithHealing "01_grub_boot_splash.png" "Bootloader with HCS branding" 3
+$capturedStages += Capture-StageWithHealing "02_desktop_baseline.png" "Neural Glass taskbar and desktop" 40
+$capturedStages += Capture-StageWithHealing "03_start_menu_open.png" "Start Menu with omnibar search and app grid" 5
 
 # 5. Phase 2: Calamares Installer Sequence
 Write-Host "`n[5/7] Phase 2: Executing Calamares Installer Sequence..." -ForegroundColor Yellow
-$capturedStages += Capture-StageWithHealing "04_installer_welcome.png" "Calamares Welcome Screen" 5
-$capturedStages += Capture-StageWithHealing "05_installer_partitions.png" "Partitioning 25 GB VDI Target" 5
-$capturedStages += Capture-StageWithHealing "06_installer_profile.png" "Profile Selection (EDGE-8GB)" 5
-$capturedStages += Capture-StageWithHealing "07_installer_progress.png" "Installing SquashFS Root to VDI" 6
-$capturedStages += Capture-StageWithHealing "08_installer_finished.png" "Installation Complete & Ready for Reboot" 5
+$capturedStages += Capture-StageWithHealing "04_calamares_welcome.png" "Installer initial screen" 5
+$capturedStages += Capture-StageWithHealing "05_calamares_partitioning.png" "Partitioning target disk with optional LUKS2" 5
+$capturedStages += Capture-StageWithHealing "06_calamares_profile.png" "Profile selection (EDGE-8GB)" 5
+$capturedStages += Capture-StageWithHealing "07_calamares_installing.png" "SquashFS extraction" 6
+$capturedStages += Capture-StageWithHealing "08_calamares_complete.png" "Installation complete" 5
 
 # 6. Phase 3: Detach ISO and Boot from Installed VDI Hard Drive!
 Write-Host "`n[6/7] Phase 3: Powering off, Detaching ISO, and Booting from Installed VDI..." -ForegroundColor Yellow
@@ -190,13 +190,17 @@ Write-Host "  Booting VM from installed VDI..."
 & $VBoxManagePath startvm $VmName --type $startType
 Start-Sleep -Seconds 5
 
-$capturedStages += Capture-StageWithHealing "09_hdd_boot_splash.png" "Installed GRUB Bootloader on VDI" 3
-$capturedStages += Capture-StageWithHealing "10_installed_desktop.png" "Booted Installed HCS Linux Desktop" 20
+$capturedStages += Capture-StageWithHealing "09_installed_hdd_boot.png" "First boot from installed VDI disk" 3
+$capturedStages += Capture-StageWithHealing "10_installed_desktop.png" "Booted installed desktop" 20
 
 # 7. Phase 4: Post-Install Brain Inferenz & RAM Audit
 Write-Host "`n[7/7] Phase 4: Post-Install Cognitive Brain Inferenz..." -ForegroundColor Yellow
-$capturedStages += Capture-StageWithHealing "11_postinstall_chat.png" "HCS Chat Execution on Installed System" 6
-$capturedStages += Capture-StageWithHealing "12_postinstall_control.png" "HCS Control Status & RAM Budget Audit" 6
+$capturedStages += Capture-StageWithHealing "11_start_menu_search.png" "Start Menu search filtering" 6
+$capturedStages += Capture-StageWithHealing "12_cheatsheet_hud.png" "Super+/ hotkey overlay" 6
+$capturedStages += Capture-StageWithHealing "13_image_studio_render.png" "CPU image generation execution" 6
+$capturedStages += Capture-StageWithHealing "14_tor_killswitch_active.png" "Tor transparent isolation active in tray" 6
+$capturedStages += Capture-StageWithHealing "15_security_lab_nmap.png" "Native security tool run in terminal" 6
+$capturedStages += Capture-StageWithHealing "16_hcs_docs_browser.png" "Offline documentation viewer" 6
 
 # Power off clean
 Write-Host "`nShutting down verified VM..." -ForegroundColor Yellow

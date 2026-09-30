@@ -192,7 +192,7 @@ async fn main() -> anyhow::Result<()> {
                 let record = TaskLedgerRecord::new(
                     &task,
                     "qwen3-0.6b",
-                    "v1.0.0",
+                    "v1.0.1",
                     "Task verified successfully.",
                     outcome,
                     usage,
@@ -337,7 +337,7 @@ async fn main() -> anyhow::Result<()> {
             match sub {
                 UpdateCommands::Check => {
                     println!("Checking upstream updates on '{}'...", config.branch);
-                    let status = mgr.check_status("1.0.0", "1.0.0");
+                    let status = mgr.check_status("1.0.1", "1.0.1");
                     println!("Status: {}", status.status);
                 }
                 UpdateCommands::Sync => {

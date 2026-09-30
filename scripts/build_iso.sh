@@ -71,8 +71,9 @@ if [ -f "/bin/busybox" ]; then
     done
 fi
 
-# Write system init script
-cat > "${ROOTFS_DIR}/sbin/init" << 'EOF'
+# Write system init script (unquoted heredoc: expands ${VERSION} host-side;
+# body contains no other $ or backticks, inner 'BANNER' block stays literal)
+cat > "${ROOTFS_DIR}/sbin/init" << EOF
 #!/bin/busybox sh
 # HCS Linux Live/Installed System Init
 
@@ -176,7 +177,8 @@ else
 fi
 
 # Configure GRUB with graphical framebuffer support (1024x768)
-cat > "${ISO_STAGING}/boot/grub/grub.cfg" << 'EOF'
+# NOTE: unquoted heredoc so ${VERSION} expands host-side (body has no other $).
+cat > "${ISO_STAGING}/boot/grub/grub.cfg" << EOF
 set timeout=10
 set default=0
 

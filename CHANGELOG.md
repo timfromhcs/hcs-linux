@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-09-30
+
+### Fixed
+- ISO guest banner and GRUB menu entries now render the release version: `build_iso.sh`
+  heredocs unquoted so `${VERSION}` expands host-side (`HCS LINUX ${VERSION}` literal fixed).
+- Installed-system VDI re-provisioned from current rootfs; `provision_installed_vdi.sh`
+  takes a version argument for its GRUB entry (was hardcoded `0.1.0-alpha.1`).
+- VirtualBox QA: desktop-baseline capture delay 14s → 40s (was shooting a black
+  framebuffer mid-boot); QA stage names aligned to the 16 plan stages; default ISO
+  paths of both VirtualBox QA scripts point at the current stable ISO.
+
 ## [1.0.0] - 2026-09-30
 
 ### Added

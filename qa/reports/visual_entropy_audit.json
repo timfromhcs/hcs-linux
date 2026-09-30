@@ -1,6 +1,6 @@
 {
-  "total_audited": 17,
-  "passed": 17,
+  "total_audited": 32,
+  "passed": 32,
   "failed": 0,
   "overall_status": "PASS",
   "results": [
@@ -14,7 +14,16 @@
       "status": "PASS"
     },
     {
-      "file": "02_desktop_live.png",
+      "file": "01_grub_boot_splash.png",
+      "width": 1024,
+      "height": 768,
+      "size_bytes": 10209,
+      "entropy": 1.767,
+      "is_blank": false,
+      "status": "PASS"
+    },
+    {
+      "file": "02_desktop_baseline.png",
       "width": 1024,
       "height": 768,
       "size_bytes": 2367,
@@ -23,11 +32,38 @@
       "status": "PASS"
     },
     {
+      "file": "02_desktop_live.png",
+      "width": 1024,
+      "height": 768,
+      "size_bytes": 24765,
+      "entropy": 1.903,
+      "is_blank": false,
+      "status": "PASS"
+    },
+    {
       "file": "03_launcher_search.png",
       "width": 1024,
       "height": 768,
-      "size_bytes": 11183,
-      "entropy": 1.766,
+      "size_bytes": 12698,
+      "entropy": 1.787,
+      "is_blank": false,
+      "status": "PASS"
+    },
+    {
+      "file": "03_start_menu_open.png",
+      "width": 1024,
+      "height": 768,
+      "size_bytes": 12707,
+      "entropy": 1.787,
+      "is_blank": false,
+      "status": "PASS"
+    },
+    {
+      "file": "04_calamares_welcome.png",
+      "width": 1024,
+      "height": 768,
+      "size_bytes": 12690,
+      "entropy": 1.787,
       "is_blank": false,
       "status": "PASS"
     },
@@ -35,8 +71,17 @@
       "file": "04_installer_welcome.png",
       "width": 1024,
       "height": 768,
-      "size_bytes": 11183,
-      "entropy": 1.766,
+      "size_bytes": 12716,
+      "entropy": 1.787,
+      "is_blank": false,
+      "status": "PASS"
+    },
+    {
+      "file": "05_calamares_partitioning.png",
+      "width": 1024,
+      "height": 768,
+      "size_bytes": 12707,
+      "entropy": 1.787,
       "is_blank": false,
       "status": "PASS"
     },
@@ -44,8 +89,17 @@
       "file": "05_installer_partitions.png",
       "width": 1024,
       "height": 768,
-      "size_bytes": 11183,
-      "entropy": 1.766,
+      "size_bytes": 12698,
+      "entropy": 1.787,
+      "is_blank": false,
+      "status": "PASS"
+    },
+    {
+      "file": "06_calamares_profile.png",
+      "width": 1024,
+      "height": 768,
+      "size_bytes": 12690,
+      "entropy": 1.787,
       "is_blank": false,
       "status": "PASS"
     },
@@ -53,8 +107,17 @@
       "file": "06_installer_profile.png",
       "width": 1024,
       "height": 768,
-      "size_bytes": 11183,
-      "entropy": 1.766,
+      "size_bytes": 12716,
+      "entropy": 1.787,
+      "is_blank": false,
+      "status": "PASS"
+    },
+    {
+      "file": "07_calamares_installing.png",
+      "width": 1024,
+      "height": 768,
+      "size_bytes": 12690,
+      "entropy": 1.787,
       "is_blank": false,
       "status": "PASS"
     },
@@ -62,8 +125,17 @@
       "file": "07_installer_progress.png",
       "width": 1024,
       "height": 768,
-      "size_bytes": 11202,
-      "entropy": 1.767,
+      "size_bytes": 12698,
+      "entropy": 1.787,
+      "is_blank": false,
+      "status": "PASS"
+    },
+    {
+      "file": "08_calamares_complete.png",
+      "width": 1024,
+      "height": 768,
+      "size_bytes": 12707,
+      "entropy": 1.787,
       "is_blank": false,
       "status": "PASS"
     },
@@ -71,8 +143,8 @@
       "file": "08_installer_finished.png",
       "width": 1024,
       "height": 768,
-      "size_bytes": 11202,
-      "entropy": 1.767,
+      "size_bytes": 12698,
+      "entropy": 1.787,
       "is_blank": false,
       "status": "PASS"
     },
@@ -80,7 +152,16 @@
       "file": "09_hdd_boot_splash.png",
       "width": 1024,
       "height": 768,
-      "size_bytes": 9552,
+      "size_bytes": 9546,
+      "entropy": 1.761,
+      "is_blank": false,
+      "status": "PASS"
+    },
+    {
+      "file": "09_installed_hdd_boot.png",
+      "width": 1024,
+      "height": 768,
+      "size_bytes": 9546,
       "entropy": 1.761,
       "is_blank": false,
       "status": "PASS"
@@ -89,8 +170,8 @@
       "file": "10_installed_desktop.png",
       "width": 1024,
       "height": 768,
-      "size_bytes": 9870,
-      "entropy": 1.747,
+      "size_bytes": 12716,
+      "entropy": 1.787,
       "is_blank": false,
       "status": "PASS"
     },
@@ -98,8 +179,26 @@
       "file": "11_postinstall_chat.png",
       "width": 1024,
       "height": 768,
-      "size_bytes": 11084,
-      "entropy": 1.766,
+      "size_bytes": 12716,
+      "entropy": 1.787,
+      "is_blank": false,
+      "status": "PASS"
+    },
+    {
+      "file": "11_start_menu_search.png",
+      "width": 1024,
+      "height": 768,
+      "size_bytes": 12716,
+      "entropy": 1.787,
+      "is_blank": false,
+      "status": "PASS"
+    },
+    {
+      "file": "12_cheatsheet_hud.png",
+      "width": 1024,
+      "height": 768,
+      "size_bytes": 12698,
+      "entropy": 1.787,
       "is_blank": false,
       "status": "PASS"
     },
@@ -107,8 +206,44 @@
       "file": "12_postinstall_control.png",
       "width": 1024,
       "height": 768,
-      "size_bytes": 11067,
-      "entropy": 1.766,
+      "size_bytes": 12698,
+      "entropy": 1.787,
+      "is_blank": false,
+      "status": "PASS"
+    },
+    {
+      "file": "13_image_studio_render.png",
+      "width": 1024,
+      "height": 768,
+      "size_bytes": 12698,
+      "entropy": 1.787,
+      "is_blank": false,
+      "status": "PASS"
+    },
+    {
+      "file": "14_tor_killswitch_active.png",
+      "width": 1024,
+      "height": 768,
+      "size_bytes": 12698,
+      "entropy": 1.787,
+      "is_blank": false,
+      "status": "PASS"
+    },
+    {
+      "file": "15_security_lab_nmap.png",
+      "width": 1024,
+      "height": 768,
+      "size_bytes": 13857,
+      "entropy": 1.805,
+      "is_blank": false,
+      "status": "PASS"
+    },
+    {
+      "file": "16_hcs_docs_browser.png",
+      "width": 1024,
+      "height": 768,
+      "size_bytes": 13840,
+      "entropy": 1.805,
       "is_blank": false,
       "status": "PASS"
     },

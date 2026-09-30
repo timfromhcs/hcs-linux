@@ -23,6 +23,21 @@ HCS Linux is a modern operating system built from the ground up to integrate loc
 
 ---
 
+## Current Stable Release: v1.0.1
+
+**Download:** [HCS-Linux-1.0.1-amd64.iso](https://github.com/timfromhcs/hcs-linux/releases) · verify with `SHA256SUMS` (`sha256sum -c SHA256SUMS`) · [Release notes](https://github.com/timfromhcs/hcs-linux/releases/tag/v1.0.1)
+
+- **Neural Glass 3.0 desktop:** Windows-like bottom taskbar (Start monogram, tasklist, SNI tray), Silicon Valley Start Menu with omnibar (`Super`), `Super+/` hotkey cheatsheet HUD.
+- **Offline CPU Image Studio:** `hcs image "prompt" --steps 6 -o render.png` (SD 1.5 LCM Q4, 512×512 in 4–8 steps, ≤2.2 GB peak, strict on-demand lifecycle).
+- **Security Lab & Tor Shield:** Debian-native arsenal (`nmap`, `wireshark`, `sqlmap`, `john`, `hashcat`, `hydra`, …), one-click fail-closed nftables transparent proxy (`hcs-tor-switch`, TransPort 9040 / DNSPort 9053, zero DNS leaks), HITL-gated `hcs agent run --role pentester`.
+- **Developer suite:** Rust / Python 3.12 / Node, Neovim LSP + VSCodium, `hcs dev init|test|debug`.
+- **Offline docs:** `hcs-docs` portal (6 manuals), `cheatsheet.json`, `hcs-welcome` onboarding tour.
+- **Installer:** Calamares OEM branding, optional LUKS2 (AES-XTS-512) full-disk encryption, `EDGE-8GB` / `LOWRAM-4GB` / `WORKSTATION-16GB` AI profiles.
+
+**Verified before release (7 gates):** `cargo fmt` clean · `clippy -D warnings` 0 warnings · `cargo test` 100 % · security audit 0 secrets · stress 0 crashes/OOM · production ISO built + ISO9660-verified · **VirtualBox 16/16 stages PASS** · GitHub Actions CI green. Full evidence: `docs/V1_STABLE_RELEASE_MASTER_PLAN.md`, `docs/V1_STABLE_QA_STATUS.md`, `qa/reports/`.
+
+---
+
 ## Key Characteristics & Engineering Targets
 
 - **Local-First & Private:** All standard inference, cognitive memory indexing, and event logging occur locally on your machine. No telemetry or prompt forwarding to external clouds.
@@ -71,8 +86,9 @@ HCS Linux is a modern operating system built from the ground up to integrate loc
 | **Model Serving Daemon** | `hcs-modeld` | On-demand GGUF model loader and supervisor. Enforces single-heavy-model resident rules and active RAM RSS tracking. |
 | **Memory Engine** | `hcs-memory` | Multi-class cognitive store (working, episodic, semantic, skill, preference) with SQLite FTS5 lexical matching and hybrid retrieval. |
 | **Agent Runtime** | `hcs-agents` | Scoped subagent orchestrator with granular capability permissions (`filesystem.read`, `process.spawn`, etc.). |
-| **Desktop Shell** | `hcs-shell` | Glass-morphic Wayland shell interface designed for Niri and Quickshell. |
+| **Desktop Shell** | `hcs-shell` | Glass-morphic Wayland shell interface designed for Niri and Quickshell: bottom taskbar, Start Menu, cheatsheet HUD. |
 | **Security & Privacy** | `hcs-security` | Tor integration, NFTables isolation, Vault LUKS management, and amnesic live sessions. |
+| **CPU Image Studio** | `hcs-image` | Offline pure-CPU text-to-image / image-to-image (SD 1.5 LCM Q4) with strict on-demand RAM lifecycle. |
 
 ---
 
@@ -106,16 +122,16 @@ HCS Linux utilizes a specialized multi-role candidate pool:
 
 ## Installation & Live USB
 
-1. Download the verified ISO: `HCS-Linux-0.1.0-alpha.1-amd64.iso`
+1. Download the verified ISO: `HCS-Linux-1.0.1-amd64.iso` from the [releases page](https://github.com/timfromhcs/hcs-linux/releases)
 2. Verify the SHA-256 checksum:
    ```bash
    sha256sum -c SHA256SUMS
    ```
 3. Write to a USB drive (replace `/dev/sdX` with your USB block device):
    ```bash
-   sudo dd if=HCS-Linux-0.1.0-alpha.1-amd64.iso of=/dev/sdX bs=4M status=progress conv=fsync
+   sudo dd if=HCS-Linux-1.0.1-amd64.iso of=/dev/sdX bs=4M status=progress conv=fsync
    ```
-4. Boot your computer from the USB drive. Select **HCS Live Desktop** or launch the Calamares installer to install HCS Linux to your hard drive.
+4. Boot your computer from the USB drive. Select **HCS Linux 1.0.1 Live Desktop** or launch the Calamares installer to install HCS Linux to your hard drive.
 
 ---
 

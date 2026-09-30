@@ -39,7 +39,7 @@ def main():
     packages.append({
         "SPDXID": "SPDXRef-Package-HCS-Linux",
         "name": "HCS Linux",
-        "versionInfo": "1.0.0",
+        "versionInfo": "1.0.1",
         "downloadLocation": "https://github.com/timfromhcs/hcs-linux",
         "licenseConcluded": "Apache-2.0",
         "licenseDeclared": "Apache-2.0",
@@ -79,8 +79,8 @@ def main():
         "spdxVersion": "SPDX-2.3",
         "dataLicense": "CC0-1.0",
         "SPDXID": "SPDXRef-DOCUMENT",
-        "name": "HCS-Linux-1.0.0-SBOM",
-            "documentNamespace": f"https://github.com/timfromhcs/hcs-linux/spdxdocs/1.0.0/{timestamp}",
+        "name": "HCS-Linux-1.0.1-SBOM",
+            "documentNamespace": f"https://github.com/timfromhcs/hcs-linux/spdxdocs/1.0.1/{timestamp}",
         "creationInfo": {
             "creators": ["Tool: HCS SBOM Generator 1.0", "Organization: HCS Linux Project"],
             "created": timestamp
@@ -107,7 +107,7 @@ def main():
     # 3. Generate BUILD-MANIFEST.json
     build_manifest = {
         "product": "HCS Linux",
-        "version": "1.0.0",
+        "version": "1.0.1",
         "architecture": "amd64",
         "base_distribution": "Debian 13 (Trixie)",
         "build_timestamp": timestamp,

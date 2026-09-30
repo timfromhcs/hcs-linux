@@ -6,6 +6,7 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 TARGET_DIR="${REPO_ROOT}/target"
 RAW_IMG="${TARGET_DIR}/hcs_installed.img"
 MOUNT_DIR="/tmp/hcs_vdi_mount"
+VERSION="${1:-1.0.1}"
 
 echo "=== HCS Linux - Provision Installed VDI Hard Disk ==="
 mkdir -p "${TARGET_DIR}"
@@ -72,7 +73,8 @@ tmpfs /tmp tmpfs defaults,nosuid,nodev 0 0
 EOF
 
 # Write GRUB configuration with high-res graphical console
-cat << 'EOF' | sudo tee "${MOUNT_DIR}/boot/grub/grub.cfg" >/dev/null
+# NOTE: unquoted heredoc so ${VERSION} expands host-side (body has no other $).
+cat << EOF | sudo tee "${MOUNT_DIR}/boot/grub/grub.cfg" >/dev/null
 set timeout=8
 set default=0
 
@@ -90,7 +92,7 @@ terminal_output gfxterm
 set menu_color_normal=light-gray/black
 set menu_color_highlight=cyan/black
 
-menuentry "HCS Linux 0.1.0-alpha.1 (Installed System)" {
+menuentry "HCS Linux ${VERSION} (Installed System)" {
     search --no-floppy --label HCS_ROOT --set=root
     linux /boot/vmlinuz root=/dev/sda1 rootfstype=ext4 rw noresume console=tty1 console=tty0 video=1024x768 init=/sbin/init
     initrd /boot/initrd.img
