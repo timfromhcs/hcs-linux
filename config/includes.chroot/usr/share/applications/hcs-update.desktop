@@ -1,0 +1,10 @@
+﻿[Desktop Entry]
+Type=Application
+Name=Software Updates
+Comment=HCS Linux
+Exec=hcs-update
+Icon=/usr/share/hcs/icons/hcs-update.svg
+Terminal=false
+Categories=System;Utility;
+Keywords=HCS;Neural Glass;
+StartupNotify=true

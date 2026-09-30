@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="termBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#18181b" />
+      <stop offset="100%" stop-color="#09090b" />
+    </linearGradient>
+    <linearGradient id="termBorderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#52525b" />
+      <stop offset="100%" stop-color="#38bdf8" />
+    </linearGradient>
+  </defs>
+
+  <rect x="8" y="8" width="112" height="112" rx="26" fill="url(#termBgGrad)" stroke="url(#termBorderGrad)" stroke-width="2.5" />
+
+  <!-- Prompt Prompt Chevron > -->
+  <polyline points="36,44 54,60 36,76" fill="none" stroke="#38bdf8" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+
+  <!-- Cursor Line _ -->
+  <line x1="62" y1="76" x2="88" y2="76" stroke="#34d399" stroke-width="5" stroke-linecap="round" />
+</svg>

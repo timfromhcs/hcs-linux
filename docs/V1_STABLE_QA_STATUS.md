@@ -39,6 +39,20 @@ Source: `docs/V1_STABLE_RELEASE_MASTER_PLAN.md` §7. Checked against this worksp
   — all screenshot-verified (`qa/screenshots/01..16_*`, entropy audit 32/32 PASS).
   Forensics on the 1.0.0 run found + fixed: literal `${VERSION}` banner (heredoc
   quoting), stale alpha VDI, black framebuffer timing — see CHANGELOG 1.0.1.
+- [x] **Gate 5 re-run (v1.1.0):** PASS 18/18 on VirtualBox 7.2.10 (ISO + installed
+  VDI from the 1.1.0 rootfs, boot banner reports `HCS LINUX 1.1.0`).
+- [ ] **In-guest GUI screenshots — KNOWN GAP (not verified):** the live ISO boots to a
+  *text console* (its init prints the banner and idles; no graphical session is
+  started), so VirtualBox framebuffer captures show the console, not GUI windows.
+  Stated plainly: **the VM stages 17-18 verify the guest boots with the GUI
+  toolchain staged — they are not GUI pixel evidence.** Actual GUI pixels are
+  verified host-side by `scripts/verify_gui.py` (9 views x 3 themes = 27
+  reference renders in `qa/expected/gui/`, all reviewed). Closing the gap requires
+  the live session to start niri + Quickshell from `init`.
+- [x] **GUI gates (host-side, real):** `verify_gui.py --render-only` 9/9,
+  `--regress` 9/9 per theme (obsidian/titanium/stealth), `gui_ram_audit.py`
+  11.2 MB / 250 MB budget. The blank-frame check (unique-colour count) caught three
+  real rendering bugs that entropy alone scored as PASS.
 - [ ] **SHA256SUMS.gpg:** blocked (no maintainer release-signing key available);
   NOT fabricated — maintainer signs with release key on merge.
 

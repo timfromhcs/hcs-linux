@@ -17,9 +17,66 @@ fn theme_preset_roundtrip() {
 
 #[test]
 fn preset_flags_are_mutually_exclusive() {
-    assert_eq!(hcs_ui::preset_flags(ThemePreset::Obsidian), (false, false));
-    assert_eq!(hcs_ui::preset_flags(ThemePreset::Titanium), (true, false));
-    assert_eq!(hcs_ui::preset_flags(ThemePreset::Stealth), (false, true));
+    // Three flags now: High Contrast joined the brand themes as an
+    // accessibility preset. At most one may ever be set, because the window
+    // resolves the palette by checking them in order. Obsidian is the default
+    // and is therefore expressed as "no flag set".
+    assert_eq!(
+        hcs_ui::preset_flags(ThemePreset::Obsidian),
+        (false, false, false)
+    );
+    assert_eq!(
+        hcs_ui::preset_flags(ThemePreset::Titanium),
+        (true, false, false)
+    );
+    assert_eq!(
+        hcs_ui::preset_flags(ThemePreset::Stealth),
+        (false, true, false)
+    );
+    assert_eq!(
+        hcs_ui::preset_flags(ThemePreset::HighContrast),
+        (false, false, true)
+    );
+
+    for preset in ThemePreset::all() {
+        let (t, s, h) = hcs_ui::preset_flags(*preset);
+        assert!(
+            [t, s, h].iter().filter(|f| **f).count() <= 1,
+            "{} must not enable more than one theme flag",
+            preset.as_str()
+        );
+    }
+}
+
+#[test]
+fn every_preset_is_listed_and_round_trips() {
+    let all = ThemePreset::all();
+    assert_eq!(all.len(), 4);
+    for preset in all {
+        assert_eq!(
+            ThemePreset::from_str_opt(preset.as_str()),
+            Some(*preset),
+            "{} must round-trip through its name",
+            preset.as_str()
+        );
+        assert!(
+            !preset.wallpaper().is_empty(),
+            "{} must declare a wallpaper",
+            preset.as_str()
+        );
+    }
+}
+
+#[test]
+fn high_contrast_is_parseable_under_both_spellings() {
+    assert_eq!(
+        ThemePreset::from_str_opt("high_contrast"),
+        Some(ThemePreset::HighContrast)
+    );
+    assert_eq!(
+        ThemePreset::from_str_opt("high-contrast"),
+        Some(ThemePreset::HighContrast)
+    );
 }
 
 #[test]
@@ -31,6 +88,9 @@ fn theme_toggles_change_resolved_theme_name() {
     g.set_theme_titanium(false);
     g.set_theme_stealth(true);
     assert_eq!(g.get_theme_name().as_str(), "stealth");
+    g.set_theme_stealth(false);
+    g.set_theme_high_contrast(true);
+    assert_eq!(g.get_theme_name().as_str(), "high_contrast");
 }
 
 #[test]
@@ -115,8 +175,7 @@ fn headless_render_rejects_zero_size() {
     let out = dir.path().join("bad.png");
     hcs_ui::install_headless().expect("headless platform");
     let g = WidgetGallery::new().expect("gallery");
-    hcs_ui::render_to_png(&g, 0, 100, &out)
-        .expect_err("zero width must be rejected");
+    hcs_ui::render_to_png(&g, 0, 100, &out).expect_err("zero width must be rejected");
 }
 
 #[test]

@@ -1,0 +1,10 @@
+﻿[Desktop Entry]
+Type=Application
+Name=Knowledge Ingest
+Comment=HCS Linux
+Exec=hcs-rag-ingest
+Icon=/usr/share/hcs/icons/hcs-rag-ingest.svg
+Terminal=false
+Categories=System;Utility;
+Keywords=HCS;Neural Glass;
+StartupNotify=true

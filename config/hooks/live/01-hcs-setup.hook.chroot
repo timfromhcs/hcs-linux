@@ -1,24 +1,88 @@
 #!/bin/sh
+# HCS Linux chroot bootstrap hook — session, payload and default user.
+#
+# v2 changes (v2 plan §5 W1):
+#   - The payload directories that v1 forgot are created and the shell, theme,
+#     session, keyboard registry and manuals are installed from includes.chroot.
+#   - The default live user is `hcs`, NOT `user`, and there is no guest account
+#     (Linux Mint 22 dropped guest login for good reason).
+#   - Locale generation and the QWERTZ default are configured here, once, rather
+#     than at every boot.
 set -eu
 
 echo "=== HCS Linux Chroot Bootstrap Hook ==="
 
-# 1. Setup HCS Configuration Directories
+# --- 1. directories ---------------------------------------------------------
 mkdir -p /etc/hcs
 mkdir -p /usr/share/hcs/branding
+mkdir -p /usr/share/hcs/docs
+mkdir -p /usr/share/hcs/session
+mkdir -p /usr/share/hcs/config
 mkdir -p /var/log/hcs
+mkdir -p /var/lib/hcs/models
 
-# 2. Configure ZRAM Swap (RAM Budget Optimization)
+# --- 2. ZRAM swap (RAM budget optimisation) ---------------------------------
 if [ -f /etc/default/zramswap ]; then
     sed -i 's/^#*ALLOCATION=.*/ALLOCATION=2048/' /etc/default/zramswap || true
 fi
 
-# 3. Setup Default Live User Permissions
-if id "user" >/dev/null 2>&1; then
-    usermod -aG sudo,video,audio user || true
+# --- 3. live user ------------------------------------------------------------
+# `hcs` owns the session. A guest account would expose the live system to
+# anyone at the keyboard, so it is deliberately absent.
+if ! id "hcs" >/dev/null 2>&1; then
+    if id "user" >/dev/null 2>&1; then
+        usermod -l hcs -d /home/hcs -m user || true
+    else
+        useradd -m -s /bin/bash -G sudo,video,audio,input,render hcs || true
+    fi
+fi
+if id "hcs" >/dev/null 2>&1; then
+    usermod -aG sudo,video,audio,input,render hcs || true
+    # Wayland-only (GNOME 49 lesson): no DISPLAY, only WAYLAND_DISPLAY.
+    mkdir -p /home/hcs/.config
+    cat > /home/hcs/.config/environment.d/10-hcs-session.conf << 'EOF'
+XDG_SESSION_TYPE=wayland
+XDG_CURRENT_DESKTOP=HCS
+LIBGL_ALWAYS_SOFTWARE=1
+HCS_RENDERER=software
+HCS_RAM_BUDGET_IDLE_MB=6144
+HCS_RAM_BUDGET_PEAK_MB=8192
+HCS_GUI_APP_BUDGET_MB=250
+EOF
+    # Autologin for the live session: a live USB should reach a desktop.
+    mkdir -p /etc/systemd/system/getty@tty6.service.d
+    cat > /etc/systemd/system/getty@tty6.service.d/override.conf << 'EOF'
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --autologin hcs --noclear %I 115200,38400,9600 vt6
+EOF
 fi
 
-# 4. Configure Tor Defaults for Privacy Mode
+# --- 4. keyboard + locale ----------------------------------------------------
+# QWERTZ is the default (project's home audience); en-US is one shortcut away
+# and FR/ES/IT/GB come from the same registry.
+cat > /etc/hcs/keyboard.conf << 'EOF'
+HCS_XKB_LAYOUT="de"
+HCS_XKB_VARIANT=""
+EOF
+printf 'de\n' > /etc/hcs/locale
+if [ -f /etc/default/keyboard ]; then
+    sed -i 's/^XKBLAYOUT=.*/XKBLAYOUT="de"/' /etc/default/keyboard || true
+else
+    cat > /etc/default/keyboard << 'EOF'
+XKBMODEL="pc105"
+XKBLAYOUT="de"
+XKBVARIANT=""
+XKBOPTIONS="grp:alt_shift_toggle"
+EOF
+fi
+if command -v locale-gen >/dev/null 2>&1; then
+    sed -i 's/^# *\(de_DE.UTF-8\|en_US.UTF-8\|fr_FR.UTF-8\|es_ES.UTF-8\|it_IT.UTF-8\)/\1/' \
+        /etc/locale.gen || true
+    locale-gen >/dev/null 2>&1 || true
+fi
+
+# --- 5. Tor defaults ---------------------------------------------------------
 if [ -d /etc/tor ]; then
     cat > /etc/tor/torrc << 'EOF'
 # HCS Linux Privacy Default Configuration
@@ -28,9 +92,11 @@ DataDirectory /var/lib/tor
 EOF
 fi
 
-# 5. Install HCS helper scripts (tracked canonical copies under /usr/share/hcs/scripts)
+# --- 6. payload install ------------------------------------------------------
+# The v1 hook installed only three helper scripts and never touched the shell,
+# theme, session or documentation trees, so the ISO booted without a desktop.
 if [ -d /usr/share/hcs/scripts ]; then
-    for script in hcs-tor-switch hcs-docs hcs-welcome; do
+    for script in hcs-tor-switch hcs-docs-html hcs-welcome; do
         if [ -f "/usr/share/hcs/scripts/${script}" ]; then
             cp -f "/usr/share/hcs/scripts/${script}" "/usr/bin/${script}"
             chmod 755 "/usr/bin/${script}"
@@ -38,7 +104,44 @@ if [ -d /usr/share/hcs/scripts ]; then
     done
 fi
 
-# 6. Clean APT Caches (Reproducibility & ISO Size Reduction)
+# Shell, theme, session, keyboard registry, docs and launchers arrive via
+# includes.chroot; assert rather than assume.
+for required in \
+    /usr/share/hcs/shell/shell.qml \
+    /usr/share/hcs/shell/taskbar.qml \
+    /usr/share/hcs/shell/start_menu.qml \
+    /usr/share/hcs/theme/colors.toml \
+    /usr/share/hcs/session/start-session.sh \
+    /usr/share/hcs/config/keyboard-layouts.conf \
+    /usr/share/hcs/docs/index.html \
+    /etc/hcs/session.conf
+do
+    if [ ! -e "${required}" ]; then
+        echo "  [ERROR] required payload missing: ${required}" >&2
+        exit 1
+    fi
+done
+chmod 755 /usr/share/hcs/session/start-session.sh || true
+
+# --- 7. session autostart ----------------------------------------------------
+mkdir -p /etc/systemd/user
+cat > /etc/systemd/user/hcs-session.service << 'EOF'
+[Unit]
+Description=HCS Neural Glass session
+After=graphical-session-pre.target
+PartOf=graphical-session.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+Environment=WAYLAND_DISPLAY=wayland-1
+ExecStart=/usr/share/hcs/session/start-session.sh
+
+[Install]
+WantedBy=graphical-session.target
+EOF
+
+# --- 8. cleanup --------------------------------------------------------------
 apt-get clean || true
 rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 

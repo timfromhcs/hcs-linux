@@ -1,29 +1,74 @@
-# Core Linux & Hardware Support
+# HCS Linux core chroot packages (v2 plan §5 W1 — real graphical session)
+#
+# v1 shipped only the Wayland *client* libraries, so no compositor could ever
+# start and the live ISO could only ever print a console banner. The compositor,
+# the shell and the session plumbing are now part of the core set.
+
+# --- Core Linux & Hardware Support -------------------------------------------
 linux-image-amd64
 live-boot
 live-config
 live-config-systemd
 systemd
 systemd-sysv
+systemd-sysusers
 udev
 dbus
 polkitd
 
-# Display & Wayland Foundations
+# --- Display & Wayland (compositor + shell) ---------------------------------
 libwayland-client0
+libwayland-server0
 wayland-protocols
 pipewire
+pipewire-pulse
 wireplumber
 seatd
+xdg-desktop-portal
+xdg-desktop-portal-wlr
+xdg-desktop-portal-gtk
+xdg-desktop-portal-hyprland
+gsettings-desktop-schemas
+qt6-declarative
+qml6-module-qtquick
+qml6-module-qtquick-layouts
+qt6-wayland
+niri
+quickshell
 
-# Storage & Core Libraries
+# --- Boot splash -------------------------------------------------------------
+plymouth
+plymouth-theme-spinner
+
+# --- Input, seat & clipboard -------------------------------------------------
+xkb-data
+x11-xkb-utils
+wl-clipboard
+wtype
+
+# --- Fonts: the software renderer needs real fonts or text renders as boxes --
+fonts-dejavu-core
+fonts-dejavu
+fonts-noto-core
+fonts-noto-cjk
+fonts-noto-color-emoji
+fontconfig
+
+# --- Locales: UI language is independent of the keyboard layout --------------
+locales
+locales-all
+xdg-utils
+keyboard-configuration
+
+# --- Storage & Core Libraries ------------------------------------------------
 sqlite3
 libsqlite3-0
 zram-tools
 cryptsetup
+btrfs-progs
 calamares
 
-# Networking & Basic Utilities
+# --- Networking & Basic Utilities -------------------------------------------
 network-manager
 wpasupplicant
 curl
@@ -32,6 +77,23 @@ sudo
 bash-completion
 nano
 htop
+tmux
+git
+less
+tree
+unzip
 tar
 zstd
 ca-certificates
+
+# --- Screenshot / screen record (hcs-shot backend) ---------------------------
+grim
+slurp
+wl-clipboard
+ffmpeg
+
+# --- Fonts for terminal rendering -------------------------------------------
+fonts-jetbrains-mono
+
+# --- Snapshot / rollback (Mint + Omarchy pattern) ----------------------------
+# btrfs-progs above provides the tools; the subvolume setup runs in the installer.

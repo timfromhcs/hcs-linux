@@ -10,13 +10,111 @@
         "--hold-seconds",
         "6"
       ],
-      "peak_rss_mb": 11.2,
+      "peak_rss_mb": 10.8,
+      "budget_mb": 250,
+      "status": "PASS"
+    },
+    {
+      "app": "hcs-fm",
+      "crate": "hcs-fm",
+      "note": "file manager: listing, filter pills, date narrowing, preview pane",
+      "args": [
+        "--json",
+        "--path",
+        "config",
+        "--hold-seconds",
+        "6"
+      ],
+      "peak_rss_mb": 10.8,
+      "budget_mb": 250,
+      "status": "PASS"
+    },
+    {
+      "app": "hcs-term",
+      "crate": "hcs-term",
+      "note": "terminal: profile search and grid rendering",
+      "args": [
+        "--profiles",
+        "--hold-seconds",
+        "6"
+      ],
+      "peak_rss_mb": 10.6,
+      "budget_mb": 250,
+      "status": "PASS"
+    },
+    {
+      "app": "hcs-notes",
+      "crate": "hcs-notes",
+      "note": "notes: Markdown store with offline search",
+      "args": [
+        "list",
+        "--json",
+        "--hold-seconds",
+        "6"
+      ],
+      "peak_rss_mb": 10.8,
+      "budget_mb": 250,
+      "status": "PASS"
+    },
+    {
+      "app": "hcs-actions",
+      "crate": "hcs-actions",
+      "note": "action registry: ranking, quick keys, privileged-action gating",
+      "args": [
+        "search",
+        "privacy",
+        "--json",
+        "--hold-seconds",
+        "6"
+      ],
+      "peak_rss_mb": 10.8,
+      "budget_mb": 250,
+      "status": "PASS"
+    },
+    {
+      "app": "hcs-update",
+      "crate": "hcs-update",
+      "note": "level-based update manager: risk levels, snapshots, rollback plan",
+      "args": [
+        "plan",
+        "--hold-seconds",
+        "6"
+      ],
+      "peak_rss_mb": 10.8,
+      "budget_mb": 250,
+      "status": "PASS"
+    },
+    {
+      "app": "hcs-persist",
+      "crate": "hcs-persist",
+      "note": "amnesic session and persistent storage state machine",
+      "args": [
+        "status",
+        "--json",
+        "--hold-seconds",
+        "6"
+      ],
+      "peak_rss_mb": 10.8,
+      "budget_mb": 250,
+      "status": "PASS"
+    },
+    {
+      "app": "hcs-recall",
+      "crate": "hcs-recall",
+      "note": "local timeline: credential and payment filtering before storage",
+      "args": [
+        "status",
+        "--json",
+        "--hold-seconds",
+        "6"
+      ],
+      "peak_rss_mb": 10.7,
       "budget_mb": 250,
       "status": "PASS"
     }
   ],
-  "total": 1,
-  "passed": 1,
+  "total": 8,
+  "passed": 8,
   "failed": 0,
   "unknown": 0,
   "rss_measurable": true,

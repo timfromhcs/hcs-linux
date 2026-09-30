@@ -1,0 +1,21 @@
+[
+  {
+    "op": "wait_session",
+    "timeout_secs": 180
+  },
+  {
+    "op": "key",
+    "key": "Super+w"
+  },
+  {
+    "op": "settle",
+    "secs": 3
+  },
+  {
+    "op": "shot",
+    "name": "widgets_board"
+  },
+  {
+    "op": "exit"
+  }
+]

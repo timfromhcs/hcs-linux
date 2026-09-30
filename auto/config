@@ -1,6 +1,8 @@
 #!/bin/sh
 set -eu
 
+HCS_VERSION="${HCS_VERSION:-2.0.0}"
+
 lb config noauto \
     --distribution trixie \
     --architectures amd64 \
@@ -8,10 +10,10 @@ lb config noauto \
     --archive-areas "main contrib non-free-firmware" \
     --bootloader grub-efi \
     --debian-installer false \
-    --iso-application "HCS Linux 0.1.0-alpha.1" \
+    --iso-application "HCS Linux ${HCS_VERSION}" \
     --iso-preparer "timfromhcs <timfromhcs@gmail.com>" \
     --iso-publisher "HCS Linux Project" \
-    --iso-volume "HCS_LINUX_010" \
+    --iso-volume "HCS_LINUX_200" \
     --memtest none \
     --apt-recommends true \
     "${@}"

@@ -1,0 +1,25 @@
+[
+  {
+    "op": "wait_session",
+    "timeout_secs": 180
+  },
+  {
+    "op": "key",
+    "key": "Super"
+  },
+  {
+    "op": "settle",
+    "secs": 2
+  },
+  {
+    "op": "shot",
+    "name": "start_menu"
+  },
+  {
+    "op": "assert_window",
+    "title": "Start"
+  },
+  {
+    "op": "exit"
+  }
+]

@@ -77,15 +77,35 @@ fn chat_window() {
 #[test]
 fn theme_presets_map_to_exclusive_flags() {
     // No window needed: pure mapping logic.
-    assert_eq!(hcs_ui::preset_flags(ThemePreset::Obsidian), (false, false));
-    assert_eq!(hcs_ui::preset_flags(ThemePreset::Titanium), (true, false));
-    assert_eq!(hcs_ui::preset_flags(ThemePreset::Stealth), (false, true));
-    for p in [
-        ThemePreset::Obsidian,
-        ThemePreset::Titanium,
-        ThemePreset::Stealth,
-    ] {
-        let (t, s) = hcs_ui::preset_flags(p);
-        assert!(!(t && s), "{} must not enable both themes", p.as_str());
+    assert_eq!(
+        hcs_ui::preset_flags(ThemePreset::Obsidian),
+        (false, false, false)
+    );
+    assert_eq!(
+        hcs_ui::preset_flags(ThemePreset::Titanium),
+        (true, false, false)
+    );
+    assert_eq!(
+        hcs_ui::preset_flags(ThemePreset::Stealth),
+        (false, true, false)
+    );
+    assert_eq!(
+        hcs_ui::preset_flags(ThemePreset::HighContrast),
+        (false, false, true)
+    );
+    // Mutual exclusivity is the invariant the window relies on: two flags set at
+    // once would resolve the palette to an arbitrary preset. Obsidian is the
+    // default, so it is expressed as "no flag set" rather than a third flag.
+    for p in ThemePreset::all() {
+        let (t, s, h) = hcs_ui::preset_flags(*p);
+        assert!(
+            [t, s, h].iter().filter(|f| **f).count() <= 1,
+            "{} must not enable more than one theme flag",
+            p.as_str()
+        );
     }
+    assert_eq!(
+        hcs_ui::preset_flags(ThemePreset::Obsidian),
+        (false, false, false)
+    );
 }

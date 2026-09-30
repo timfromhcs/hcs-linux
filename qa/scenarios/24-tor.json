@@ -1,0 +1,21 @@
+[
+  {
+    "op": "wait_session",
+    "timeout_secs": 180
+  },
+  {
+    "op": "key",
+    "key": "Super+e"
+  },
+  {
+    "op": "settle",
+    "secs": 3
+  },
+  {
+    "op": "shot",
+    "name": "tor_control"
+  },
+  {
+    "op": "exit"
+  }
+]

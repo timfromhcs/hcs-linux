@@ -1,0 +1,10 @@
+﻿[Desktop Entry]
+Type=Application
+Name=Terminal
+Comment=HCS Linux
+Exec=hcs-term
+Icon=/usr/share/hcs/icons/hcs-term.svg
+Terminal=false
+Categories=System;Utility;
+Keywords=HCS;Neural Glass;
+StartupNotify=true

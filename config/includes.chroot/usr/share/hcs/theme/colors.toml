@@ -1,0 +1,99 @@
+# HCS Linux — Theme source of truth (v2 plan §4.3)
+#
+# ONE file drives the whole system. `hcs theme set <name>` validates this file,
+# expands the templates in /usr/share/hcs/theme/templates/, atomically swaps the
+# result into /var/lib/hcs/theme/active/, then reloads every affected component.
+#
+# Borrowed patterns:
+#   - Omarchy 4 `colors.toml`: one accent file, template expansion, atomic swap
+#   - Windows 11 Snap + GNOME 49 quick settings: control surface over one state
+#   - Apple Liquid Glass (macOS 27 / iOS 26): DYNAMIC TOKENS, but see the
+#     `glass_min_opacity` rule below — Apple needed four revisions to fix
+#     unreadable translucent controls. We encode the fix instead of rediscovering it.
+#
+# glass_min_opacity is enforced by `hcs-a11y-check` (Gate 10). Text never sits on
+# a surface below 4.5:1 contrast (WCAG AA).
+
+preset = "obsidian"
+
+[presets.obsidian]
+name        = "Obsidian"
+description = "HCS default. Deep obsidian with neural cyan."
+bg          = "#0d1117"
+surface     = "#161b22"
+surface_alt = "#1c2430"
+border      = "#30363d"
+text        = "#e6edf3"
+text_dim    = "#8b949e"
+accent      = "#38bdf8"
+accent_2    = "#34d399"
+warn        = "#f59e0b"
+danger      = "#f85149"
+ok          = "#3fb950"
+glass_min_opacity = 0.90
+wallpaper   = "neural_glass_dark"
+
+[presets.titanium]
+name        = "Frosted Titanium"
+description = "Cool titanium greys with a steel-blue accent."
+bg          = "#16181d"
+surface     = "#22252b"
+surface_alt = "#2b2f36"
+border      = "#4a4f58"
+text        = "#f2f4f7"
+text_dim    = "#9aa3ae"
+accent      = "#60a5fa"
+accent_2    = "#a78bfa"
+warn        = "#fbbf24"
+danger      = "#f87171"
+ok          = "#4ade80"
+glass_min_opacity = 0.92
+wallpaper   = "frosted_titanium"
+
+[presets.stealth]
+name        = "Cybernetic Stealth"
+description = "Maximum contrast, reduced transparency, privacy-first."
+bg          = "#05070a"
+surface     = "#0b0f14"
+surface_alt = "#111721"
+border      = "#1f2937"
+text        = "#f9fafb"
+text_dim    = "#6b7280"
+accent      = "#22d3ee"
+accent_2    = "#a3e635"
+warn        = "#fb923c"
+danger      = "#ef4444"
+ok          = "#84cc16"
+glass_min_opacity = 0.96
+wallpaper   = "cybernetic_stealth"
+
+[presets.high_contrast]
+name        = "High Contrast (a11y)"
+description = "WCAG AAA text contrast for maximum legibility. See Gate 10."
+bg          = "#000000"
+surface     = "#000000"
+surface_alt = "#0a0a0a"
+border      = "#ffffff"
+text        = "#ffffff"
+text_dim    = "#e0e0e0"
+accent      = "#00ffff"
+accent_2    = "#ffff00"
+warn        = "#ffa500"
+danger      = "#ff5555"
+ok          = "#00ff88"
+glass_min_opacity = 1.00
+wallpaper   = "neural_glass_dark"
+
+[behavior]
+# Apple/iOS lesson: motion is an OS-level preference, not an app-level one.
+reduce_motion     = false
+animations        = true
+backdrop_blur     = true
+live_theme_preview = true
+
+[layout]
+# Exact fractional scaling (GNOME 49 lesson: rounded scale factors blur text).
+scale_factor  = 1.0
+scale_options = [1.0, 1.25, 1.5, 1.75, 2.0]
+taskbar_height = 52
+taskbar_align  = "center"

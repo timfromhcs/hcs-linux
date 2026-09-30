@@ -1,0 +1,21 @@
+[
+  {
+    "op": "wait_session",
+    "timeout_secs": 240
+  },
+  {
+    "op": "settle",
+    "secs": 5
+  },
+  {
+    "op": "shot",
+    "name": "installed_desktop"
+  },
+  {
+    "op": "assert_window",
+    "title": "Neural Glass"
+  },
+  {
+    "op": "exit"
+  }
+]

@@ -10,8 +10,9 @@ permissions:
   contents: read
 
 jobs:
+  # ---------------------------------------------------------------- G1 static
   fast-path:
-    name: Fast Path Audit & Unit Tests
+    name: G1 Static — fmt, clippy, tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -28,13 +29,14 @@ jobs:
           python-version: "3.12"
 
       - name: Install Python Dependencies
-        run: pip install pyyaml
+        run: pip install pyyaml pillow psutil
 
       - name: Rust Code Formatting
-        run: cargo fmt --check
+        run: cargo fmt --all -- --check
 
       - name: Rust Clippy Lints
-        run: cargo clippy --workspace -- -D warnings
+        # --all-targets as well: tests are where the v1 blockers hid.
+        run: cargo clippy --workspace --all-targets -- -D warnings
 
       - name: Rust Unit & Integration Tests
         run: cargo test --workspace
@@ -45,8 +47,30 @@ jobs:
       - name: Model Registry Validation
         run: python scripts/fetch_models.py --verify-only
 
+      - name: Starter Model Staging Report
+        # Proves the bake rule is executable and that no licence-restricted
+        # model would ship. Fails if the registry cannot be read.
+        run: python scripts/stage_starter_models.py --check
+
       - name: Python Unit Tests
         run: python -m unittest discover -s tests/unit -p "test_*.py"
+
+  # ------------------------------------------------------- G2 security + G3
+  security:
+    name: G2 Security & G3 Supply Chain
+    needs: fast-path
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python Dependencies
+        run: pip install pyyaml
 
       - name: Security & Secret Leakage Audit
         run: python scripts/run_security_audit.py
@@ -57,8 +81,19 @@ jobs:
       - name: SPDX SBOM & Notices Generation
         run: python scripts/generate_sbom.py
 
+      - name: Threat Model Is Documented
+        # G2 requires the threat model to exist and be current; a privacy claim
+        # without one is just marketing.
+        run: |
+          test -f docs/THREAT_MODEL.md || {
+            echo "[FAIL] docs/THREAT_MODEL.md is missing"; exit 1; }
+          grep -q "Tails" docs/THREAT_MODEL.md || {
+            echo "[FAIL] the threat model must cite its reference systems"; exit 1; }
+          echo "[OK] threat model present and referenced"
+
+  # ------------------------------------------------------ G5/G6 host GUI
   gui:
-    name: GUI Render, Regression & RAM Gate
+    name: G5 Render & Regression + G6 RAM
     needs: fast-path
     runs-on: ubuntu-latest
     steps:
@@ -76,40 +111,37 @@ jobs:
           python-version: "3.12"
 
       - name: Install GUI Gate Dependencies
-        run: pip install pillow psutil
-
-      - name: Install Headless Font Set
-        # The Slint software renderer needs real fonts; without them text
-        # renders as empty boxes.
+        # The Slint software renderer with system fonts needs fontconfig headers
+        # at build time; a real font set is needed or text renders as boxes.
         run: |
           sudo apt-get update
-          sudo apt-get install -y fonts-dejavu-core
+          sudo apt-get install -y fonts-dejavu-core fonts-noto-core \
+            pkg-config libfontconfig-dev libfreetype-dev
+          pip install pillow psutil
 
       - name: GUI Unit Tests
-        run: cargo test -p hcs-ui -p hcs-chat -p hcs-monitor -p hcs-control -p hcs-search -p hcs-diagnose
+        run: cargo test -p hcs-ui -p hcs-chat -p hcs-monitor -p hcs-control -p hcs-search -p hcs-diagnose -p hcs-fm -p hcs-term
 
       - name: GUI Headless Render Audit
-        # Renders every view with the software renderer (no GPU/display needed)
-        # and rejects blank frames via entropy + unique-colour count.
+        # Every view with the software renderer (no GPU/display needed), rejecting
+        # blank frames via entropy AND unique-colour count.
         run: |
-          python scripts/verify_gui.py --render-only --theme obsidian
-          python scripts/verify_gui.py --render-only --theme titanium
-          python scripts/verify_gui.py --render-only --theme stealth
+          for theme in obsidian titanium stealth high_contrast; do
+            python scripts/verify_gui.py --render-only --theme "$theme"
+          done
 
       - name: GUI Visual Regression
-        # Diffs renders against qa/expected/gui/. A new view must be added there
-        # with `python scripts/verify_gui.py --update` and the images reviewed.
         run: |
-          python scripts/verify_gui.py --regress --theme obsidian
-          python scripts/verify_gui.py --regress --theme titanium
-          python scripts/verify_gui.py --regress --theme stealth
+          for theme in obsidian titanium stealth high_contrast; do
+            python scripts/verify_gui.py --regress --theme "$theme"
+          done
 
       - name: GUI RAM Budget Audit
-        # <= 250 MB RSS per GUI app (plan §3); measures real /proc RSS.
         run: python scripts/gui_ram_audit.py
 
+  # ------------------------------------------------------------- G7 Wayland
   gui-wayland:
-    name: GUI Wayland Integration (headless Weston)
+    name: G7 Wayland Integration (headless Weston)
     needs: fast-path
     runs-on: ubuntu-latest
     steps:
@@ -122,7 +154,8 @@ jobs:
       - name: Install Headless Wayland Stack
         run: |
           sudo apt-get update
-          sudo apt-get install -y weston fonts-dejavu-core
+          sudo apt-get install -y weston fonts-dejavu-core \
+            pkg-config libfontconfig-dev libfreetype-dev
 
       - name: Start Headless Weston Compositor
         run: |
@@ -134,7 +167,7 @@ jobs:
           done
 
       - name: Launch GUI App on Wayland
-        # Real window on a real compositor: proves the GUI runs outside the
+        # A real window on a real compositor: proves the GUI runs outside the
         # software-render test path. Exit code 124 = timeout kill, which is the
         # expected outcome because the app stays open.
         env:
@@ -142,7 +175,7 @@ jobs:
           WAYLAND_DISPLAY: wayland-0
         run: |
           set +e
-          timeout 20 cargo run -q -p hcs-gui-shots --bin hcs-gui-shots -- \
+          timeout 20 cargo run --quiet -p hcs-gui-shots --bin hcs-gui-shots -- \
             --out-dir target/gui-wayland --view chat
           code=$?
           if [ $code -ne 0 ] && [ $code -ne 124 ]; then
@@ -152,6 +185,127 @@ jobs:
           test -f target/gui-wayland/chat-obsidian.png
           echo "[OK] GUI app rendered on headless Wayland"
 
+  # ------------------------------------------------------------ G10 a11y
+  a11y:
+    name: G10 Accessibility — focus order, WCAG, motion
+    needs: fast-path
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build crate
+        run: cargo build --quiet --bin hcs-a11y-check
+
+      - name: Accessibility Gate
+        run: cargo run --quiet --bin hcs-a11y-check -- --report qa/reports/a11y.json
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a11y-report
+          path: qa/reports/a11y.json
+
+  # ------------------------------------------------------------- G4 payload
+  payload:
+    name: G4 ISO Payload Contract
+    needs: fast-path
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Payload Tools
+        run: sudo apt-get update && sudo apt-get install -y squashfs-tools
+
+      - name: Validate every declared payload file exists in the tree
+        # The v1 ISO lost its .desktop launchers, icons, wallpapers and manuals
+        # silently, because `cp ... || true` swallowed a missing target dir.
+        # This job checks the *tree* on every push, so the loss can never reach
+        # an image build again.
+        run: |
+          set -euo pipefail
+          missing=0
+          for f in \
+            config/includes.chroot/usr/share/hcs/theme/colors.toml \
+            config/includes.chroot/usr/share/hcs/session/start-session.sh \
+            config/includes.chroot/usr/share/hcs/config/keyboard-layouts.conf \
+            config/includes.chroot/usr/share/hcs/docs/index.html \
+            config/includes.chroot/etc/hcs/session.conf
+          do
+            [ -f "$f" ] || { echo "[MISSING] $f"; missing=1; }
+          done
+          for f in \
+            config/includes.chroot/usr/share/hcs/shell/{shell,taskbar,start_menu,cheatsheet,control_center,notification_center,widgets,snap_flyout,taskview,stage,clipboard,notifications}.qml
+          do
+            [ -f "$f" ] || { echo "[MISSING] $f"; missing=1; }
+          done
+          for f in \
+            config/includes.chroot/usr/share/applications/hcs-{chat,monitor,control,search,diagnose,docs,docs-html,settings,fm,term,shot,notes,update,rag-ingest,welcome}.desktop
+          do
+            [ -f "$f" ] || { echo "[MISSING] $f"; missing=1; }
+          done
+          for f in config/includes.chroot/usr/share/hcs/docs/manuals/*.md; do
+            [ -f "$f" ] || { echo "[MISSING] $f"; missing=1; }
+          done
+          [ "$missing" -eq 0 ] || { echo "[FAIL] payload contract violated"; exit 1; }
+          echo "[OK] every declared payload file is present"
+
+      - name: Session bootstrap is valid shell
+        run: bash -n config/includes.chroot/usr/share/hcs/session/start-session.sh
+
+      - name: ISO build script is valid shell
+        run: bash -n scripts/build_iso.sh && bash -n scripts/verify_payload.sh
+
+  # ------------------------------------------------------------ G9 RAG eval
+  rag:
+    name: G9 Retrieval Evaluation
+    needs: fast-path
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: RAG CLI answers with citations
+        # The gate is behavioural: every answer must cite a manual section, and
+        # an out-of-scope question must be refused.
+        run: |
+          set -euo pipefail
+          cargo run --quiet --bin hcs -- rag stats
+          cargo run --quiet --bin hcs -- rag query "how does the Tor kill switch work" | tee /tmp/a.txt
+          grep -q "\.md#" /tmp/a.txt || {
+            echo "[FAIL] an answer was produced without a citation"; exit 1; }
+          cargo run --quiet --bin hcs -- rag query "what is the weather tomorrow" | tee /tmp/b.txt
+          grep -q "REFUSED" /tmp/b.txt || {
+            echo "[FAIL] an out-of-scope question was not refused"; exit 1; }
+          echo "[OK] retrieval cites sources and refuses out-of-scope questions"
+
+      - name: Action registry is consistent
+        # Quick keys must be unambiguous and privileged actions must be gated.
+        run: |
+          set -euo pipefail
+          cargo run --quiet --bin hcs -- actions validate
+          cargo run --quiet --bin hcs-actions -- describe privacy.tor.toggle --json > /tmp/t.json
+          python3 -c "
+          import json,sys
+          d = json.load(open('/tmp/t.json'))
+          assert d['requires_confirmation'] is True, 'Tor toggle must require confirmation'
+          assert d['risk'] == 'privileged'
+          print('[OK] privileged actions are gated')"
+
+  # --------------------------------------------------------- ISO packaging
   iso-integration:
     name: ISO & Packaging Integration
     needs: fast-path
@@ -170,3 +324,29 @@ jobs:
           test -f auto/config
           test -f config/package-lists/hcs-core.list.chroot
           test -f config/hooks/live/01-hcs-setup.hook.chroot
+
+      - name: Validate Chroot Hook
+        run: sh -n config/hooks/live/01-hcs-setup.hook.chroot
+
+      - name: ISO Metadata Carries the Release Version
+        # auto/config was still declaring 0.1.0-alpha.1 long after the release
+        # had moved on, so the ISO's own metadata contradicted the banner.
+        run: |
+          set -euo pipefail
+          grep -q 'HCS_VERSION:-2.0.0' auto/config
+          grep -q 'HCS_LINUX_200' auto/config
+          grep -q 'niri' config/package-lists/hcs-core.list.chroot
+          grep -q 'quickshell' config/package-lists/hcs-core.list.chroot
+          echo "[OK] ISO metadata and desktop stack are current"
+
+      - name: The session stack is actually declared
+        # The v1 image shipped no compositor at all, which is why the live ISO
+        # could only ever print a console banner.
+        run: |
+          set -euo pipefail
+          for pkg in niri quickshell seatd pipewire wireplumber xdg-desktop-portal \
+                     plymouth fonts-dejavu-core fonts-noto-core xkb-data; do
+            grep -q "^${pkg}\$" config/package-lists/hcs-core.list.chroot || {
+              echo "[FAIL] ${pkg} is missing from the core package list"; exit 1; }
+          done
+          echo "[OK] a real graphical session can be assembled from the package list"

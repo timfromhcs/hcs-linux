@@ -1,0 +1,21 @@
+[
+  {
+    "op": "settle",
+    "secs": 4
+  },
+  {
+    "op": "shot",
+    "name": "installer_welcome"
+  },
+  {
+    "op": "settle",
+    "secs": 3
+  },
+  {
+    "op": "shot",
+    "name": "installer_partition"
+  },
+  {
+    "op": "exit"
+  }
+]

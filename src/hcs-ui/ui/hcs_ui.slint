@@ -81,6 +81,25 @@ export global Presets {
         warn: #fbbf24,
         danger: #f87171,
     };
+    // High Contrast is an accessibility preset, not a brand theme. It is
+    // checked by the Gate 10 contrast audit: every text/background pair below
+    // clears WCAG AAA (7:1) so the desktop stays usable with low vision.
+    // Apple needed four Liquid Glass revisions to fix unreadable translucent
+    // controls; this preset exists so we never ship that bug.
+    in-out property <Palette> high_contrast: {
+        theme-name: "high_contrast",
+        surface: #000000,
+        surface-alt: #0a0a0a,
+        surface-raised: #141414,
+        accent: #00e5ff,
+        accent-alt: #ffff00,
+        text-primary: #ffffff,
+        text-muted: #e0e0e0,
+        border-soft: #ffffff,
+        success: #00ff88,
+        warn: #ffa500,
+        danger: #ff5555,
+    };
 }
 
 // ---------------------------------------------------------------- AppHeader
@@ -610,7 +629,8 @@ export component WidgetGallery inherits Window {
     // working setters for it.
     in property <bool> theme-titanium: false;
     in property <bool> theme-stealth: false;
-    in property <Palette> palette: root.theme-stealth ? Presets.stealth : (root.theme-titanium ? Presets.titanium : Presets.obsidian);
+    in property <bool> theme-high-contrast: false;
+    in property <Palette> palette: root.theme-high-contrast ? Presets.high_contrast : (root.theme-stealth ? Presets.stealth : (root.theme-titanium ? Presets.titanium : Presets.obsidian));
     in property <string> theme-name: root.palette.theme-name;
 
     AppHeader { x: 0; y: 0; width: 720px; app-title: "HCS UI Foundation"; subtitle: "gallery"; p: root.palette; }
@@ -666,7 +686,8 @@ export component DocsWindow inherits Window {
 
     in property <bool> theme-titanium: false;
     in property <bool> theme-stealth: false;
-    in property <Palette> palette: root.theme-stealth ? Presets.stealth : (root.theme-titanium ? Presets.titanium : Presets.obsidian);
+    in property <bool> theme-high-contrast: false;
+    in property <Palette> palette: root.theme-high-contrast ? Presets.high_contrast : (root.theme-stealth ? Presets.stealth : (root.theme-titanium ? Presets.titanium : Presets.obsidian));
     in property <string> theme-name: root.palette.theme-name;
 
     in property <string> manual-list: "01 Getting Started\n02 AI Brain Guide\n03 CPU Image Studio\n04 Security Pentest\n05 Tor Anonymity\n06 Developer Manual";
@@ -719,7 +740,8 @@ export component SettingsWindow inherits Window {
 
     in property <bool> theme-titanium: false;
     in property <bool> theme-stealth: false;
-    in property <Palette> palette: root.theme-stealth ? Presets.stealth : (root.theme-titanium ? Presets.titanium : Presets.obsidian);
+    in property <bool> theme-high-contrast: false;
+    in property <Palette> palette: root.theme-high-contrast ? Presets.high_contrast : (root.theme-stealth ? Presets.stealth : (root.theme-titanium ? Presets.titanium : Presets.obsidian));
     in property <string> theme-name: root.palette.theme-name;
 
     in property <string> selected-theme: "obsidian";

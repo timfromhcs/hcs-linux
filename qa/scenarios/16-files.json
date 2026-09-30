@@ -1,0 +1,25 @@
+[
+  {
+    "op": "wait_session",
+    "timeout_secs": 180
+  },
+  {
+    "op": "open",
+    "app": "hcs-fm"
+  },
+  {
+    "op": "settle",
+    "secs": 4
+  },
+  {
+    "op": "shot",
+    "name": "files_manager"
+  },
+  {
+    "op": "assert_window",
+    "title": "Files"
+  },
+  {
+    "op": "exit"
+  }
+]

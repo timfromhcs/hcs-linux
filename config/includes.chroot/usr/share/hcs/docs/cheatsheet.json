@@ -1,1 +1,65 @@
-{"apps": [{"action": "HCS Chat", "keys": "Super+Return"}, {"action": "Search", "keys": "Super+Space"}, {"action": "Monitor", "keys": "Super+M"}, {"action": "Image Studio", "keys": "Super+I"}, {"action": "Terminal", "keys": "Super+T"}], "privacy": [{"action": "Tor Killswitch", "keys": "Super+Alt+T"}, {"action": "Redacted Clipboard", "keys": "Super+V"}], "system": [{"action": "Start Menu", "keys": "Super"}, {"action": "Show Desktop", "keys": "Super+D"}, {"action": "Close Window", "keys": "Super+Q"}, {"action": "Window Switcher", "keys": "Alt+Tab"}]}
+{
+  "_meta": {
+    "version": "2.0.0",
+    "note": "The Windows-key position is the HCS key. Bindings are written as Super+X in code but presented to users as HCS+X. Layout-independent by contract: changing the keyboard layout never remaps these.",
+    "layouts": ["de (QWERTZ, default)", "us (QWERTY)", "fr (AZERTY)", "es", "it", "gb"],
+    "layout_switch": "HCS+Space"
+  },
+  "system": [
+    { "action": "Start Menu", "keys": "HCS", "group": "system" },
+    { "action": "Omnibar (find and act)", "keys": "HCS+Space", "group": "system" },
+    { "action": "HCS Menu (install/setup/update)", "keys": "HCS+Alt+Space", "group": "system" },
+    { "action": "Show Desktop", "keys": "HCS+D", "group": "system" },
+    { "action": "Close Window", "keys": "HCS+Q", "group": "system" },
+    { "action": "Window Switcher", "keys": "Alt+Tab", "group": "system" },
+    { "action": "Task View (all windows + desktops)", "keys": "HCS+Tab", "group": "system" },
+    { "action": "Snap Layouts", "keys": "HCS+Z", "group": "system" },
+    { "action": "Snap Window Left", "keys": "HCS+Left", "group": "system" },
+    { "action": "Snap Window Right", "keys": "HCS+Right", "group": "system" },
+    { "action": "Maximize / Restore", "keys": "HCS+Up", "group": "system" },
+    { "action": "Minimize", "keys": "HCS+Down", "group": "system" },
+    { "action": "New Virtual Desktop", "keys": "HCS+Ctrl+D", "group": "system" },
+    { "action": "Close Virtual Desktop", "keys": "HCS+Ctrl+Shift+W", "group": "system" },
+    { "action": "Switch Desktop Left / Right", "keys": "HCS+Ctrl+Left / HCS+Ctrl+Right", "group": "system" },
+    { "action": "Jump to Desktop 1-9", "keys": "HCS+1 … HCS+9", "group": "system" },
+    { "action": "Toggle Tiling Mode", "keys": "HCS+Alt+T", "group": "system" },
+    { "action": "Toggle Stage Manager", "keys": "HCS+Alt+S", "group": "system" },
+    { "action": "Control Center", "keys": "HCS+E", "group": "system" },
+    { "action": "Notification Center", "keys": "HCS+N", "group": "system" },
+    { "action": "Widgets Board", "keys": "HCS+W", "group": "system" },
+    { "action": "All Keyboard Shortcuts (this HUD)", "keys": "HCS+/ or F1", "group": "system" },
+    { "action": "Lock Screen", "keys": "HCS+L", "group": "system" },
+    { "action": "Switch Keyboard Layout", "keys": "HCS+Space (held)", "group": "system" }
+  ],
+  "apps": [
+    { "action": "AI Chat", "keys": "HCS+Return", "group": "apps" },
+    { "action": "Image Studio", "keys": "HCS+I", "group": "apps" },
+    { "action": "System Monitor", "keys": "HCS+M", "group": "apps" },
+    { "action": "Files", "keys": "HCS+E while in Files", "group": "apps" },
+    { "action": "Terminal", "keys": "HCS+T", "group": "apps" },
+    { "action": "Screenshot / Snip", "keys": "Print or HCS+Shift+S", "group": "apps" },
+    { "action": "Notes", "keys": "HCS+Shift+N", "group": "apps" },
+    { "action": "Settings", "keys": "HCS+Comma", "group": "apps" },
+    { "action": "Software Updates", "keys": "HCS+U", "group": "apps" },
+    { "action": "Knowledge Ingest (RAG)", "keys": "HCS+Shift+R", "group": "apps" }
+  ],
+  "privacy": [
+    { "action": "Tor Killswitch", "keys": "HCS+Alt+T", "group": "privacy" },
+    { "action": "Redacted Clipboard", "keys": "HCS+V", "group": "privacy" },
+    { "action": "Amnesic Session (toggle)", "keys": "HCS+Alt+A", "group": "privacy" },
+    { "action": "Recall Timeline (local, encrypted)", "keys": "HCS+J", "group": "privacy" },
+    { "action": "Vault (LUKS)", "keys": "HCS+Alt+V", "group": "privacy" },
+    { "action": "Privacy Settings", "keys": "HCS+Alt+P", "group": "privacy" }
+  ],
+  "ai": [
+    { "action": "Ask the Brain (context aware)", "keys": "HCS+K", "group": "ai" },
+    { "action": "Explain Selection with Brain", "keys": "HCS+Shift+K", "group": "ai" },
+    { "action": "RAG Query (search the manuals)", "keys": "HCS+Shift+F", "group": "ai" },
+    { "action": "Cancel Current Generation", "keys": "Esc", "group": "ai" }
+  ],
+  "accessibility": [
+    { "action": "Reduce Motion (toggle)", "keys": "HCS+Alt+M", "group": "accessibility" },
+    { "action": "High Contrast Theme (toggle)", "keys": "HCS+Alt+H", "group": "accessibility" },
+    { "action": "Larger Text (toggle)", "keys": "HCS+Plus / HCS+Minus", "group": "accessibility" }
+  ]
+}

@@ -1,0 +1,33 @@
+[
+  {
+    "op": "wait_session",
+    "timeout_secs": 180
+  },
+  {
+    "op": "open",
+    "app": "hcs-chat"
+  },
+  {
+    "op": "settle",
+    "secs": 4
+  },
+  {
+    "op": "key",
+    "key": "Super+i"
+  },
+  {
+    "op": "settle",
+    "secs": 3
+  },
+  {
+    "op": "shot",
+    "name": "image_studio"
+  },
+  {
+    "op": "rss",
+    "process": "hcs-chat"
+  },
+  {
+    "op": "exit"
+  }
+]

@@ -1615,7 +1615,7 @@ dependencies = [
 
 [[package]]
 name = "hcs"
-version = "1.0.1"
+version = "2.0.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -1632,8 +1632,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "hcs-a11y"
+version = "2.0.0"
+dependencies = [
+ "anyhow",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "hcs-actions"
+version = "2.0.0"
+dependencies = [
+ "anyhow",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+]
+
+[[package]]
 name = "hcs-agents"
-version = "1.0.1"
+version = "2.0.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -1650,7 +1669,7 @@ dependencies = [
 
 [[package]]
 name = "hcs-chat"
-version = "1.0.1"
+version = "2.0.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -1673,7 +1692,7 @@ dependencies = [
 
 [[package]]
 name = "hcs-control"
-version = "1.0.1"
+version = "2.0.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -1689,7 +1708,7 @@ dependencies = [
 
 [[package]]
 name = "hcs-diagnose"
-version = "1.0.1"
+version = "2.0.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -1701,8 +1720,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "hcs-fm"
+version = "2.0.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "clap",
+ "hcs-ui",
+ "serde",
+ "serde_json",
+ "slint",
+ "slint-build",
+]
+
+[[package]]
 name = "hcs-gui-shots"
-version = "1.0.1"
+version = "2.0.0"
 dependencies = [
  "anyhow",
  "hcs-chat",
@@ -1717,7 +1750,7 @@ dependencies = [
 
 [[package]]
 name = "hcs-image"
-version = "1.0.1"
+version = "2.0.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -1734,7 +1767,7 @@ dependencies = [
 
 [[package]]
 name = "hcs-installer"
-version = "1.0.1"
+version = "2.0.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -1744,7 +1777,7 @@ dependencies = [
 
 [[package]]
 name = "hcs-mcp"
-version = "1.0.1"
+version = "2.0.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -1763,7 +1796,7 @@ dependencies = [
 
 [[package]]
 name = "hcs-memory"
-version = "1.0.1"
+version = "2.0.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -1780,7 +1813,7 @@ dependencies = [
 
 [[package]]
 name = "hcs-modeld"
-version = "1.0.1"
+version = "2.0.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -1797,7 +1830,7 @@ dependencies = [
 
 [[package]]
 name = "hcs-monitor"
-version = "1.0.1"
+version = "2.0.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -1809,8 +1842,38 @@ dependencies = [
 ]
 
 [[package]]
+name = "hcs-notes"
+version = "2.0.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "hcs-persist"
+version = "2.0.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+]
+
+[[package]]
+name = "hcs-qa-agent"
+version = "2.0.0"
+dependencies = [
+ "anyhow",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "hcs-rag-ingest"
-version = "1.0.1"
+version = "2.0.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -1822,8 +1885,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "hcs-recall"
+version = "2.0.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "hcs-search"
-version = "1.0.1"
+version = "2.0.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -1835,7 +1908,7 @@ dependencies = [
 
 [[package]]
 name = "hcs-security"
-version = "1.0.1"
+version = "2.0.0"
 dependencies = [
  "anyhow",
  "regex",
@@ -1848,7 +1921,7 @@ dependencies = [
 
 [[package]]
 name = "hcs-settings"
-version = "1.0.1"
+version = "2.0.0"
 dependencies = [
  "anyhow",
  "serde",
@@ -1859,8 +1932,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "hcs-shot"
+version = "2.0.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "clap",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+]
+
+[[package]]
+name = "hcs-term"
+version = "2.0.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "hcs-ui",
+ "serde",
+ "serde_json",
+ "slint",
+ "slint-build",
+]
+
+[[package]]
 name = "hcs-ui"
-version = "1.0.1"
+version = "2.0.0"
 dependencies = [
  "anyhow",
  "hcs-image",
@@ -1875,8 +1973,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "hcs-update"
+version = "2.0.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "hcs-updater"
-version = "1.0.1"
+version = "2.0.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -1893,7 +2001,7 @@ dependencies = [
 
 [[package]]
 name = "hcsd"
-version = "1.0.1"
+version = "2.0.0"
 dependencies = [
  "anyhow",
  "chrono",

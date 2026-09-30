@@ -5,7 +5,7 @@ Adheres to GEMINI.md Sections 64, 121, and 122.
 #>
 
 param(
-    [string]$IsoPath = "dist\HCS-Linux-1.0.0-amd64.iso",
+    [string]$IsoPath = "dist\HCS-Linux-1.1.0-amd64.iso",
     [string]$VmName = "HCS-Linux-Visual-QA",
     [int]$MemoryMB = 8192,
     [int]$CpuCount = 4,

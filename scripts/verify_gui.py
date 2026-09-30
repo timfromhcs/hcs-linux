@@ -164,7 +164,10 @@ def main() -> int:
     ap.add_argument("--update", action="store_true",
                     help="render and overwrite reference images")
     ap.add_argument("--theme", default="obsidian",
-                    choices=["obsidian", "titanium", "stealth"])
+                    # high_contrast is an accessibility preset, not a brand theme,
+                    # but it is gated exactly like the other three: a preset nobody
+                    # renders is a preset nobody has looked at.
+                    choices=["obsidian", "titanium", "stealth", "high_contrast"])
     ap.add_argument("--list", action="store_true", help="print view inventory")
     ap.add_argument("--no-render", action="store_true",
                     help="audit/diff the PNGs already in qa/gui (no cargo run)")

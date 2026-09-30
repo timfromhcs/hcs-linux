@@ -1,0 +1,260 @@
+{
+  "contrast": [
+    {
+      "background": "#0d1117",
+      "foreground": "#e6edf3",
+      "passes": true,
+      "ratio": 16.016082763671875,
+      "required": 4.5,
+      "theme": "obsidian"
+    },
+    {
+      "background": "#161b22",
+      "foreground": "#e6edf3",
+      "passes": true,
+      "ratio": 14.639774322509766,
+      "required": 4.5,
+      "theme": "obsidian"
+    },
+    {
+      "background": "#0d1117",
+      "foreground": "#8b949e",
+      "passes": true,
+      "ratio": 6.152740478515625,
+      "required": 4.5,
+      "theme": "obsidian"
+    },
+    {
+      "background": "#161b22",
+      "foreground": "#8b949e",
+      "passes": true,
+      "ratio": 5.624017238616943,
+      "required": 4.5,
+      "theme": "obsidian"
+    },
+    {
+      "background": "#e2e8f0",
+      "foreground": "#0f172a",
+      "passes": true,
+      "ratio": 14.481510162353516,
+      "required": 4.5,
+      "theme": "titanium"
+    },
+    {
+      "background": "#cbd5e1",
+      "foreground": "#0f172a",
+      "passes": true,
+      "ratio": 12.024320602416992,
+      "required": 4.5,
+      "theme": "titanium"
+    },
+    {
+      "background": "#e2e8f0",
+      "foreground": "#475569",
+      "passes": true,
+      "ratio": 6.1468024253845215,
+      "required": 4.5,
+      "theme": "titanium"
+    },
+    {
+      "background": "#cbd5e1",
+      "foreground": "#475569",
+      "passes": true,
+      "ratio": 5.103826999664307,
+      "required": 4.5,
+      "theme": "titanium"
+    },
+    {
+      "background": "#0f0f16",
+      "foreground": "#e5e7eb",
+      "passes": true,
+      "ratio": 15.416461944580078,
+      "required": 4.5,
+      "theme": "stealth"
+    },
+    {
+      "background": "#17171f",
+      "foreground": "#e5e7eb",
+      "passes": true,
+      "ratio": 14.389164924621582,
+      "required": 4.5,
+      "theme": "stealth"
+    },
+    {
+      "background": "#0f0f16",
+      "foreground": "#8b95a5",
+      "passes": true,
+      "ratio": 6.307878494262695,
+      "required": 4.5,
+      "theme": "stealth"
+    },
+    {
+      "background": "#17171f",
+      "foreground": "#8b95a5",
+      "passes": true,
+      "ratio": 5.887544631958008,
+      "required": 4.5,
+      "theme": "stealth"
+    },
+    {
+      "background": "#000000",
+      "foreground": "#ffffff",
+      "passes": true,
+      "ratio": 20.999998092651367,
+      "required": 7.0,
+      "theme": "high_contrast"
+    },
+    {
+      "background": "#0a0a0a",
+      "foreground": "#ffffff",
+      "passes": true,
+      "ratio": 19.798145294189453,
+      "required": 7.0,
+      "theme": "high_contrast"
+    },
+    {
+      "background": "#000000",
+      "foreground": "#e0e0e0",
+      "passes": true,
+      "ratio": 15.908087730407715,
+      "required": 7.0,
+      "theme": "high_contrast"
+    },
+    {
+      "background": "#0a0a0a",
+      "foreground": "#e0e0e0",
+      "passes": true,
+      "ratio": 14.997649192810059,
+      "required": 7.0,
+      "theme": "high_contrast"
+    }
+  ],
+  "contrast_checks": 16,
+  "failures": [],
+  "focus": [
+    {
+      "problems": [],
+      "tabbable": [
+        "omnibar.input",
+        "omnibar.results"
+      ],
+      "view": "omnibar"
+    },
+    {
+      "problems": [],
+      "tabbable": [
+        "taskbar.start",
+        "taskbar.search",
+        "taskbar.windowlist",
+        "taskbar.tray"
+      ],
+      "view": "taskbar"
+    },
+    {
+      "problems": [],
+      "tabbable": [
+        "menu.omnibar",
+        "menu.pinned",
+        "menu.all",
+        "menu.power"
+      ],
+      "view": "start_menu"
+    },
+    {
+      "problems": [],
+      "tabbable": [
+        "cc.tor",
+        "cc.network",
+        "cc.audio",
+        "cc.brightness",
+        "cc.profile"
+      ],
+      "view": "control_center"
+    },
+    {
+      "problems": [],
+      "tabbable": [
+        "nc.dnd",
+        "nc.list",
+        "nc.clear"
+      ],
+      "view": "notification_center"
+    },
+    {
+      "problems": [],
+      "tabbable": [
+        "fm.tabs",
+        "fm.search",
+        "fm.filter_name",
+        "fm.filter_content",
+        "fm.filter_date",
+        "fm.entries"
+      ],
+      "view": "files"
+    },
+    {
+      "problems": [],
+      "tabbable": [
+        "term.tabs",
+        "term.grid",
+        "term.composer"
+      ],
+      "view": "terminal"
+    },
+    {
+      "problems": [],
+      "tabbable": [
+        "notes.list",
+        "notes.editor",
+        "notes.search"
+      ],
+      "view": "notes"
+    },
+    {
+      "problems": [],
+      "tabbable": [
+        "docs.manual_list",
+        "docs.body",
+        "docs.explain"
+      ],
+      "view": "docs"
+    },
+    {
+      "problems": [],
+      "tabbable": [
+        "settings.theme",
+        "settings.keyboard",
+        "settings.privacy",
+        "settings.motion",
+        "settings.scale",
+        "settings.disclosure"
+      ],
+      "view": "settings"
+    },
+    {
+      "problems": [],
+      "tabbable": [
+        "update.levels",
+        "update.list",
+        "update.apply",
+        "update.rollback"
+      ],
+      "view": "update"
+    },
+    {
+      "problems": [],
+      "tabbable": [
+        "snap.half_left",
+        "snap.half_right",
+        "snap.quarters",
+        "snap.thirds",
+        "snap.three_quarter"
+      ],
+      "view": "snap_flyout"
+    }
+  ],
+  "gate": "a11y",
+  "status": "PASS",
+  "themes_checked": 4,
+  "views_checked": 12
+}

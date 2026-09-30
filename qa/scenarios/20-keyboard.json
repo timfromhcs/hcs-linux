@@ -1,0 +1,25 @@
+[
+  {
+    "op": "wait_session",
+    "timeout_secs": 180
+  },
+  {
+    "op": "settle",
+    "secs": 2
+  },
+  {
+    "op": "key",
+    "key": "Super+space"
+  },
+  {
+    "op": "settle",
+    "secs": 2
+  },
+  {
+    "op": "shot",
+    "name": "keyboard_layouts"
+  },
+  {
+    "op": "exit"
+  }
+]

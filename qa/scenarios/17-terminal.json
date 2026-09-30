@@ -1,0 +1,33 @@
+[
+  {
+    "op": "wait_session",
+    "timeout_secs": 180
+  },
+  {
+    "op": "open",
+    "app": "hcs-term"
+  },
+  {
+    "op": "settle",
+    "secs": 4
+  },
+  {
+    "op": "type",
+    "text": "hcs memory stats"
+  },
+  {
+    "op": "settle",
+    "secs": 3
+  },
+  {
+    "op": "shot",
+    "name": "terminal"
+  },
+  {
+    "op": "rss",
+    "process": "hcs-term"
+  },
+  {
+    "op": "exit"
+  }
+]

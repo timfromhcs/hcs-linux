@@ -1,0 +1,15 @@
+#!/bin/bash
+# hcs-docs-html — HTML documentation portal launcher (Master Plan Pillar 7)
+#
+# NOTE: `hcs-docs` is the NATIVE Slint markdown viewer (src/hcs-ui/src/bin/hcs-docs.rs).
+# This script is the browser-based HTML portal fallback and must keep a different name,
+# otherwise the live build overwrites the native binary in the ISO payload.
+set -euo pipefail
+DOC=/usr/share/hcs/docs/index.html
+if [ ! -f "$DOC" ]; then
+    echo "Offline docs portal not installed at $DOC" >&2
+    exit 1
+fi
+if command -v xdg-open >/dev/null 2>&1; then xdg-open "$DOC";
+elif command -v codium >/dev/null 2>&1; then codium "$DOC";
+else echo "Open offline docs at: $DOC"; fi

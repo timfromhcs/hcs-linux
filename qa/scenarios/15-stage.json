@@ -1,0 +1,29 @@
+[
+  {
+    "op": "wait_session",
+    "timeout_secs": 180
+  },
+  {
+    "op": "open",
+    "app": "hcs-chat"
+  },
+  {
+    "op": "settle",
+    "secs": 3
+  },
+  {
+    "op": "key",
+    "key": "Super+alt+s"
+  },
+  {
+    "op": "settle",
+    "secs": 3
+  },
+  {
+    "op": "shot",
+    "name": "stage_manager"
+  },
+  {
+    "op": "exit"
+  }
+]

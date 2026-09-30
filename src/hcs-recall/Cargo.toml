@@ -1,0 +1,21 @@
+[package]
+name = "hcs-recall"
+description = "HCS Recall: local encrypted timeline of what you have seen"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[lib]
+name = "hcs_recall"
+path = "src/lib.rs"
+
+[[bin]]
+name = "hcs-recall"
+path = "src/main.rs"
+
+[dependencies]
+clap.workspace = true
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true

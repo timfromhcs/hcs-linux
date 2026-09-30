@@ -1,0 +1,29 @@
+[
+  {
+    "op": "wait_session",
+    "timeout_secs": 180
+  },
+  {
+    "op": "open",
+    "app": "hcs-chat"
+  },
+  {
+    "op": "settle",
+    "secs": 3
+  },
+  {
+    "op": "key",
+    "key": "Super+Tab"
+  },
+  {
+    "op": "settle",
+    "secs": 3
+  },
+  {
+    "op": "shot",
+    "name": "task_view"
+  },
+  {
+    "op": "exit"
+  }
+]

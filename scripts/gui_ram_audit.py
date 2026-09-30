@@ -56,9 +56,24 @@ def inventory() -> list[App]:
             "all GUI views built and rendered headlessly (foundation, chat, "
             "monitor, control, search, diagnose, docs, settings)"),
     ]
-    # App crates register themselves here as the phases land.
-    for extra in json.loads(_extra_apps_json() or "[]"):
-        apps.append(App(**extra))
+    # App crates register themselves in config/gui_apps.json, so this script does
+    # not need editing every time an app lands.
+    #
+    # The manifest is a *mapping* with an "apps" list plus `_`-prefixed
+    # documentation keys. Iterating a dict directly yields its keys, so the
+    # top level must be unwrapped before the list is read.
+    manifest = json.loads(_extra_apps_json() or "{}")
+    entries = manifest.get("apps", []) if isinstance(manifest, dict) else manifest
+    for entry in entries or []:
+        if isinstance(entry, dict) and entry.get("name"):
+            apps.append(
+                App(
+                    name=entry["name"],
+                    crate_=entry.get("crate", entry["name"]),
+                    args=entry.get("args", []),
+                    note=entry.get("note", ""),
+                )
+            )
     return apps
 
 

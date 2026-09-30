@@ -11,7 +11,8 @@ export component ControlWindow inherits Window {
 
     in property <bool> theme-titanium: false;
     in property <bool> theme-stealth: false;
-    in property <Palette> palette: root.theme-stealth ? Presets.stealth : (root.theme-titanium ? Presets.titanium : Presets.obsidian);
+    in property <bool> theme-high-contrast: false;
+    in property <Palette> palette: root.theme-high-contrast ? Presets.high_contrast : (root.theme-stealth ? Presets.stealth : (root.theme-titanium ? Presets.titanium : Presets.obsidian));
     in property <string> theme-name: root.palette.theme-name;
 
     in property <bool> tor-isolated: false;

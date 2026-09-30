@@ -1,0 +1,21 @@
+[package]
+name = "hcs-update"
+description = "HCS update manager: risk levels, snapshots, rollback"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[lib]
+name = "hcs_update"
+path = "src/lib.rs"
+
+[[bin]]
+name = "hcs-update"
+path = "src/main.rs"
+
+[dependencies]
+clap.workspace = true
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true

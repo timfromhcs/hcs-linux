@@ -1,0 +1,34 @@
+[
+  {
+    "op": "wait_session",
+    "timeout_secs": 180
+  },
+  {
+    "op": "key",
+    "key": "Super+space"
+  },
+  {
+    "op": "settle",
+    "secs": 2
+  },
+  {
+    "op": "type",
+    "text": "ram"
+  },
+  {
+    "op": "settle",
+    "secs": 2
+  },
+  {
+    "op": "shot",
+    "name": "omnibar_query"
+  },
+  {
+    "op": "assert_text",
+    "name": "current",
+    "needle": "ram"
+  },
+  {
+    "op": "exit"
+  }
+]

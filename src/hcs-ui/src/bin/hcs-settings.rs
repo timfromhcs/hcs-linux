@@ -12,7 +12,7 @@ fn main() -> anyhow::Result<()> {
         .position(|a| a == "--theme")
         .and_then(|i| args.get(i + 1))
         .and_then(|s| ThemePreset::from_str_opt(s))
-        .unwrap_or_else(|| hcs_ui::load_theme());
+        .unwrap_or_else(hcs_ui::load_theme);
 
     hcs_ui::settings::run(theme)
 }

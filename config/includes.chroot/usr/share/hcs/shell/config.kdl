@@ -1,13 +1,53 @@
-// HCS Linux - Niri Wayland Compositor Configuration
-// Design: Modern glass aesthetics, scrollable columns, smooth animations
+// HCS Linux — niri compositor configuration (v2 plan §5 W1/W2)
+//
+// Mod = the HCS key. It sits where the Windows key sits and does what the
+// Windows key does, but it is called HCS everywhere in the product. Users
+// arriving from Windows get identical muscle memory; the docs never have to
+// explain a foreign key name.
+//
+// Window management is DUAL-MODE (v2 plan §4.2):
+//   - free     : Win11-style floating windows with Snap Layouts. THE DEFAULT,
+//                because that is what most users arrive expecting.
+//   - tiling   : niri's native scroll columns, keyboard-driven (Omarchy style).
+// Toggled at runtime with Mod+Alt+T, so the choice is never baked into the image.
+//
+// CPU-ONLY is a hard requirement: no GPU may be needed to reach a desktop.
+// niri's software path (pixman) is selected explicitly below.
+
+input {
+    keyboard {
+        xkb {
+            // QWERTZ default; the full registry lives in
+            // /usr/share/hcs/config/keyboard-layouts.conf (de/us/fr/es/it/gb).
+            layout "de"
+        }
+        repeat-rate 50
+        repeat-delay 250
+    }
+    touchpad {
+        tap
+        natural-scroll
+        scroll-factor 1.0
+    }
+}
 
 output "eDP-1" {
     mode "1920x1080@60.000"
+    // Exact fractional scaling (GNOME 49 lesson): rounded factors blur text.
     scale 1.0
 }
 
+prefer-no-csd
+
+// Software rendering. llvmpipe on a real GPU would be faster, but a
+// misconfigured driver must never cost the user their desktop.
+environment "WLR_RENDERER", "pixman"
+environment "LIBGL_ALWAYS_SOFTWARE", "1"
+environment "HCS_RENDERER", "software"
+environment "XCURSOR_THEME", "Adwaita"
+
 layout {
-    gaps 16
+    gaps 14
     center-focused-column "never"
     default-column-width { proportion 0.5; }
 
@@ -22,18 +62,69 @@ layout {
     }
 }
 
+animations {
+    slowdown 1.0
+    window-open { duration-ms 180; curve "ease-out-cubic"; }
+    window-close { duration-ms 140; curve "ease-in-cubic"; }
+    workspace-switch { duration-ms 220; curve "ease-out-expo"; }
+}
+
 prefer-no-csd
 
-spawn-at-startup "quickshell" "-c" "/usr/share/hcs/shell"
-spawn-at-startup "hcsd"
+// --- autostart ---------------------------------------------------------------
+spawn-at-startup "quickshell" "-p" "/usr/share/hcs/shell"
+spawn-at-startup "/usr/share/hcs/session/start-session.sh"
 
+// --- bindings ---------------------------------------------------------------
 binds {
-    Mod+Return { spawn "hcs-chat"; }
-    Mod+Space { spawn "hcs-search"; }
-    Mod+C { spawn "hcs-control" "status"; }
-    Mod+Q { close-window; }
-    Mod+Left  { focus-column-left; }
-    Mod+Right { focus-column-right; }
-    Mod+Shift+Left  { move-column-left; }
-    Mod+Shift+Right { move-column-right; }
+    // --- launcher / omnibar -------------------------------------------------
+    Mod+Space        { spawn "hcs-search"; }
+    Mod+Alt+Space    { spawn "quickshell" "-p" "/usr/share/hcs/shell/control_drawer.qml"; }
+    Mod+Return       { spawn "hcs-chat"; }
+    Mod+Slash        { spawn "quickshell" "-p" "/usr/share/hcs/shell/cheatsheet.qml"; }
+    F1               { spawn "quickshell" "-p" "/usr/share/hcs/shell/cheatsheet.qml"; }
+
+    // --- apps ---------------------------------------------------------------
+    Mod+I            { spawn "hcs-chat" "--gui" "--tab" "image"; }
+    Mod+M            { spawn "hcs-monitor" "--gui"; }
+    Mod+T            { spawn "hcs-term"; }
+    Mod+E            { spawn "hcs-fm"; }
+    Mod+Comma        { spawn "hcs-settings"; }
+    Mod+U            { spawn "hcs-update" "--gui"; }
+    Mod+Shift+R      { spawn "hcs-rag-ingest" "--gui"; }
+    Mod+Shift+N      { spawn "hcs-notes"; }
+    Mod+Shift+S      { spawn "hcs-shot" "--region"; }
+    Print            { spawn "hcs-shot" "--screen"; }
+
+    // --- shell surfaces -----------------------------------------------------
+    Mod+E            { spawn "quickshell" "-p" "/usr/share/hcs/shell/control_center.qml"; }
+    Mod+N            { spawn "quickshell" "-p" "/usr/share/hcs/shell/notification_center.qml"; }
+    Mod+W            { spawn "quickshell" "-p" "/usr/share/hcs/shell/widgets.qml"; }
+    Mod+Z            { spawn "quickshell" "-p" "/usr/share/hcs/shell/snap_flyout.qml"; }
+    Mod+Tab          { spawn "quickshell" "-p" "/usr/share/hcs/shell/taskview.qml"; }
+    Mod+Alt+S        { spawn "quickshell" "-p" "/usr/share/hcs/shell/stage.qml"; }
+
+    // --- window management --------------------------------------------------
+    Mod+Q            { close-window; }
+    Mod+Left         { focus-column-left; }
+    Mod+Right        { focus-column-right; }
+    Mod+Shift+Left   { move-column-left; }
+    Mod+Shift+Right  { move-column-right; }
+    Mod+Alt+T        { spawn "hcs" "window" "mode" "toggle"; }
+    Mod+Alt+H        { spawn "hcs" "theme" "set" "high_contrast"; }
+    Mod+Alt+M        { spawn "hcs" "settings" "reduce-motion" "toggle"; }
+    Mod+Plus         { spawn "hcs" "settings" "scale" "up"; }
+    Mod+Minus        { spawn "hcs" "settings" "scale" "down"; }
+
+    // --- privacy ------------------------------------------------------------
+    Mod+Alt+T        { spawn "hcs" "security" "tor" "toggle"; }
+    Mod+V            { spawn "quickshell" "-p" "/usr/share/hcs/shell/clipboard.qml"; }
+    Mod+Alt+A        { spawn "hcs" "privacy" "amnesic" "toggle"; }
+    Mod+J            { spawn "hcs" "recall"; }
+    Mod+Alt+V        { spawn "hcs" "security" "vault"; }
+
+    // --- AI -----------------------------------------------------------------
+    Mod+K            { spawn "hcs-chat" "--gui"; }
+    Mod+Shift+K      { spawn "hcs" "ask" "--selection"; }
+    Mod+Shift+F      { spawn "hcs" "rag" "query"; }
 }

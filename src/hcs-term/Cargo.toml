@@ -1,0 +1,32 @@
+[package]
+name = "hcs-term"
+description = "HCS terminal emulator: vte parser, grid rendering, dev profiles"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[lib]
+name = "hcs_term"
+path = "src/lib.rs"
+
+[[bin]]
+name = "hcs-term"
+path = "src/main.rs"
+
+[dependencies]
+hcs-ui = { path = "../hcs-ui" }
+slint = { version = "1.18.1", default-features = false, features = [
+    "compat-1-2",
+    "renderer-software",
+    "software-renderer-systemfonts",
+    "backend-winit",
+    "std",
+] }
+clap.workspace = true
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[build-dependencies]
+slint-build = { version = "1.18.1", features = ["experimental-module-builds"] }

@@ -1,0 +1,21 @@
+[
+  {
+    "op": "wait_session",
+    "timeout_secs": 180
+  },
+  {
+    "op": "shot",
+    "name": "theme_before"
+  },
+  {
+    "op": "settle",
+    "secs": 2
+  },
+  {
+    "op": "shot",
+    "name": "theme_after_switch"
+  },
+  {
+    "op": "exit"
+  }
+]

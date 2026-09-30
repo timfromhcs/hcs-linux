@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Welcome to HCS Linux
+Comment=First-boot tour
+Exec=hcs-welcome
+Icon=/usr/share/hcs/icons/hcs.svg
+Terminal=true
+Categories=System;Utility;
+NoDisplay=false

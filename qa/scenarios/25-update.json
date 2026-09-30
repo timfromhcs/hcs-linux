@@ -1,0 +1,25 @@
+[
+  {
+    "op": "wait_session",
+    "timeout_secs": 180
+  },
+  {
+    "op": "open",
+    "app": "hcs-update"
+  },
+  {
+    "op": "settle",
+    "secs": 4
+  },
+  {
+    "op": "shot",
+    "name": "update_levels"
+  },
+  {
+    "op": "assert_window",
+    "title": "Update"
+  },
+  {
+    "op": "exit"
+  }
+]

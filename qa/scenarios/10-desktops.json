@@ -1,0 +1,25 @@
+[
+  {
+    "op": "wait_session",
+    "timeout_secs": 180
+  },
+  {
+    "op": "settle",
+    "secs": 2
+  },
+  {
+    "op": "key",
+    "key": "Super+ctrl+d"
+  },
+  {
+    "op": "settle",
+    "secs": 3
+  },
+  {
+    "op": "shot",
+    "name": "virtual_desktops"
+  },
+  {
+    "op": "exit"
+  }
+]

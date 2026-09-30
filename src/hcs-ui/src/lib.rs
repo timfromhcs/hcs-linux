@@ -91,6 +91,22 @@ pub fn palette_values(preset: ThemePreset) -> PaletteValues {
             warn: (0xfb, 0xbf, 0x24),
             danger: (0xf8, 0x71, 0x71),
         },
+        // WCAG AAA text pairs. Gate 10 asserts these ratios; if a value here is
+        // ever "prettified" the gate must fail.
+        ThemePreset::HighContrast => PaletteValues {
+            theme_name: "high_contrast",
+            surface: (0x00, 0x00, 0x00),
+            surface_alt: (0x0a, 0x0a, 0x0a),
+            surface_raised: (0x14, 0x14, 0x14),
+            accent: (0x00, 0xe5, 0xff),
+            accent_alt: (0xff, 0xff, 0x00),
+            text_primary: (0xff, 0xff, 0xff),
+            text_muted: (0xe0, 0xe0, 0xe0),
+            border_soft: (0xff, 0xff, 0xff),
+            success: (0x00, 0xff, 0x88),
+            warn: (0xff, 0xa5, 0x00),
+            danger: (0xff, 0x55, 0x55),
+        },
     }
 }
 
@@ -133,9 +149,10 @@ macro_rules! hcs_palette {
 #[macro_export]
 macro_rules! apply_hcs_theme {
     ($win:expr, $preset:expr) => {{
-        let (titanium, stealth) = $crate::preset_flags($preset);
+        let (titanium, stealth, high_contrast) = $crate::preset_flags($preset);
         $win.set_theme_titanium(titanium);
         $win.set_theme_stealth(stealth);
+        $win.set_theme_high_contrast(high_contrast);
         $win.set_palette($crate::hcs_palette!($crate::palette_values($preset)));
         $win.set_theme_name($preset.as_str().into());
     }};
@@ -154,12 +171,19 @@ pub const APP_RSS_BUDGET_MB: u64 = 250;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum ThemePreset {
-    /// Obsidian Neural Gradient â€” default dark theme.
+    /// Obsidian Neural Gradient — default dark theme.
     Obsidian,
-    /// Frosted Titanium â€” light architectural theme.
+    /// Frosted Titanium — light architectural theme.
     Titanium,
-    /// Cybernetic Stealth â€” Security Lab theme.
+    /// Cybernetic Stealth — Security Lab theme.
     Stealth,
+    /// High Contrast — accessibility preset, checked by the Gate 10 audit.
+    ///
+    /// This is not a brand theme. It exists because Apple needed four Liquid
+    /// Glass revisions before translucent controls were legible again; we ship
+    /// the corrected version as a first-class preset instead of rediscovering
+    /// the bug.
+    HighContrast,
 }
 
 impl ThemePreset {
@@ -168,6 +192,7 @@ impl ThemePreset {
             ThemePreset::Obsidian => "obsidian",
             ThemePreset::Titanium => "titanium",
             ThemePreset::Stealth => "stealth",
+            ThemePreset::HighContrast => "high_contrast",
         }
     }
 
@@ -176,7 +201,30 @@ impl ThemePreset {
             "obsidian" => Some(ThemePreset::Obsidian),
             "titanium" => Some(ThemePreset::Titanium),
             "stealth" => Some(ThemePreset::Stealth),
+            "high_contrast" | "high-contrast" | "contrast" => Some(ThemePreset::HighContrast),
             _ => None,
+        }
+    }
+
+    /// Every preset, in menu order. Used by `hcs theme list` and the settings
+    /// app so the list cannot drift from the enum.
+    pub fn all() -> &'static [ThemePreset] {
+        &[
+            ThemePreset::Obsidian,
+            ThemePreset::Titanium,
+            ThemePreset::Stealth,
+            ThemePreset::HighContrast,
+        ]
+    }
+
+    /// The wallpaper that belongs to this preset, matching `colors.toml`.
+    pub fn wallpaper(self) -> &'static str {
+        match self {
+            ThemePreset::Titanium => "frosted_titanium",
+            ThemePreset::Stealth => "cybernetic_stealth",
+            // High Contrast keeps the default wallpaper: legibility comes from
+            // the palette, not from an image nobody can see through.
+            ThemePreset::Obsidian | ThemePreset::HighContrast => "neural_glass_dark",
         }
     }
 }
@@ -197,21 +245,23 @@ pub fn theme_config_path() -> std::path::PathBuf {
 }
 
 /// Booleans that select the active Neural Glass preset. The palette itself is
-/// resolved inside `AppFrame` (`theme-titanium` / `theme-stealth`), so plain
-/// `bool` bindings are all that is needed — those are always code-generated,
-/// which keeps the theme system testable from `cargo test`.
-pub fn preset_flags(preset: ThemePreset) -> (bool, bool) {
+/// resolved inside the window (`theme-titanium` / `theme-stealth` /
+/// `theme-high-contrast`), so plain `bool` bindings are all that is needed —
+/// those are always code-generated, which keeps the theme system testable from
+/// `cargo test`.
+pub fn preset_flags(preset: ThemePreset) -> (bool, bool, bool) {
     match preset {
-        ThemePreset::Obsidian => (false, false),
-        ThemePreset::Titanium => (true, false),
-        ThemePreset::Stealth => (false, true),
+        ThemePreset::Obsidian => (false, false, false),
+        ThemePreset::Titanium => (true, false, false),
+        ThemePreset::Stealth => (false, true, false),
+        ThemePreset::HighContrast => (false, false, true),
     }
 }
 
 /// Implemented for every generated window type so the theme can be applied
 /// without knowing the concrete type.
 pub trait ThemeTarget {
-    fn apply_theme_flags(&self, titanium: bool, stealth: bool);
+    fn apply_theme_flags(&self, titanium: bool, stealth: bool, high_contrast: bool);
 }
 
 /// Implement [`ThemeTarget`] for a generated Slint window type.
@@ -220,9 +270,10 @@ pub trait ThemeTarget {
 macro_rules! theme_target {
     ($t:ty) => {
         impl $crate::ThemeTarget for $t {
-            fn apply_theme_flags(&self, titanium: bool, stealth: bool) {
+            fn apply_theme_flags(&self, titanium: bool, stealth: bool, high_contrast: bool) {
                 self.set_theme_titanium(titanium);
                 self.set_theme_stealth(stealth);
+                self.set_theme_high_contrast(high_contrast);
             }
         }
     };

@@ -1,0 +1,20 @@
+[package]
+name = "hcs-qa-agent"
+description = "HCS deterministic guest-side QA driver for VirtualBox stages"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[lib]
+name = "hcs_qa_agent"
+path = "src/lib.rs"
+
+[[bin]]
+name = "hcs-qa-agent"
+path = "src/main.rs"
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+anyhow.workspace = true

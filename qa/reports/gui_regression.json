@@ -1,6 +1,6 @@
 {
   "mode": "regress",
-  "theme": "stealth",
+  "theme": "high_contrast",
   "total": 9,
   "passed": 9,
   "failed": 0,
@@ -13,64 +13,64 @@
   },
   "results": [
     {
-      "file": "chat-image-studio-stealth.png",
-      "reference": "qa\\expected\\gui\\chat-image-studio-stealth.png",
+      "file": "chat-high_contrast.png",
+      "reference": "qa\\expected\\gui\\chat-high_contrast.png",
       "mean_diff": 0.0,
       "changed_pct": 0.0,
       "status": "PASS"
     },
     {
-      "file": "chat-stealth.png",
-      "reference": "qa\\expected\\gui\\chat-stealth.png",
+      "file": "chat-image-studio-high_contrast.png",
+      "reference": "qa\\expected\\gui\\chat-image-studio-high_contrast.png",
       "mean_diff": 0.0,
       "changed_pct": 0.0,
       "status": "PASS"
     },
     {
-      "file": "control-stealth.png",
-      "reference": "qa\\expected\\gui\\control-stealth.png",
+      "file": "control-high_contrast.png",
+      "reference": "qa\\expected\\gui\\control-high_contrast.png",
       "mean_diff": 0.0,
       "changed_pct": 0.0,
       "status": "PASS"
     },
     {
-      "file": "diagnose-stealth.png",
-      "reference": "qa\\expected\\gui\\diagnose-stealth.png",
+      "file": "diagnose-high_contrast.png",
+      "reference": "qa\\expected\\gui\\diagnose-high_contrast.png",
       "mean_diff": 0.0,
       "changed_pct": 0.0,
       "status": "PASS"
     },
     {
-      "file": "docs-stealth.png",
-      "reference": "qa\\expected\\gui\\docs-stealth.png",
+      "file": "docs-high_contrast.png",
+      "reference": "qa\\expected\\gui\\docs-high_contrast.png",
       "mean_diff": 0.0,
       "changed_pct": 0.0,
       "status": "PASS"
     },
     {
-      "file": "foundation-gallery-stealth.png",
-      "reference": "qa\\expected\\gui\\foundation-gallery-stealth.png",
+      "file": "foundation-gallery-high_contrast.png",
+      "reference": "qa\\expected\\gui\\foundation-gallery-high_contrast.png",
       "mean_diff": 0.0,
       "changed_pct": 0.0,
       "status": "PASS"
     },
     {
-      "file": "monitor-stealth.png",
-      "reference": "qa\\expected\\gui\\monitor-stealth.png",
+      "file": "monitor-high_contrast.png",
+      "reference": "qa\\expected\\gui\\monitor-high_contrast.png",
       "mean_diff": 0.0,
       "changed_pct": 0.0,
       "status": "PASS"
     },
     {
-      "file": "search-stealth.png",
-      "reference": "qa\\expected\\gui\\search-stealth.png",
+      "file": "search-high_contrast.png",
+      "reference": "qa\\expected\\gui\\search-high_contrast.png",
       "mean_diff": 0.0,
       "changed_pct": 0.0,
       "status": "PASS"
     },
     {
-      "file": "settings-stealth.png",
-      "reference": "qa\\expected\\gui\\settings-stealth.png",
+      "file": "settings-high_contrast.png",
+      "reference": "qa\\expected\\gui\\settings-high_contrast.png",
       "mean_diff": 0.0,
       "changed_pct": 0.0,
       "status": "PASS"
