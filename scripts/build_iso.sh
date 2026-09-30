@@ -51,7 +51,7 @@ EOF
 echo "HCS Linux ${VERSION} \n \l" > "${ROOTFS_DIR}/etc/issue"
 
 # Copy compiled native binaries
-for bin in hcs hcsd hcs-modeld hcs-chat hcs-search hcs-control hcs-installer hcs-updater hcs-mcp hcs-monitor hcs-rag-ingest hcs-diagnose; do
+for bin in hcs hcsd hcs-modeld hcs-chat hcs-search hcs-control hcs-installer hcs-updater hcs-mcp hcs-monitor hcs-rag-ingest hcs-diagnose hcs-image; do
     if [ -f "${REPO_ROOT}/target/release/${bin}" ]; then
         cp -f "${REPO_ROOT}/target/release/${bin}" "${ROOTFS_DIR}/usr/bin/"
         chmod 755 "${ROOTFS_DIR}/usr/bin/${bin}"

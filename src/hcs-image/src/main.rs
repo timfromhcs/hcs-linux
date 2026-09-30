@@ -9,6 +9,7 @@ use hcs_image::{EngineConfig, ImageMode, InferenceRequest};
 #[derive(Parser, Debug)]
 #[command(
     name = "hcs-image",
+    version,
     about = "HCS offline CPU image generation (SD 1.5 LCM Q4, pure CPU)"
 )]
 struct Cli {

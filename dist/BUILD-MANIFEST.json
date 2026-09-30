@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "architecture": "amd64",
   "base_distribution": "Debian 13 (Trixie)",
-  "build_timestamp": "2026-09-30T17:09:19.125240+00:00",
+  "build_timestamp": "2026-09-30T17:15:56.975211+00:00",
   "target_ram_budget": "<= 6144 MB idle / <= 8192 MB peak",
   "source_locks_hash": "sources.lock.yaml",
   "models_count": 7,

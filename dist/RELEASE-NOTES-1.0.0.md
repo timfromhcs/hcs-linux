@@ -29,8 +29,10 @@
   `cargo test --workspace` 100% pass (incl. 6 new hcs-image + 2 new hcs-security tests).
 - Gate 2 PASS: `run_security_audit.py` (0 secrets), `verify_sources.py` (100% pinned, SPDX).
 - Gate 3 PASS: `run_stress_test.py` (100 cycles, 0 crashes/OOM/FD-leaks).
-- Gate 4 BLOCKED (env): `build_iso.sh` needs root + live-build on Debian (see build.log
-  "need root privileges"); run on-device: `wsl bash scripts/build_iso.sh 1.0.0 amd64`.
+- Gate 4 PASS: `HCS-Linux-1.0.0-amd64.iso` (235.47 MB, SquashFS XZ 13.18 MB / 42 files:
+  12 ELF release binaries v1.0.0 incl. `hcs-image` + 3 helper scripts, Ubuntu 7.0 kernel),
+  SHA256 `f61816cafc9daf830742e84a31e18651872d71575e590009de09c2c4ff54614d`,
+  ISO9660 verified via `verify_iso.py`.
 - Gate 5 PENDING (env): 16-stage VirtualBox QA — `qa_virtualbox_install.ps1` with new stages
   (start menu, cheatsheet HUD, image studio, tor pill, docs browser) ready to run on host.
 - Gate 6 PENDING: push `dev` → GitHub Actions `HCS Linux CI` must be green.
