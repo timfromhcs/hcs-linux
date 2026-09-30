@@ -1,0 +1,30 @@
+{
+  "apps": [
+    {
+      "app": "hcs-ui-gallery",
+      "crate": "hcs-ui",
+      "note": "foundation widget kit (proxy for GUI baseline)",
+      "args": [
+        "--gui-render",
+        "foundation-gallery",
+        "--out-dir",
+        "target/ram-audit",
+        "--hold-seconds",
+        "6"
+      ],
+      "peak_rss_mb": 11.3,
+      "budget_mb": 250,
+      "status": "PASS"
+    }
+  ],
+  "total": 1,
+  "passed": 1,
+  "failed": 0,
+  "unknown": 0,
+  "rss_measurable": true,
+  "app_budget_mb": 250,
+  "idle_budget_mb": 6144,
+  "peak_budget_mb": 8192,
+  "platform": "Windows",
+  "overall_status": "PASS"
+}

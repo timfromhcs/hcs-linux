@@ -1,0 +1,25 @@
+{
+  "mode": "render-only",
+  "theme": "obsidian",
+  "total": 1,
+  "passed": 1,
+  "failed": 0,
+  "overall_status": "PASS",
+  "thresholds": {
+    "min_entropy": 0.5,
+    "min_size_bytes": 1500,
+    "max_mean_diff": 2.0,
+    "pixel_tolerance": 12
+  },
+  "results": [
+    {
+      "file": "foundation-gallery-obsidian.png",
+      "size_bytes": 77872,
+      "width": 720,
+      "height": 560,
+      "entropy": 3.353,
+      "unique_colors": 2451,
+      "status": "PASS"
+    }
+  ]
+}

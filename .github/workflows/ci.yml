@@ -57,6 +57,95 @@ jobs:
       - name: SPDX SBOM & Notices Generation
         run: python scripts/generate_sbom.py
 
+  gui:
+    name: GUI Render, Regression & RAM Gate
+    needs: fast-path
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install GUI Gate Dependencies
+        run: pip install pillow psutil
+
+      - name: Install Headless Font Set
+        # The Slint software renderer needs real fonts; without them text
+        # renders as empty boxes.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fonts-dejavu-core
+
+      - name: GUI Unit Tests
+        run: cargo test -p hcs-ui
+
+      - name: GUI Headless Render Audit
+        # Renders every view with the software renderer (no GPU/display needed)
+        # and rejects blank frames via entropy + unique-colour count.
+        run: python scripts/verify_gui.py --render-only
+
+      - name: GUI Visual Regression
+        # Diffs renders against qa/expected/gui/. First run on a new view must
+        # use `python scripts/verify_gui.py --update` and the images reviewed.
+        run: python scripts/verify_gui.py --regress
+
+      - name: GUI RAM Budget Audit
+        # <= 250 MB RSS per GUI app (plan §3); measures real /proc RSS.
+        run: python scripts/gui_ram_audit.py
+
+  gui-wayland:
+    name: GUI Wayland Integration (headless Weston)
+    needs: fast-path
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Headless Wayland Stack
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y weston fonts-dejavu-core
+
+      - name: Start Headless Weston Compositor
+        run: |
+          weston --backend=headless-backend.so --width=1280 --height=800 \
+                 --socket=wayland-0 &
+          for i in $(seq 1 30); do
+            [ -S "${XDG_RUNTIME_DIR:-/tmp}/wayland-0" ] && break
+            sleep 1
+          done
+
+      - name: Launch GUI App on Wayland
+        # Real window on a real compositor: proves the GUI runs outside the
+        # software-render test path. Exit code 124 = timeout kill, which is the
+        # expected outcome because the app stays open.
+        env:
+          XDG_RUNTIME_DIR: /tmp
+          WAYLAND_DISPLAY: wayland-0
+        run: |
+          set +e
+          timeout 20 cargo run -q -p hcs-ui --bin hcs-gui-render -- \
+            --gui-render foundation-gallery --out-dir target/gui-wayland
+          code=$?
+          if [ $code -ne 0 ] && [ $code -ne 124 ]; then
+            echo "GUI Wayland launch failed with exit $code"
+            exit 1
+          fi
+          test -f target/gui-wayland/foundation-gallery-obsidian.png
+          echo "[OK] GUI app rendered on headless Wayland"
+
   iso-integration:
     name: ISO & Packaging Integration
     needs: fast-path

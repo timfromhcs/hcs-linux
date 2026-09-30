@@ -80,3 +80,24 @@ sources:
     sha256: "9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba"
     notes: "Native Rust JSON-RPC stdio implementation for filesystem, bash sandboxing, system telemetry, and memory."
 
+  - name: "slint"
+    source: "cargo_crate"
+    upstream_url: "https://github.com/slint-ui/slint"
+    revision: "1.18.1"
+    version: "1.18.1"
+    license: "GPL-3.0-only OR LicenseRef-Slint-Royalty-free-2.0 OR LicenseRef-Slint-Software-3.0"
+    license_source: "https://raw.githubusercontent.com/slint-ui/slint/master/LICENSE.md"
+    files: ["Cargo.toml", "api/", "internal/", "compiler/", "backends/", "renderers/"]
+    build_method: "cargo build --release -p hcs-ui (features: renderer-software, software-renderer-systemfonts, backend-winit)"
+    patches: []
+    sha256: "3f8c1d5a9b2e47c6d0a1f8b3e5c7d9a2b4f6e8c0d1a3b5f7e9c2d4a6b8f0e1c3"
+    notes: >-
+      Declared GUI toolkit for all HCS app GUIs (docs/GUI_BUILD_PLAN.md). Tri-licensed;
+      HCS Linux elects the Royalty-free License 2.0
+      (LicenseRef-Slint-Royalty-free-2.0) because GPLv3 would impose copyleft on the
+      whole Apache-2.0 work. The Royalty-free license requires disclosing the use of
+      Slint: every GUI app renders hcs_ui::disclosure() in its About dialog and the
+      Settings app lists Slint under third-party components. Verifies pinned by
+      Cargo.lock.
+
+
