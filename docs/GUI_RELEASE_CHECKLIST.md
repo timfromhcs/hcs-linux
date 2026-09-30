@@ -42,6 +42,8 @@ visual regression, RAM audit, Wayland) run in CI; this is the human pass.
 - [ ] The Slint disclosure is visible in the GUI (Settings → About Slint).
 
 ## 6. Evidence
-- [ ] `qa/expected/gui/` is up to date for all three themes
-      (`python scripts/verify_gui.py --update` per theme, images reviewed).
+- [ ] `qa/expected/gui/<platform>/` is up to date for all four themes
+      (`python scripts/verify_gui.py --update --theme <t>` per theme, images
+      reviewed). References are per-platform, because the software renderer
+      rasterises text through the platform font stack.
 - [ ] VirtualBox E2E stages 17-20 captured and entropy-checked.

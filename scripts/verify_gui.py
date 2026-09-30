@@ -8,7 +8,7 @@ this script audits them.
 
   --render-only : render every view, then assert the output is not blank
                   (size + Shannon entropy), same method as verify_visual_qa.py
-  --regress     : render every view and diff against qa/expected/gui/
+  --regress     : render every view and diff against qa/expected/gui/<platform>/
                   (mean absolute pixel difference, per-pixel tolerance)
   --update      : render and overwrite the reference images
   --list        : print the view inventory
@@ -28,8 +28,36 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 GUI_DIR = REPO_ROOT / "qa/gui"
-EXPECTED_DIR = REPO_ROOT / "qa/expected/gui"
+EXPECTED_ROOT = REPO_ROOT / "qa/expected/gui"
 REPORT = REPO_ROOT / "qa/reports/gui_regression.json"
+
+
+def platform_key() -> str:
+    """Reference images are per-platform, and that is not negotiable.
+
+    The Slint software renderer rasterises text through the platform's font
+    stack: DirectWrite on Windows, FreeType/fontconfig on Linux. The same Slint
+    document therefore produces slightly different glyph antialiasing and
+    hinting on each platform, which is a ~2-6% pixel difference on text-heavy
+    views. A single shared reference set can only ever be exact on the platform
+    that generated it; on the other it fails while the UI is in fact correct.
+
+    So references live under qa/expected/gui/<platform>/ and the gate compares
+    a render against the references captured on that same platform. The
+    non-blank render audit still runs everywhere, because "did anything draw at
+    all" is platform independent.
+    """
+    if sys.platform == "win32":
+        return "windows"
+    if sys.platform.startswith("linux"):
+        return "linux"
+    if sys.platform == "darwin":
+        return "macos"
+    return "other"
+
+
+def expected_dir() -> Path:
+    return EXPECTED_ROOT / platform_key()
 
 # Same thresholds as scripts/verify_visual_qa.py so GUI and VM gates agree.
 MIN_SIZE_BYTES = 1500
@@ -112,8 +140,9 @@ def diff_against_reference(theme: str) -> list[dict]:
     from PIL import Image, ImageChops
 
     results = []
+    refs = expected_dir()
     for png in sorted(GUI_DIR.glob(f"*-{theme}.png")):
-        ref = EXPECTED_DIR / png.name
+        ref = refs / png.name
         entry = {"file": png.name, "reference": str(ref.relative_to(REPO_ROOT))}
         if not ref.exists():
             entry.update(status="FAIL", error="no reference image (run with --update)")
@@ -160,7 +189,7 @@ def main() -> int:
     ap.add_argument("--render-only", action="store_true",
                     help="render and assert non-blank output only")
     ap.add_argument("--regress", action="store_true",
-                    help="render and diff against qa/expected/gui")
+                    help="render and diff against qa/expected/gui/<platform>")
     ap.add_argument("--update", action="store_true",
                     help="render and overwrite reference images")
     ap.add_argument("--theme", default="obsidian",
@@ -185,8 +214,16 @@ def main() -> int:
         return 0
 
     if args.regress:
-        print("=== HCS GUI visual regression (theme=%s) ===" % args.theme)
+        refs = expected_dir()
+        print("=== HCS GUI visual regression (theme=%s, references=%s) ==="
+              % (args.theme, refs.relative_to(REPO_ROOT)))
         if not args.no_render and not render(args.theme):
+            return 1
+        if not refs.is_dir():
+            print("[ERROR] no reference set for platform '%s'.\n"
+                  "        Generate it on this platform with:\n"
+                  "          python scripts/verify_gui.py --update --theme %s"
+                  % (platform_key(), args.theme), file=sys.stderr)
             return 1
         results = diff_against_reference(args.theme)
     else:
@@ -203,6 +240,7 @@ def main() -> int:
     summary = {
         "mode": "regress" if args.regress else "render-only",
         "theme": args.theme,
+        "platform": platform_key(),
         "total": len(results),
         "passed": passed,
         "failed": len(results) - passed,

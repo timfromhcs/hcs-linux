@@ -40,7 +40,7 @@ das ist der einzige Verzweigungspunkt in diesem Plan.
    - `src/lib.rs` — Konstruktoren + Theme-Umschaltung
      (Obsidian / Titanium / Stealth, steuert QML- und Slint-Seite über eine JSON-Datei).
 3. Test-Skripte (siehe §4) + CI-Job `gui` in `.github/workflows/ci.yml` anlegen.
-4. Referenz-Beispiel: ein Widget-Screenshot unter `qa/expected/gui/`.
+4. Referenz-Beispiel: ein Widget-Screenshot unter `qa/expected/gui/<platform>/`.
 5. `.desktop`-Datei-Konvention festlegen (siehe P1, Schritt 4).
 
 ### P1 — v1.1.0: `hcs-chat --gui` + Image Studio (ein PR)
@@ -86,10 +86,19 @@ wird der PR nicht gemergt. Gemessen wird per `/proc`-RSS, nicht per Schätzung.
    `python scripts/verify_gui.py --render-only` (neu in P0). Assert: kein Blank-Frame,
    Entropie ≥0.5, Mindestgröße — dieselbe Methode wie `scripts/verify_visual_qa.py`.
 3. **Visual Regression** — Render mit Referenz vergleichen:
-   `python scripts/verify_gui.py --regress` gegen `qa/expected/gui/<app>-<view>-<theme>.png`
+   `python scripts/verify_gui.py --regress` gegen
+   `qa/expected/gui/<platform>/<app>-<view>-<theme>.png`
    (SSIM-/Pixel-Schwelle, JSON-Report im bekannten Audit-Format). Referenzen werden im PR
-   als Screenshots zur Review angehängt und erst nach Abnahme unter `qa/expected/gui/`
-   eingecheckt.
+   als Screenshots zur Review angehängt und erst nach Abnahme eingecheckt.
+
+   **Die Referenzen sind plattformspezifisch.** Der Slint-Software-Renderer
+   rastern Text über den Font-Stack der Plattform (DirectWrite unter Windows,
+   FreeType/fontconfig unter Linux). Dasselbe Slint-Dokument erzeugt daher je
+   Plattform leicht andere Glyphen-Antialiasing und Hinting — bei textlastigen
+   Views rund 2–6 % abweichende Pixel. Ein gemeinsamer Referenzsatz kann nur auf
+   der erzeugenden Plattform exakt sein; auf der anderen schlägt er fehl, obwohl
+   die Oberfläche korrekt ist. Deshalb `qa/expected/gui/windows/` und
+   `qa/expected/gui/linux/`, und der Blank-Frame-Audit läuft weiter überall.
 4. **RAM-Audit** — `python scripts/gui_ram_audit.py` (neu in P0): startet jede GUI-App
    headless (Offscreen-Backend), misst RSS via `/proc`, prüft ≤250 MB pro App und
    Gesamt-Matrix. Cruise: läuft in CI und vor jedem Release.
@@ -122,7 +131,7 @@ wird der PR nicht gemergt. Gemessen wird per `/proc`-RSS, nicht per Schätzung.
 - je App: `src/hcs-<name>/{src/gui.rs,ui/*.slint}`, `--gui`-Flag in `main.rs`
 - `config/includes.chroot/usr/share/applications/hcs-*.desktop`
 - `scripts/verify_gui.py`, `scripts/gui_ram_audit.py`, `docs/GUI_RELEASE_CHECKLIST.md`
-- `qa/expected/gui/*.png` (Referenzen), `.github/workflows/ci.yml` (2 Jobs)
+- `qa/expected/gui/<platform>/*.png` (Referenzen), `.github/workflows/ci.yml` (2 Jobs)
 - `vendor/locks/sources.lock.yaml` (Slint-Pin), `dist/THIRD-PARTY-NOTICES.txt` (Lizenz)
 - P3 zusätzlich: `pulldown-cmark`-Pin (sonst keine neuen Deps — alles andere existiert)
 

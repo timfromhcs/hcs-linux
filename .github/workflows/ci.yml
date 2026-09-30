@@ -139,6 +139,18 @@ jobs:
             python scripts/verify_gui.py --render-only --theme "$theme"
           done
 
+      - name: Upload rendered GUI frames
+        # Reference images are per-platform because the software renderer
+        # rasterises text through the platform font stack. The render is
+        # uploaded so the Linux reference set can be reviewed and committed
+        # from a real Linux run rather than guessed.
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gui-frames-linux
+          path: qa/gui/*.png
+          if-no-files-found: warn
+
       - name: GUI Visual Regression
         run: |
           for theme in obsidian titanium stealth high_contrast; do
@@ -303,8 +315,12 @@ jobs:
 
       - name: Action registry is consistent
         # Quick keys must be unambiguous and privileged actions must be gated.
+        # `hcs actions …` shells out to the hcs-actions binary, so the target
+        # directory has to be on PATH — a build tree is not an install prefix.
         run: |
           set -euo pipefail
+          cargo build --quiet --bin hcs --bin hcs-actions
+          echo "$PWD/target/debug" >> "$GITHUB_PATH"
           cargo run --quiet --bin hcs -- actions validate
           cargo run --quiet --bin hcs-actions -- describe privacy.tor.toggle --json > /tmp/t.json
           python3 -c "

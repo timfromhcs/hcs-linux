@@ -187,7 +187,19 @@ fn main() -> anyhow::Result<()> {
         let out = out_dir.join(&file);
         render_view(spec, theme, &out)?;
         if update_refs {
-            let refs = PathBuf::from("qa/expected/gui");
+            // References are per-platform: the software renderer rasterises text
+            // through the platform font stack, so a reference captured on Windows
+            // is not pixel-identical on Linux and vice versa.
+            let platform = if cfg!(target_os = "windows") {
+                "windows"
+            } else if cfg!(target_os = "linux") {
+                "linux"
+            } else if cfg!(target_os = "macos") {
+                "macos"
+            } else {
+                "other"
+            };
+            let refs = PathBuf::from("qa/expected/gui").join(platform);
             std::fs::create_dir_all(&refs)?;
             let refpath = refs.join(&file);
             std::fs::copy(&out, &refpath)?;

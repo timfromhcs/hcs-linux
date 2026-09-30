@@ -47,7 +47,7 @@ Source: `docs/V1_STABLE_RELEASE_MASTER_PLAN.md` §7. Checked against this worksp
   Stated plainly: **the VM stages 17-18 verify the guest boots with the GUI
   toolchain staged — they are not GUI pixel evidence.** Actual GUI pixels are
   verified host-side by `scripts/verify_gui.py` (9 views x 3 themes = 27
-  reference renders in `qa/expected/gui/`, all reviewed). Closing the gap requires
+  reference renders in `qa/expected/gui/windows/`, all reviewed). Closing the gap requires
   the live session to start niri + Quickshell from `init`.
 - [x] **GUI gates (host-side, real):** `verify_gui.py --render-only` 9/9,
   `--regress` 9/9 per theme (obsidian/titanium/stealth), `gui_ram_audit.py`
