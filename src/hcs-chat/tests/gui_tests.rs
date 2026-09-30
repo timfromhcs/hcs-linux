@@ -7,10 +7,17 @@
 //! runs sequentially; the pure-logic tests (no window) stay independent and
 //! parallel. Rendering is covered separately by `scripts/verify_gui.py`, which
 //! renders through the standalone `hcs-gui-render` binary.
+//!
+//! The window is created on the *headless* platform, not winit. `hcs-chat`
+//! links `backend-winit`, so on a build machine with no display the default
+//! platform aborts with "neither WAYLAND_DISPLAY nor DISPLAY is set" — which
+//! is what CI hit. Installing the software-renderer platform first makes the
+//! test behave identically on a workstation and on a runner.
 
 use hcs_ui::ThemePreset;
 
 fn window() -> hcs_chat::gui::ChatWindow {
+    hcs_ui::install_headless().expect("headless platform");
     let ctx = hcs_chat::gui::ChatContext::offline("test-project");
     hcs_chat::gui::build_window(&ctx, ThemePreset::Obsidian).expect("chat window")
 }
