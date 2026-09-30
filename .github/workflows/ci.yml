@@ -31,6 +31,15 @@ jobs:
       - name: Install Python Dependencies
         run: pip install pyyaml pillow psutil
 
+      - name: Install GUI Build Dependencies
+        # The Slint software renderer with system fonts links against fontconfig
+        # and freetype. Without these headers the whole workspace fails to build
+        # on Linux — which is why the GUI crates compile on Windows and not on
+        # a bare CI runner.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libfontconfig-dev libfreetype-dev
+
       - name: Rust Code Formatting
         run: cargo fmt --all -- --check
 
