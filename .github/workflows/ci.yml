@@ -1,0 +1,77 @@
+name: HCS Linux CI
+
+on:
+  push:
+    branches: [ main, dev, "feature/**", "fix/**" ]
+  pull_request:
+    branches: [ main, dev ]
+
+permissions:
+  contents: read
+
+jobs:
+  fast-path:
+    name: Fast Path Audit & Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python Dependencies
+        run: pip install pyyaml
+
+      - name: Rust Code Formatting
+        run: cargo fmt --check
+
+      - name: Rust Clippy Lints
+        run: cargo clippy --workspace -- -D warnings
+
+      - name: Rust Unit & Integration Tests
+        run: cargo test --workspace
+
+      - name: Source & Package Lock Validation
+        run: python scripts/verify_sources.py
+
+      - name: Model Registry Validation
+        run: python scripts/fetch_models.py --verify-only
+
+      - name: Python Unit Tests
+        run: python -m unittest discover -s tests/unit -p "test_*.py"
+
+      - name: Security & Secret Leakage Audit
+        run: python scripts/run_security_audit.py
+
+      - name: System Stress Suite
+        run: python scripts/run_stress_test.py
+
+      - name: SPDX SBOM & Notices Generation
+        run: python scripts/generate_sbom.py
+
+  iso-integration:
+    name: ISO & Packaging Integration
+    needs: fast-path
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Build Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xorriso squashfs-tools
+
+      - name: Validate Live-Build Configs
+        run: |
+          test -f auto/config
+          test -f config/package-lists/hcs-core.list.chroot
+          test -f config/hooks/live/01-hcs-setup.hook.chroot

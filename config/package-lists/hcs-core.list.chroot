@@ -1,0 +1,37 @@
+# Core Linux & Hardware Support
+linux-image-amd64
+live-boot
+live-config
+live-config-systemd
+systemd
+systemd-sysv
+udev
+dbus
+polkitd
+
+# Display & Wayland Foundations
+libwayland-client0
+wayland-protocols
+pipewire
+wireplumber
+seatd
+
+# Storage & Core Libraries
+sqlite3
+libsqlite3-0
+zram-tools
+cryptsetup
+calamares
+
+# Networking & Basic Utilities
+network-manager
+wpasupplicant
+curl
+iproute2
+sudo
+bash-completion
+nano
+htop
+tar
+zstd
+ca-certificates

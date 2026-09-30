@@ -1,0 +1,36 @@
+{
+  "suite": "Visual QA Baseline Stages",
+  "version": "1.0.0",
+  "expected_stages": [
+    {
+      "name": "boot.png",
+      "description": "GRUB bootloader splash with HCS Linux branding",
+      "min_width": 1024,
+      "min_height": 768
+    },
+    {
+      "name": "desktop.png",
+      "description": "Niri / Quickshell Wayland glass desktop baseline",
+      "min_width": 1024,
+      "min_height": 768
+    },
+    {
+      "name": "launcher.png",
+      "description": "Unified HCS application launcher and fast search",
+      "min_width": 1024,
+      "min_height": 768
+    },
+    {
+      "name": "chat.png",
+      "description": "HCS Chat interaction dialog with local Brain",
+      "min_width": 1024,
+      "min_height": 768
+    },
+    {
+      "name": "installer.png",
+      "description": "Calamares branded installer welcome and partition page",
+      "min_width": 1024,
+      "min_height": 768
+    }
+  ]
+}

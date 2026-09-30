@@ -1,0 +1,65 @@
+{
+  "system": "HCS Glass Design System",
+  "version": "1.0.0",
+  "colors": {
+    "background_base": "#0a0c10",
+    "background_surface": "rgba(22, 27, 34, 0.72)",
+    "background_elevated": "rgba(33, 38, 45, 0.85)",
+    "primary": "#38bdf8",
+    "primary_glow": "rgba(56, 189, 248, 0.35)",
+    "accent": "#818cf8",
+    "success": "#34d399",
+    "warning": "#fbbf24",
+    "error": "#f87171",
+    "text_primary": "#f1f5f9",
+    "text_secondary": "#94a3b8",
+    "text_muted": "#64748b",
+    "border_subtle": "rgba(255, 255, 255, 0.08)",
+    "border_focus": "rgba(56, 189, 248, 0.6)"
+  },
+  "glass": {
+    "blur_radius_px": 24,
+    "saturation_percent": 140,
+    "noise_opacity": 0.02,
+    "low_power_fallback": {
+      "blur_enabled": false,
+      "background_surface": "#161b22"
+    }
+  },
+  "geometry": {
+    "radius_small_px": 8,
+    "radius_medium_px": 14,
+    "radius_large_px": 22,
+    "radius_pill_px": 9999
+  },
+  "spacing": {
+    "xs_px": 4,
+    "sm_px": 8,
+    "md_px": 16,
+    "lg_px": 24,
+    "xl_px": 32,
+    "xxl_px": 48
+  },
+  "typography": {
+    "font_family_ui": "Inter, system-ui, sans-serif",
+    "font_family_mono": "JetBrains Mono, monospace",
+    "size_caption_pt": 9,
+    "size_body_pt": 11,
+    "size_heading_pt": 15,
+    "size_title_pt": 20,
+    "size_hero_pt": 28
+  },
+  "animation": {
+    "duration_fast_ms": 120,
+    "duration_normal_ms": 240,
+    "duration_smooth_ms": 380,
+    "easing": "cubic-bezier(0.16, 1, 0.3, 1)",
+    "reduced_motion": {
+      "duration_ms": 0
+    }
+  },
+  "shadows": {
+    "soft": "0 8px 32px 0 rgba(0, 0, 0, 0.37)",
+    "glow": "0 0 24px rgba(56, 189, 248, 0.25)"
+  }
+}

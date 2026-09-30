@@ -1,0 +1,17 @@
+HCS Linux
+Copyright 2026 HCS Linux Contributors
+
+This product includes software developed by the HCS Linux Project (https://github.com/timfromhcs/hcs-linux).
+
+HCS Linux builds upon and integrates numerous open source projects, including:
+- Debian GNU/Linux (SPI / Software in the Public Interest, Inc.)
+- live-build (Debian Live Project)
+- llama.cpp (Georgi Gerganov and llama.cpp contributors)
+- niri (YaLTeR and niri contributors)
+- Quickshell (OutFoxxed and Quickshell contributors)
+- Calamares (Calamares Community)
+- SQLite (Public Domain / Hipp, Wyrick & Company, Inc.)
+- Qwen models (Alibaba Cloud / Qwen Team - Apache 2.0)
+
+Full licenses and copyright notices for third-party software and models are documented
+in licenses/third-party/, licenses/models/, and THIRD-PARTY-NOTICES.txt.

@@ -1,0 +1,39 @@
+// HCS Linux - Niri Wayland Compositor Configuration
+// Design: Modern glass aesthetics, scrollable columns, smooth animations
+
+output "eDP-1" {
+    mode "1920x1080@60.000"
+    scale 1.0
+}
+
+layout {
+    gaps 16
+    center-focused-column "never"
+    default-column-width { proportion 0.5; }
+
+    focus-ring {
+        width 2
+        active-color "#38bdf8"
+        inactive-color "#1e293b"
+    }
+
+    border {
+        off
+    }
+}
+
+prefer-no-csd
+
+spawn-at-startup "quickshell" "-c" "/usr/share/hcs/shell"
+spawn-at-startup "hcsd"
+
+binds {
+    Mod+Return { spawn "hcs-chat"; }
+    Mod+Space { spawn "hcs-search"; }
+    Mod+C { spawn "hcs-control" "status"; }
+    Mod+Q { close-window; }
+    Mod+Left  { focus-column-left; }
+    Mod+Right { focus-column-right; }
+    Mod+Shift+Left  { move-column-left; }
+    Mod+Shift+Right { move-column-right; }
+}

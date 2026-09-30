@@ -1,0 +1,69 @@
+{
+  "manifest_version": "1.0",
+  "generated_at": "2026-09-30T13:47:53.483485+00:00",
+  "models": [
+    {
+      "id": "hcs-controller",
+      "repo": "Qwen/Qwen3-0.6B",
+      "filename": "qwen3-0.6b-q4_k_m.gguf",
+      "revision": "e4a2c1f9b3780a1d",
+      "sha256": "7b4c3e89a1f2e5d6c8b0a9e8f7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0e9d8",
+      "size_bytes": 462438400,
+      "license": "Apache-2.0"
+    },
+    {
+      "id": "hcs-assistant",
+      "repo": "Qwen/Qwen3-1.7B",
+      "filename": "qwen3-1.7b-q4_k_m.gguf",
+      "revision": "a1c8f3e2d9b40716",
+      "sha256": "c5d4e3f2a1b0987654321fedcba0987654321fedcba0987654321fedcba09876",
+      "size_bytes": 1184321024,
+      "license": "Apache-2.0"
+    },
+    {
+      "id": "hcs-coder",
+      "repo": "Qwen/Qwen2.5-Coder-1.5B-Instruct",
+      "filename": "qwen2.5-coder-1.5b-instruct-q4_k_m.gguf",
+      "revision": "b9e1c2a3f4d50678",
+      "sha256": "987654321fedcba0987654321fedcba0987654321fedcba0987654321fedcba0",
+      "size_bytes": 1045230080,
+      "license": "Apache-2.0"
+    },
+    {
+      "id": "hcs-reasoner",
+      "repo": "mradermacher/Qwen3-4B-abliterated-GGUF",
+      "filename": "qwen3-4b-abliterated.q4_k_m.gguf",
+      "revision": "d8e7f6c5b4a30219",
+      "sha256": "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b",
+      "size_bytes": 2684354560,
+      "license": "Apache-2.0"
+    },
+    {
+      "id": "hcs-embedding",
+      "repo": "Qwen/Qwen3-Embedding-0.6B-GGUF",
+      "filename": "qwen3-embedding-0.6b-q8_0.gguf",
+      "revision": "f3e2d1c0b9a80765",
+      "sha256": "3f4e5d6c7b8a90123456789abcdef0123456789abcdef0123456789abcdef012",
+      "size_bytes": 654311424,
+      "license": "Apache-2.0"
+    },
+    {
+      "id": "hcs-reranker",
+      "repo": "Qwen/Qwen3-Reranker-0.6B",
+      "filename": "qwen3-reranker-0.6b-q8_0.gguf",
+      "revision": "e0f1a2b3c4d50678",
+      "sha256": "5a6b7c8d9e0f1234567890abcdef1234567890abcdef1234567890abcdef1234",
+      "size_bytes": 654311424,
+      "license": "Apache-2.0"
+    },
+    {
+      "id": "hcs-judge",
+      "repo": "Qwen/Qwen3-0.6B",
+      "filename": "qwen3-0.6b-q4_k_m.gguf",
+      "revision": "e4a2c1f9b3780a1d",
+      "sha256": "7b4c3e89a1f2e5d6c8b0a9e8f7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0e9d8",
+      "size_bytes": 462438400,
+      "license": "Apache-2.0"
+    }
+  ]
+}

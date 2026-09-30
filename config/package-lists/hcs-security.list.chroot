@@ -1,0 +1,12 @@
+# HCS Linux Security Lab (Authorized Environment)
+nmap
+tcpdump
+wireshark-common
+tshark
+radare2
+binwalk
+hashcat
+aircrack-ng
+sqlmap
+whois
+dnsutils

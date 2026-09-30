@@ -1,0 +1,11 @@
+{
+  "product": "HCS Linux",
+  "version": "0.1.0-alpha.1",
+  "architecture": "amd64",
+  "base_distribution": "Debian 13 (Trixie)",
+  "build_timestamp": "2026-09-30T13:47:53.483485+00:00",
+  "target_ram_budget": "<= 6144 MB idle / <= 8192 MB peak",
+  "source_locks_hash": "sources.lock.yaml",
+  "models_count": 7,
+  "packages_count": 8
+}

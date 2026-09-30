@@ -1,0 +1,35 @@
+#!/bin/sh
+set -eu
+
+echo "=== HCS Linux Chroot Bootstrap Hook ==="
+
+# 1. Setup HCS Configuration Directories
+mkdir -p /etc/hcs
+mkdir -p /usr/share/hcs/branding
+mkdir -p /var/log/hcs
+
+# 2. Configure ZRAM Swap (RAM Budget Optimization)
+if [ -f /etc/default/zramswap ]; then
+    sed -i 's/^#*ALLOCATION=.*/ALLOCATION=2048/' /etc/default/zramswap || true
+fi
+
+# 3. Setup Default Live User Permissions
+if id "user" >/dev/null 2>&1; then
+    usermod -aG sudo,video,audio user || true
+fi
+
+# 4. Configure Tor Defaults for Privacy Mode
+if [ -d /etc/tor ]; then
+    cat > /etc/tor/torrc << 'EOF'
+# HCS Linux Privacy Default Configuration
+SocksPort 127.0.0.1:9050
+Log notice file /var/log/tor/notices.log
+DataDirectory /var/lib/tor
+EOF
+fi
+
+# 5. Clean APT Caches (Reproducibility & ISO Size Reduction)
+apt-get clean || true
+rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+echo "=== HCS Linux Bootstrap Hook Completed Successfully ==="

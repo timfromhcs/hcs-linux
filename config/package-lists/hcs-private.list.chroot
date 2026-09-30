@@ -1,0 +1,7 @@
+# HCS Linux Privacy Stack
+tor
+nftables
+apparmor
+apparmor-utils
+bubblewrap
+iptables

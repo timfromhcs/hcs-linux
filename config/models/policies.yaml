@@ -1,0 +1,60 @@
+version: "1.0"
+
+routing_policy:
+  default_route: "controller"
+  routes:
+    - intent: "ui_command"
+      target_model: "hcs-controller"
+      temperature: 0.0
+      max_tokens: 128
+      thinking_enabled: false
+
+    - intent: "chat"
+      target_model: "hcs-assistant"
+      temperature: 0.7
+      max_tokens: 2048
+      thinking_enabled: false
+
+    - intent: "code_edit"
+      target_model: "hcs-coder"
+      temperature: 0.2
+      max_tokens: 4096
+      thinking_enabled: false
+
+    - intent: "complex_reasoning"
+      target_model: "hcs-reasoner"
+      temperature: 0.5
+      max_tokens: 4096
+      thinking_enabled: true
+
+    - intent: "memory_embedding"
+      target_model: "hcs-embedding"
+      temperature: 0.0
+      max_tokens: 512
+      thinking_enabled: false
+
+    - intent: "memory_rerank"
+      target_model: "hcs-reranker"
+      temperature: 0.0
+      max_tokens: 512
+      thinking_enabled: false
+
+    - intent: "outcome_judge"
+      target_model: "hcs-judge"
+      temperature: 0.0
+      max_tokens: 1024
+      thinking_enabled: false
+
+memory_policy:
+  recency_weight: 0.20
+  lexical_weight: 0.35
+  semantic_weight: 0.35
+  confidence_weight: 0.10
+  contradiction_threshold: 0.85
+  min_promotion_score: 80
+
+evaluation_policy:
+  strict_mode: true
+  require_objective_evidence: true
+  min_correctness_threshold: 85
+  min_verification_threshold: 90

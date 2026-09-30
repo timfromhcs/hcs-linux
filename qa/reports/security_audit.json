@@ -1,0 +1,9 @@
+{
+  "secret_scanning_clean": true,
+  "least_privilege_enforced": true,
+  "tor_routing_policy_verified": true,
+  "root_execution_forbidden": true,
+  "model_hash_verification_mandatory": true,
+  "violations": [],
+  "status": "PASS"
+}

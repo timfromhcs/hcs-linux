@@ -1,0 +1,21 @@
+version: "1.0"
+
+suites:
+  - name: "hcs-core-regression"
+    revision: "2026-09-30-v1"
+    golden_dataset: "data/golden/golden_tasks.json"
+    target_hardware: "EDGE-8GB"
+    thresholds:
+      critical_task_regression_max: 0
+      fatal_tool_use_regression_max: 0
+      crash_oom_count_max: 0
+      min_overall_correctness_pct: 92
+      min_verification_quality_pct: 95
+      schema_invalid_judge_outputs_max: 0
+    metrics_recorded:
+      - "correctness"
+      - "instruction_following"
+      - "relevance"
+      - "verification_quality"
+      - "peak_rss_mb"
+      - "latency_ms"

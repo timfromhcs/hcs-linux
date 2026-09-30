@@ -1,0 +1,17 @@
+#!/bin/sh
+set -eu
+
+lb config noauto \
+    --distribution trixie \
+    --architectures amd64 \
+    --binary-images iso-hybrid \
+    --archive-areas "main contrib non-free-firmware" \
+    --bootloader grub-efi \
+    --debian-installer false \
+    --iso-application "HCS Linux 0.1.0-alpha.1" \
+    --iso-preparer "timfromhcs <timfromhcs@gmail.com>" \
+    --iso-publisher "HCS Linux Project" \
+    --iso-volume "HCS_LINUX_010" \
+    --memtest none \
+    --apt-recommends true \
+    "${@}"

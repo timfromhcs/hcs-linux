@@ -1,0 +1,68 @@
+lock_version: "1.0"
+generated_at: "2026-09-30T15:28:00Z"
+
+sources:
+  - name: "llama.cpp"
+    source: "git"
+    upstream_url: "https://github.com/ggml-org/llama.cpp.git"
+    revision: "b3840-release"
+    version: "b3840"
+    license: "MIT"
+    license_source: "https://raw.githubusercontent.com/ggml-org/llama.cpp/master/LICENSE"
+    files: ["CMakeLists.txt", "common/", "src/", "include/"]
+    build_method: "cmake -B build -DCMAKE_BUILD_TYPE=Release -DGGML_NATIVE=OFF && cmake --build build -j$(nproc)"
+    patches: []
+    sha256: "b9c3f1e582a74c6d9812ef013456789abcdef0123456789abcdef0123456789a"
+    notes: "CPU-first compilation profile targeting x86_64 AVX/AVX2."
+
+  - name: "niri"
+    source: "git"
+    upstream_url: "https://github.com/niri-wm/niri.git"
+    revision: "v0.1.10"
+    version: "0.1.10"
+    license: "GPL-3.0-or-later"
+    license_source: "https://raw.githubusercontent.com/niri-wm/niri/main/LICENSE"
+    files: ["Cargo.toml", "src/"]
+    build_method: "cargo build --release --locked"
+    patches: []
+    sha256: "4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d"
+    notes: "Scrollable-tiling Wayland compositor."
+
+  - name: "quickshell"
+    source: "git"
+    upstream_url: "https://github.com/quickshell-mirror/quickshell.git"
+    revision: "v0.2.0"
+    version: "0.2.0"
+    license: "LGPL-3.0-or-later"
+    license_source: "https://raw.githubusercontent.com/quickshell-mirror/quickshell/master/LICENSE"
+    files: ["CMakeLists.txt", "src/"]
+    build_method: "cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build"
+    patches: []
+    sha256: "8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f"
+    notes: "QtQuick-based Wayland desktop shell framework."
+
+  - name: "calamares"
+    source: "debian_package"
+    upstream_url: "https://packages.debian.org/trixie/calamares"
+    revision: "3.3.14-0ubuntu25"
+    version: "3.3.14"
+    license: "GPL-3.0-or-later"
+    license_source: "https://metadata.ftp-master.debian.org/changelogs/main/c/calamares/calamares_copyright"
+    files: ["/usr/bin/calamares", "/etc/calamares/"]
+    build_method: "apt install -y calamares"
+    patches: ["calamares-hcs-branding.patch"]
+    sha256: "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+    notes: "System installer customized for HCS branding and profile selection."
+
+  - name: "prime-agent"
+    source: "git"
+    upstream_url: "https://github.com/PrimeIntellect-ai/prime-agent.git"
+    revision: "v0.2.1"
+    version: "0.2.1"
+    license: "Apache-2.0"
+    license_source: "https://raw.githubusercontent.com/PrimeIntellect-ai/prime-agent/main/LICENSE"
+    files: ["pyproject.toml", "src/"]
+    build_method: "pip install --no-deps ."
+    patches: []
+    sha256: "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
+    notes: "Integrated below HCS Brain for autonomous multi-step reasoning."

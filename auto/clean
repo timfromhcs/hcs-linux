@@ -1,0 +1,5 @@
+#!/bin/sh
+set -eu
+
+lb clean noauto "${@}"
+rm -f build.log

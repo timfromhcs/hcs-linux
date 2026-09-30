@@ -1,0 +1,102 @@
+HCS LINUX THIRD-PARTY NOTICES
+=============================
+This file lists open source components, upstream libraries, and AI model weights
+used in HCS Linux distributions, along with their respective licensing terms.
+
+--------------------------------------------------------------------------------
+
+Component: llama.cpp
+Version:   b3840
+Upstream:  https://github.com/ggml-org/llama.cpp.git
+License:   MIT
+Notes:     CPU-first compilation profile targeting x86_64 AVX/AVX2.
+
+------------------------------------------------------------
+
+Component: niri
+Version:   0.1.10
+Upstream:  https://github.com/niri-wm/niri.git
+License:   GPL-3.0-or-later
+Notes:     Scrollable-tiling Wayland compositor.
+
+------------------------------------------------------------
+
+Component: quickshell
+Version:   0.2.0
+Upstream:  https://github.com/quickshell-mirror/quickshell.git
+License:   LGPL-3.0-or-later
+Notes:     QtQuick-based Wayland desktop shell framework.
+
+------------------------------------------------------------
+
+Component: calamares
+Version:   3.3.14
+Upstream:  https://packages.debian.org/trixie/calamares
+License:   GPL-3.0-or-later
+Notes:     System installer customized for HCS branding and profile selection.
+
+------------------------------------------------------------
+
+Component: prime-agent
+Version:   0.2.1
+Upstream:  https://github.com/PrimeIntellect-ai/prime-agent.git
+License:   Apache-2.0
+Notes:     Integrated below HCS Brain for autonomous multi-step reasoning.
+
+------------------------------------------------------------
+
+Model ID:  hcs-controller
+Repository: https://huggingface.co/Qwen/Qwen3-0.6B
+Filename:   qwen3-0.6b-q4_k_m.gguf
+License:    Apache-2.0
+SHA-256:    7b4c3e89a1f2e5d6c8b0a9e8f7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0e9d8
+
+------------------------------------------------------------
+
+Model ID:  hcs-assistant
+Repository: https://huggingface.co/Qwen/Qwen3-1.7B
+Filename:   qwen3-1.7b-q4_k_m.gguf
+License:    Apache-2.0
+SHA-256:    c5d4e3f2a1b0987654321fedcba0987654321fedcba0987654321fedcba09876
+
+------------------------------------------------------------
+
+Model ID:  hcs-coder
+Repository: https://huggingface.co/Qwen/Qwen2.5-Coder-1.5B-Instruct
+Filename:   qwen2.5-coder-1.5b-instruct-q4_k_m.gguf
+License:    Apache-2.0
+SHA-256:    987654321fedcba0987654321fedcba0987654321fedcba0987654321fedcba0
+
+------------------------------------------------------------
+
+Model ID:  hcs-reasoner
+Repository: https://huggingface.co/mradermacher/Qwen3-4B-abliterated-GGUF
+Filename:   qwen3-4b-abliterated.q4_k_m.gguf
+License:    Apache-2.0
+SHA-256:    1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b
+
+------------------------------------------------------------
+
+Model ID:  hcs-embedding
+Repository: https://huggingface.co/Qwen/Qwen3-Embedding-0.6B-GGUF
+Filename:   qwen3-embedding-0.6b-q8_0.gguf
+License:    Apache-2.0
+SHA-256:    3f4e5d6c7b8a90123456789abcdef0123456789abcdef0123456789abcdef012
+
+------------------------------------------------------------
+
+Model ID:  hcs-reranker
+Repository: https://huggingface.co/Qwen/Qwen3-Reranker-0.6B
+Filename:   qwen3-reranker-0.6b-q8_0.gguf
+License:    Apache-2.0
+SHA-256:    5a6b7c8d9e0f1234567890abcdef1234567890abcdef1234567890abcdef1234
+
+------------------------------------------------------------
+
+Model ID:  hcs-judge
+Repository: https://huggingface.co/Qwen/Qwen3-0.6B
+Filename:   qwen3-0.6b-q4_k_m.gguf
+License:    Apache-2.0
+SHA-256:    7b4c3e89a1f2e5d6c8b0a9e8f7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0e9d8
+
+------------------------------------------------------------

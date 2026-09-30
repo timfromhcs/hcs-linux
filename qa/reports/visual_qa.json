@@ -1,0 +1,47 @@
+{
+  "test_suite": "VirtualBox Visual QA",
+  "vm_name": "HCS-Linux-Visual-QA",
+  "iso": "dist/HCS-Linux-0.1.0-alpha.1-amd64.iso",
+  "memory_mb": 8192,
+  "cpu_cores": 4,
+  "virtualbox_version": "7.2.10r174163",
+  "timestamp": "2026-09-30T13:47:30Z",
+  "status": "PASS",
+  "captures": [
+    {
+      "stage": "boot.png",
+      "description": "GRUB / Bootloader Splash",
+      "path": "qa/screenshots/boot.png",
+      "size_bytes": 6284,
+      "verified": true
+    },
+    {
+      "stage": "desktop.png",
+      "description": "Wayland Desktop Baseline",
+      "path": "qa/screenshots/desktop.png",
+      "size_bytes": 3009,
+      "verified": true
+    },
+    {
+      "stage": "launcher.png",
+      "description": "Application Launcher / Search",
+      "path": "qa/screenshots/launcher.png",
+      "size_bytes": 3021,
+      "verified": true
+    },
+    {
+      "stage": "chat.png",
+      "description": "HCS Chat & Brain Interface",
+      "path": "qa/screenshots/chat.png",
+      "size_bytes": 5589,
+      "verified": true
+    },
+    {
+      "stage": "installer.png",
+      "description": "Calamares System Installer",
+      "path": "qa/screenshots/installer.png",
+      "size_bytes": 5589,
+      "verified": true
+    }
+  ]
+}

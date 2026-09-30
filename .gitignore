@@ -1,0 +1,68 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Build and package outputs
+target/
+build/
+dist/*.iso
+dist/*.img
+dist/*.tar.*
+*.iso
+*.squashfs
+*.img
+*.vdi
+*.vmdk
+*.qcow2
+*.deb
+*.rpm
+
+# Models and large binaries (Never commit weights to Git history)
+vendor/models/**/*.gguf
+vendor/models/**/*.bin
+vendor/models/**/*.safetensors
+vendor/models/**/*.pt
+vendor/models/**/*.pth
+vendor/models/**/*.onnx
+*.gguf
+*.safetensors
+
+# Runtime sockets, logs, temporary files
+*.sock
+*.pid
+*.log
+*.tmp
+*.bak
+run/
+.cache/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# QA test run dumps
+qa/latest/
+qa/screenshots/run_*
+qa/logs/
+
+# Secrets and local configurations
+.env
+*.token
+*.key
+*.pem
+credentials.json
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+config/includes.chroot/usr/bin/*

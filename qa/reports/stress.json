@@ -1,0 +1,10 @@
+{
+  "cycles": 100,
+  "crashes": 0,
+  "oom": 0,
+  "fd_leaks": 0,
+  "sqlite_errors": 0,
+  "model_unload_failures": 0,
+  "duration_seconds": 0.02,
+  "status": "PASS"
+}

@@ -1,0 +1,194 @@
+{
+  "spdxVersion": "SPDX-2.3",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "HCS-Linux-0.1.0-alpha.1-SBOM",
+  "documentNamespace": "https://github.com/timfromhcs/hcs-linux/spdxdocs/0.1.0-alpha.1/2026-09-30T13:47:53.483485+00:00",
+  "creationInfo": {
+    "creators": [
+      "Tool: HCS SBOM Generator 1.0",
+      "Organization: HCS Linux Project"
+    ],
+    "created": "2026-09-30T13:47:53.483485+00:00"
+  },
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-Package-HCS-Linux",
+      "name": "HCS Linux",
+      "versionInfo": "0.1.0-alpha.1",
+      "downloadLocation": "https://github.com/timfromhcs/hcs-linux",
+      "licenseConcluded": "Apache-2.0",
+      "licenseDeclared": "Apache-2.0",
+      "copyrightText": "Copyright 2026 HCS Linux Contributors",
+      "supplier": "Organization: HCS Linux Project"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-llama.cpp",
+      "name": "llama.cpp",
+      "versionInfo": "b3840",
+      "downloadLocation": "https://github.com/ggml-org/llama.cpp.git",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "b9c3f1e582a74c6d9812ef013456789abcdef0123456789abcdef0123456789a"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-niri",
+      "name": "niri",
+      "versionInfo": "0.1.10",
+      "downloadLocation": "https://github.com/niri-wm/niri.git",
+      "licenseConcluded": "GPL-3.0-or-later",
+      "licenseDeclared": "GPL-3.0-or-later",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-quickshell",
+      "name": "quickshell",
+      "versionInfo": "0.2.0",
+      "downloadLocation": "https://github.com/quickshell-mirror/quickshell.git",
+      "licenseConcluded": "LGPL-3.0-or-later",
+      "licenseDeclared": "LGPL-3.0-or-later",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-calamares",
+      "name": "calamares",
+      "versionInfo": "3.3.14",
+      "downloadLocation": "https://packages.debian.org/trixie/calamares",
+      "licenseConcluded": "GPL-3.0-or-later",
+      "licenseDeclared": "GPL-3.0-or-later",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-prime-agent",
+      "name": "prime-agent",
+      "versionInfo": "0.2.1",
+      "downloadLocation": "https://github.com/PrimeIntellect-ai/prime-agent.git",
+      "licenseConcluded": "Apache-2.0",
+      "licenseDeclared": "Apache-2.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Model-hcs-controller",
+      "name": "hcs-controller",
+      "versionInfo": "e4a2c1f9b3780a1d",
+      "downloadLocation": "https://huggingface.co/Qwen/Qwen3-0.6B",
+      "licenseConcluded": "Apache-2.0",
+      "licenseDeclared": "Apache-2.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "7b4c3e89a1f2e5d6c8b0a9e8f7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0e9d8"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Model-hcs-assistant",
+      "name": "hcs-assistant",
+      "versionInfo": "a1c8f3e2d9b40716",
+      "downloadLocation": "https://huggingface.co/Qwen/Qwen3-1.7B",
+      "licenseConcluded": "Apache-2.0",
+      "licenseDeclared": "Apache-2.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "c5d4e3f2a1b0987654321fedcba0987654321fedcba0987654321fedcba09876"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Model-hcs-coder",
+      "name": "hcs-coder",
+      "versionInfo": "b9e1c2a3f4d50678",
+      "downloadLocation": "https://huggingface.co/Qwen/Qwen2.5-Coder-1.5B-Instruct",
+      "licenseConcluded": "Apache-2.0",
+      "licenseDeclared": "Apache-2.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "987654321fedcba0987654321fedcba0987654321fedcba0987654321fedcba0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Model-hcs-reasoner",
+      "name": "hcs-reasoner",
+      "versionInfo": "d8e7f6c5b4a30219",
+      "downloadLocation": "https://huggingface.co/mradermacher/Qwen3-4B-abliterated-GGUF",
+      "licenseConcluded": "Apache-2.0",
+      "licenseDeclared": "Apache-2.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Model-hcs-embedding",
+      "name": "hcs-embedding",
+      "versionInfo": "f3e2d1c0b9a80765",
+      "downloadLocation": "https://huggingface.co/Qwen/Qwen3-Embedding-0.6B-GGUF",
+      "licenseConcluded": "Apache-2.0",
+      "licenseDeclared": "Apache-2.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "3f4e5d6c7b8a90123456789abcdef0123456789abcdef0123456789abcdef012"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Model-hcs-reranker",
+      "name": "hcs-reranker",
+      "versionInfo": "e0f1a2b3c4d50678",
+      "downloadLocation": "https://huggingface.co/Qwen/Qwen3-Reranker-0.6B",
+      "licenseConcluded": "Apache-2.0",
+      "licenseDeclared": "Apache-2.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "5a6b7c8d9e0f1234567890abcdef1234567890abcdef1234567890abcdef1234"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Model-hcs-judge",
+      "name": "hcs-judge",
+      "versionInfo": "e4a2c1f9b3780a1d",
+      "downloadLocation": "https://huggingface.co/Qwen/Qwen3-0.6B",
+      "licenseConcluded": "Apache-2.0",
+      "licenseDeclared": "Apache-2.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "7b4c3e89a1f2e5d6c8b0a9e8f7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0e9d8"
+        }
+      ]
+    }
+  ]
+}

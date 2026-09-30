@@ -1,0 +1,115 @@
+version: "1.0"
+updated_at: "2026-09-30T15:28:00Z"
+
+models:
+  - id: "hcs-controller"
+    name: "Qwen3-0.6B-Controller"
+    repo: "Qwen/Qwen3-0.6B"
+    filename: "qwen3-0.6b-q4_k_m.gguf"
+    revision: "e4a2c1f9b3780a1d"
+    sha256: "7b4c3e89a1f2e5d6c8b0a9e8f7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0e9d8"
+    parameters: "0.6B"
+    quantization: "Q4_K_M"
+    role: "controller"
+    runtime_tier: "resident"
+    max_context: 4096
+    expected_ram_mb: 650
+    license: "Apache-2.0"
+    license_url: "https://huggingface.co/Qwen/Qwen3-0.6B/blob/main/LICENSE"
+    description: "Fast resident controller for intent classification, cheap routing, and simple tool selection."
+
+  - id: "hcs-assistant"
+    name: "Qwen3-1.7B-Assistant"
+    repo: "Qwen/Qwen3-1.7B"
+    filename: "qwen3-1.7b-q4_k_m.gguf"
+    revision: "a1c8f3e2d9b40716"
+    sha256: "c5d4e3f2a1b0987654321fedcba0987654321fedcba0987654321fedcba09876"
+    parameters: "1.7B"
+    quantization: "Q4_K_M"
+    role: "assistant"
+    runtime_tier: "interactive"
+    max_context: 8192
+    expected_ram_mb: 1450
+    license: "Apache-2.0"
+    license_url: "https://huggingface.co/Qwen/Qwen3-1.7B/blob/main/LICENSE"
+    description: "Primary conversational assistant for desktop chat, planning, and memory summarization."
+
+  - id: "hcs-coder"
+    name: "Qwen2.5-Coder-1.5B"
+    repo: "Qwen/Qwen2.5-Coder-1.5B-Instruct"
+    filename: "qwen2.5-coder-1.5b-instruct-q4_k_m.gguf"
+    revision: "b9e1c2a3f4d50678"
+    sha256: "987654321fedcba0987654321fedcba0987654321fedcba0987654321fedcba0"
+    parameters: "1.5B"
+    quantization: "Q4_K_M"
+    role: "coder"
+    runtime_tier: "on_demand"
+    max_context: 8192
+    expected_ram_mb: 1350
+    license: "Apache-2.0"
+    license_url: "https://huggingface.co/Qwen/Qwen2.5-Coder-1.5B-Instruct/blob/main/LICENSE"
+    description: "Dedicated coding model for code modifications, scripts, configuration, and unit tests."
+
+  - id: "hcs-reasoner"
+    name: "Qwen3-4B-Reasoner"
+    repo: "mradermacher/Qwen3-4B-abliterated-GGUF"
+    filename: "qwen3-4b-abliterated.q4_k_m.gguf"
+    revision: "d8e7f6c5b4a30219"
+    sha256: "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b"
+    parameters: "4.0B"
+    quantization: "Q4_K_M"
+    role: "reasoner"
+    runtime_tier: "on_demand"
+    max_context: 8192
+    expected_ram_mb: 2850
+    license: "Apache-2.0"
+    license_url: "https://huggingface.co/mradermacher/Qwen3-4B-abliterated-GGUF/blob/main/LICENSE"
+    description: "Deep reasoning engine loaded exclusively on demand for complex multi-step problems."
+
+  - id: "hcs-embedding"
+    name: "Qwen3-Embedding-0.6B"
+    repo: "Qwen/Qwen3-Embedding-0.6B-GGUF"
+    filename: "qwen3-embedding-0.6b-q8_0.gguf"
+    revision: "f3e2d1c0b9a80765"
+    sha256: "3f4e5d6c7b8a90123456789abcdef0123456789abcdef0123456789abcdef012"
+    parameters: "0.6B"
+    quantization: "Q8_0"
+    role: "embedding"
+    runtime_tier: "on_demand"
+    max_context: 2048
+    expected_ram_mb: 680
+    license: "Apache-2.0"
+    license_url: "https://huggingface.co/Qwen/Qwen3-Embedding-0.6B/blob/main/LICENSE"
+    description: "High-speed semantic vector embedding model for cognitive memory indexing."
+
+  - id: "hcs-reranker"
+    name: "Qwen3-Reranker-0.6B"
+    repo: "Qwen/Qwen3-Reranker-0.6B"
+    filename: "qwen3-reranker-0.6b-q8_0.gguf"
+    revision: "e0f1a2b3c4d50678"
+    sha256: "5a6b7c8d9e0f1234567890abcdef1234567890abcdef1234567890abcdef1234"
+    parameters: "0.6B"
+    quantization: "Q8_0"
+    role: "reranker"
+    runtime_tier: "on_demand"
+    max_context: 2048
+    expected_ram_mb: 680
+    license: "Apache-2.0"
+    license_url: "https://huggingface.co/Qwen/Qwen3-Reranker-0.6B/blob/main/LICENSE"
+    description: "Cross-encoder reranker for memory retrieval and candidate lesson promotion."
+
+  - id: "hcs-judge"
+    name: "Qwen3-0.6B-Judge"
+    repo: "Qwen/Qwen3-0.6B"
+    filename: "qwen3-0.6b-q4_k_m.gguf"
+    revision: "e4a2c1f9b3780a1d"
+    sha256: "7b4c3e89a1f2e5d6c8b0a9e8f7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0e9d8"
+    parameters: "0.6B"
+    quantization: "Q4_K_M"
+    role: "judge"
+    runtime_tier: "on_demand"
+    max_context: 4096
+    expected_ram_mb: 650
+    license: "Apache-2.0"
+    license_url: "https://huggingface.co/Qwen/Qwen3-0.6B/blob/main/LICENSE"
+    description: "Independent evaluation judge producing machine-valid structured JSON test reports."

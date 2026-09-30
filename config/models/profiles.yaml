@@ -1,0 +1,75 @@
+version: "1.0"
+default_profile: "EDGE-8GB"
+
+profiles:
+  EDGE-8GB:
+    description: "Resource-constrained edge profile strictly capped at 8GB peak RAM"
+    target_hardware:
+      min_ram_mb: 7600
+      max_ram_mb: 8500
+      min_cpu_cores: 4
+      gpu_required: false
+    budget:
+      idle_baseline_max_mb: 6144   # 6.0 GB RAM
+      normal_peak_max_mb: 8192      # 8.0 GB RAM
+    model_rules:
+      max_concurrent_heavy_models: 1
+      auto_unload_timeout_seconds: 45
+      default_context_window: 4096
+      enable_zram: true
+      zram_size_mb: 2048
+    active_models:
+      controller: "hcs-controller"
+      assistant: "hcs-assistant"
+      coder: "hcs-coder"
+      reasoner: "hcs-reasoner"
+      embedding: "hcs-embedding"
+      reranker: "hcs-reranker"
+      judge: "hcs-judge"
+
+  STANDARD-16GB:
+    description: "Standard desktop workstation profile for seamless multitasking"
+    target_hardware:
+      min_ram_mb: 15000
+      max_ram_mb: 17000
+      min_cpu_cores: 6
+      gpu_required: false
+    budget:
+      idle_baseline_max_mb: 6144
+      normal_peak_max_mb: 12288
+    model_rules:
+      max_concurrent_heavy_models: 2
+      auto_unload_timeout_seconds: 180
+      default_context_window: 8192
+      enable_zram: false
+    active_models:
+      controller: "hcs-controller"
+      assistant: "hcs-assistant"
+      coder: "hcs-coder"
+      reasoner: "hcs-reasoner"
+      embedding: "hcs-embedding"
+      reranker: "hcs-reranker"
+      judge: "hcs-judge"
+
+  LARGE-32GB:
+    description: "High-memory developer and research profile with persistent models"
+    target_hardware:
+      min_ram_mb: 31000
+      min_cpu_cores: 8
+      gpu_required: false
+    budget:
+      idle_baseline_max_mb: 8192
+      normal_peak_max_mb: 24576
+    model_rules:
+      max_concurrent_heavy_models: 4
+      auto_unload_timeout_seconds: 600
+      default_context_window: 16384
+      enable_zram: false
+    active_models:
+      controller: "hcs-controller"
+      assistant: "hcs-assistant"
+      coder: "hcs-coder"
+      reasoner: "hcs-reasoner"
+      embedding: "hcs-embedding"
+      reranker: "hcs-reranker"
+      judge: "hcs-judge"
