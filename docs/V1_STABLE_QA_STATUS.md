@@ -27,9 +27,15 @@ Source: `docs/V1_STABLE_RELEASE_MASTER_PLAN.md` §7. Checked against this worksp
   (Super+//F1, 3 cards) synced to shell dir.
 - [x] **Calamares OEM:** branded `show.qml` slideshow, `partition.conf` (LUKS2 AES-XTS-512,
   automated options), `users.conf` (groups, HW AI-profile convention).
-- [~] **Verification & release:** Gates 1-3 PASS + Gate-4 SBOM/manifests regenerated
-  (`dist/SBOM.spdx.json`, `MODEL/BUILD-MANIFEST.json`, `THIRD-PARTY-NOTICES.txt`);
-  Gates 4-7 env-blocked/pending — see `dist/RELEASE-NOTES-1.0.0.md` for exact commands.
+- [x] **Verification & release:** Gates 1-4 + 6 PASS, Gate 7 published 2026-09-30:
+  `HCS-Linux-1.0.0-amd64.iso` (235.47 MB, SHA256
+  `f61816cafc9daf830742e84a31e18651872d71575e590009de09c2c4ff54614d`),
+  SBOM/MODEL/BUILD manifests + THIRD-PARTY-NOTICES regenerated (v1.0.0),
+  CI run 36750197514 green, PR #3 (dev→main) open,
+  Release https://github.com/timfromhcs/hcs-linux/releases/tag/v1.0.0 (6 assets).
+- [ ] **Gate 5 VirtualBox 16-stage QA:** blocked (no VirtualBox on build host);
+  ready: `powershell -ExecutionPolicy Bypass -File scripts/qa_virtualbox_install.ps1 -IsoPath "dist/HCS-Linux-1.0.0-amd64.iso"`.
+- [ ] **SHA256SUMS.gpg:** blocked (no maintainer release-signing key available);
+  NOT fabricated — maintainer signs with release key on merge.
 
-Open follow-ups (need maintainer decision): version bump → 1.0.0, real ISO build on
-Debian host, VirtualBox 16-stage run, CI push, PR + GPG signing.
+Open follow-ups (need maintainer decision): PR #3 merge, Gate-5-VirtualBox-Lauf, GPG-Signatur.

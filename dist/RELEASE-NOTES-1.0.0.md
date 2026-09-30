@@ -35,9 +35,13 @@
   ISO9660 verified via `verify_iso.py`.
 - Gate 5 PENDING (env): 16-stage VirtualBox QA — `qa_virtualbox_install.ps1` with new stages
   (start menu, cheatsheet HUD, image studio, tor pill, docs browser) ready to run on host.
-- Gate 6 PENDING: push `dev` → GitHub Actions `HCS Linux CI` must be green.
-- Gate 7 PENDING: PR `dev`→`main`, bump `workspace.package.version` 0.1.0-alpha.1 → 1.0.0,
-  rebuild ISO + SBOM/SHA256SUMS(+.gpg)/THIRD-PARTY-NOTICES/BUILD+MODEL-MANIFEST, sign, publish.
+- Gate 6 PASS: push `dev` → GitHub Actions `HCS Linux CI` green (run 36750197514:
+  Fast Path + ISO & Packaging Integration).
+- Gate 7 DONE 2026-09-30: PR #3 (`dev`→`main`) open,
+  tag `v1.0.0`, Release https://github.com/timfromhcs/hcs-linux/releases/tag/v1.0.0
+  with 6 assets (ISO, SHA256SUMS, SBOM.spdx.json, THIRD-PARTY-NOTICES.txt,
+  BUILD/MODEL-MANIFEST.json). Remaining: PR merge, Gate-5 VirtualBox run,
+  SHA256SUMS.gpg (kein Maintainer-Signing-Key vorhanden — nicht fabriziert).
 
 ## RAM budget compliance (§5 matrix)
 Idle ~480MB → +0.6B resident ~1050MB → 1.7B chat ~2200MB → 4B reason ~4100MB →
