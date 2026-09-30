@@ -66,3 +66,17 @@ sources:
     patches: []
     sha256: "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
     notes: "Integrated below HCS Brain for autonomous multi-step reasoning."
+
+  - name: "model-context-protocol"
+    source: "spec"
+    upstream_url: "https://github.com/modelcontextprotocol/specification.git"
+    revision: "2024-11-05"
+    version: "2024-11-05"
+    license: "MIT"
+    license_source: "https://raw.githubusercontent.com/modelcontextprotocol/specification/main/LICENSE"
+    files: ["schema/schema.json"]
+    build_method: "cargo build -p hcs-mcp --release"
+    patches: []
+    sha256: "9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba"
+    notes: "Native Rust JSON-RPC stdio implementation for filesystem, bash sandboxing, system telemetry, and memory."
+

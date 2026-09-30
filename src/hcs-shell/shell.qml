@@ -74,7 +74,7 @@ ShellRoot {
 
                 Item { Layout.fillWidth: true }
 
-                // Brain Telemetry Pill (Active Model & RAM)
+                // Brain Telemetry Pill (Active Model & RAM) -> Click to open hcs-monitor
                 Rectangle {
                     width: 210
                     height: 28
@@ -104,9 +104,15 @@ ShellRoot {
                             color: "#38bdf8"
                         }
                     }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: Quickshell.process("hcs-monitor").start()
+                    }
                 }
 
-                // Tor Privacy Indicator
+                // Tor Privacy Indicator -> Click to open Control Drawer
                 Rectangle {
                     width: 72
                     height: 28
@@ -130,6 +136,30 @@ ShellRoot {
                             color: "#e2e8f0"
                         }
                     }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: Quickshell.process("quickshell").args(["-p", "/usr/share/hcs/shell/control_drawer.qml"]).start()
+                    }
+                }
+
+                // Notifications Bell
+                Rectangle {
+                    width: 28
+                    height: 28
+                    radius: 14
+                    color: "rgba(255, 255, 255, 0.06)"
+                    Text {
+                        anchors.centerIn: parent
+                        text: "🔔"
+                        font.pixelSize: 12
+                    }
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: Quickshell.process("quickshell").args(["-p", "/usr/share/hcs/shell/notifications.qml"]).start()
+                    }
                 }
 
                 // Clock & Date
@@ -151,7 +181,7 @@ ShellRoot {
             horizontalCenter: true
         }
         height: 68
-        width: 440
+        width: 540
         color: "transparent"
 
         Rectangle {
@@ -164,9 +194,9 @@ ShellRoot {
 
             RowLayout {
                 anchors.centerIn: parent
-                spacing: 16
+                spacing: 12
 
-                // App Launcher / Grid
+                // App Launcher / Finder
                 Rectangle {
                     width: 44; height: 44; radius: 12
                     color: "#1e293b"
@@ -202,6 +232,18 @@ ShellRoot {
                     }
                 }
 
+                // HCS AI Monitor
+                Rectangle {
+                    width: 44; height: 44; radius: 12
+                    color: "#0f172a"
+                    border.color: "rgba(56, 189, 248, 0.4)"
+                    Text { anchors.centerIn: parent; text: "Mon"; color: "#38bdf8"; font.pixelSize: 11; font.bold: true }
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: Quickshell.process("hcs-monitor").start()
+                    }
+                }
+
                 // HCS Control Center
                 Rectangle {
                     width: 44; height: 44; radius: 12
@@ -223,6 +265,18 @@ ShellRoot {
                     MouseArea {
                         anchors.fill: parent
                         onClicked: Quickshell.process("hcs-control").arg("tor").start()
+                    }
+                }
+
+                // HCS Diagnostic Triage
+                Rectangle {
+                    width: 44; height: 44; radius: 12
+                    color: "#1e1b4b"
+                    border.color: "rgba(251, 191, 36, 0.4)"
+                    Text { anchors.centerIn: parent; text: "Diag"; color: "#fbbf24"; font.pixelSize: 11; font.bold: true }
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: Quickshell.process("hcs-diagnose").start()
                     }
                 }
 

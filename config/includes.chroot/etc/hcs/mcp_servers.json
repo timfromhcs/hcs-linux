@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "hcs-filesystem": {
+      "command": "/usr/bin/hcs-mcp",
+      "args": ["fs", "--root", "/home/hcs"]
+    },
+    "hcs-bash": {
+      "command": "/usr/bin/hcs-mcp",
+      "args": ["bash", "--sandbox"]
+    },
+    "hcs-memory": {
+      "command": "/usr/bin/hcs-mcp",
+      "args": ["memory"]
+    },
+    "hcs-system": {
+      "command": "/usr/bin/hcs-mcp",
+      "args": ["system"]
+    },
+    "hcs-fetch": {
+      "command": "/usr/bin/hcs-mcp",
+      "args": ["fetch", "--privacy-mode", "auto"]
+    }
+  }
+}

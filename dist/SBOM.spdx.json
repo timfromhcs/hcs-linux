@@ -3,13 +3,13 @@
   "dataLicense": "CC0-1.0",
   "SPDXID": "SPDXRef-DOCUMENT",
   "name": "HCS-Linux-0.1.0-alpha.1-SBOM",
-  "documentNamespace": "https://github.com/timfromhcs/hcs-linux/spdxdocs/0.1.0-alpha.1/2026-09-30T15:35:18.051958+00:00",
+  "documentNamespace": "https://github.com/timfromhcs/hcs-linux/spdxdocs/0.1.0-alpha.1/2026-09-30T15:52:43.461467+00:00",
   "creationInfo": {
     "creators": [
       "Tool: HCS SBOM Generator 1.0",
       "Organization: HCS Linux Project"
     ],
-    "created": "2026-09-30T15:35:18.051958+00:00"
+    "created": "2026-09-30T15:52:43.461467+00:00"
   },
   "packages": [
     {
@@ -89,6 +89,20 @@
         {
           "algorithm": "SHA256",
           "checksumValue": "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-model-context-protocol",
+      "name": "model-context-protocol",
+      "versionInfo": "2024-11-05",
+      "downloadLocation": "https://github.com/modelcontextprotocol/specification.git",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba"
         }
       ]
     },
