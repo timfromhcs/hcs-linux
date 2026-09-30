@@ -1,5 +1,5 @@
 // HCS Linux - Niri Wayland Compositor Configuration
-// Aesthetic: Modern glass aesthetics, scrollable columns, smooth spring physics
+// Aesthetic: Modern Neural Glass aesthetics, scrollable columns, smooth spring physics
 // Adheres to GEMINI.md Section 36-60
 
 output "eDP-1" {
@@ -23,6 +23,13 @@ layout {
     }
 }
 
+animations {
+    slowdown 1.0
+    window-open { duration-ms 180; curve "ease-out-cubic"; }
+    window-close { duration-ms 140; curve "ease-in-cubic"; }
+    workspace-switch { duration-ms 220; curve "ease-out-expo"; }
+}
+
 prefer-no-csd
 
 spawn-at-startup "quickshell" "-c" "/usr/share/hcs/shell"
@@ -32,6 +39,12 @@ binds {
     Mod+Return { spawn "hcs-chat"; }
     Mod+Space  { spawn "hcs-search"; }
     Mod+C      { spawn "hcs-control" "status"; }
+    Mod+A      { spawn "quickshell" "-p" "/usr/share/hcs/shell/control_drawer.qml"; }
+    Mod+V      { spawn "quickshell" "-p" "/usr/share/hcs/shell/clipboard.qml"; }
+    Mod+N      { spawn "quickshell" "-p" "/usr/share/hcs/shell/notifications.qml"; }
+    Mod+M      { spawn "hcs-monitor"; }
+    Mod+D      { spawn "hcs-diagnose"; }
+    Mod+I      { spawn "hcs-rag-ingest"; }
     Mod+T      { spawn "x-terminal-emulator"; }
     Mod+Q      { close-window; }
     Mod+Left   { focus-column-left; }

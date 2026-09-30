@@ -404,6 +404,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "hcs-diagnose"
+version = "0.1.0-alpha.1"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "clap",
+ "serde",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
 name = "hcs-installer"
 version = "0.1.0-alpha.1"
 dependencies = [
@@ -411,6 +423,25 @@ dependencies = [
  "clap",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "hcs-mcp"
+version = "0.1.0-alpha.1"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "clap",
+ "hcs-memory",
+ "hcs-modeld",
+ "hcs-security",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]
@@ -445,6 +476,31 @@ dependencies = [
  "thiserror",
  "tokio",
  "tracing",
+]
+
+[[package]]
+name = "hcs-monitor"
+version = "0.1.0-alpha.1"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "clap",
+ "serde",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "hcs-rag-ingest"
+version = "0.1.0-alpha.1"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "clap",
+ "hcs-memory",
+ "serde",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]

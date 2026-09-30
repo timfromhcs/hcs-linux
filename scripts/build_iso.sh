@@ -51,7 +51,7 @@ EOF
 echo "HCS Linux ${VERSION} \n \l" > "${ROOTFS_DIR}/etc/issue"
 
 # Copy compiled native binaries
-for bin in hcs hcsd hcs-modeld hcs-chat hcs-search hcs-control hcs-installer hcs-updater; do
+for bin in hcs hcsd hcs-modeld hcs-chat hcs-search hcs-control hcs-installer hcs-updater hcs-mcp hcs-monitor hcs-rag-ingest hcs-diagnose; do
     if [ -f "${REPO_ROOT}/target/release/${bin}" ]; then
         cp -f "${REPO_ROOT}/target/release/${bin}" "${ROOTFS_DIR}/usr/bin/"
         chmod 755 "${ROOTFS_DIR}/usr/bin/${bin}"
@@ -102,6 +102,8 @@ cat << 'BANNER'
  [  OK  ] Initialized Cognitive Model Manager (hcs-modeld: Edge-8GB Profile)
  [  OK  ] Started Contextual Memory Engine (hcs-memory: SQLite FTS5)
  [  OK  ] Launched Prime Agent Runtime (hcs-agents)
+ [  OK  ] Native MCP Server Suite Active (/usr/bin/hcs-mcp)
+ [  OK  ] AI Telemetry & Diagnostic Monitors Active (hcs-monitor, hcs-diagnose)
  [  OK  ] Unified Developer CLI Active (/usr/bin/hcs)
  [  OK  ] Continuous GitHub Updater Active (hcs-updater tracking main)
  [  OK  ] Network Stack Active (NAT / Tor isolation available)
@@ -132,6 +134,7 @@ cp -rf "${REPO_ROOT}/assets/wallpapers/"* "${ROOTFS_DIR}/usr/share/hcs/wallpaper
 cp -rf "${REPO_ROOT}/src/hcs-shell/"* "${ROOTFS_DIR}/usr/share/hcs/shell/" 2>/dev/null || true
 cp -rf "${REPO_ROOT}/config/installer/calamares/"* "${ROOTFS_DIR}/etc/calamares/" 2>/dev/null || true
 cp -rf "${REPO_ROOT}/config/models" "${ROOTFS_DIR}/etc/hcs/" 2>/dev/null || true
+cp -rf "${REPO_ROOT}/config/includes.chroot/etc/hcs/"* "${ROOTFS_DIR}/etc/hcs/" 2>/dev/null || true
 
 # 3. Create compressed SquashFS root
 echo "[3/5] Compressing root filesystem into SquashFS..."

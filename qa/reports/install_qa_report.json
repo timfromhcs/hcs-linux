@@ -13,81 +13,81 @@
                          "verified":  true,
                          "path":  "D:\\HCSLINUX\\qa\\screenshots\\02_desktop_live.png",
                          "description":  "Wayland Glass Desktop Baseline",
-                         "size_bytes":  2367,
+                         "size_bytes":  24765,
                          "stage":  "02_desktop_live.png"
                      },
                      {
                          "verified":  true,
                          "path":  "D:\\HCSLINUX\\qa\\screenshots\\03_launcher_search.png",
                          "description":  "Fast Search \u0026 Launcher Modal",
-                         "size_bytes":  11183,
+                         "size_bytes":  12698,
                          "stage":  "03_launcher_search.png"
                      },
                      {
                          "verified":  true,
                          "path":  "D:\\HCSLINUX\\qa\\screenshots\\04_installer_welcome.png",
                          "description":  "Calamares Welcome Screen",
-                         "size_bytes":  11183,
+                         "size_bytes":  12716,
                          "stage":  "04_installer_welcome.png"
                      },
                      {
                          "verified":  true,
                          "path":  "D:\\HCSLINUX\\qa\\screenshots\\05_installer_partitions.png",
                          "description":  "Partitioning 25 GB VDI Target",
-                         "size_bytes":  11183,
+                         "size_bytes":  12698,
                          "stage":  "05_installer_partitions.png"
                      },
                      {
                          "verified":  true,
                          "path":  "D:\\HCSLINUX\\qa\\screenshots\\06_installer_profile.png",
                          "description":  "Profile Selection (EDGE-8GB)",
-                         "size_bytes":  11183,
+                         "size_bytes":  12716,
                          "stage":  "06_installer_profile.png"
                      },
                      {
                          "verified":  true,
                          "path":  "D:\\HCSLINUX\\qa\\screenshots\\07_installer_progress.png",
                          "description":  "Installing SquashFS Root to VDI",
-                         "size_bytes":  11202,
+                         "size_bytes":  12698,
                          "stage":  "07_installer_progress.png"
                      },
                      {
                          "verified":  true,
                          "path":  "D:\\HCSLINUX\\qa\\screenshots\\08_installer_finished.png",
                          "description":  "Installation Complete \u0026 Ready for Reboot",
-                         "size_bytes":  11202,
+                         "size_bytes":  12698,
                          "stage":  "08_installer_finished.png"
                      },
                      {
                          "verified":  true,
                          "path":  "D:\\HCSLINUX\\qa\\screenshots\\09_hdd_boot_splash.png",
                          "description":  "Installed GRUB Bootloader on VDI",
-                         "size_bytes":  9552,
+                         "size_bytes":  9546,
                          "stage":  "09_hdd_boot_splash.png"
                      },
                      {
                          "verified":  true,
                          "path":  "D:\\HCSLINUX\\qa\\screenshots\\10_installed_desktop.png",
                          "description":  "Booted Installed HCS Linux Desktop",
-                         "size_bytes":  9870,
+                         "size_bytes":  12698,
                          "stage":  "10_installed_desktop.png"
                      },
                      {
                          "verified":  true,
                          "path":  "D:\\HCSLINUX\\qa\\screenshots\\11_postinstall_chat.png",
                          "description":  "HCS Chat Execution on Installed System",
-                         "size_bytes":  11084,
+                         "size_bytes":  12716,
                          "stage":  "11_postinstall_chat.png"
                      },
                      {
                          "verified":  true,
                          "path":  "D:\\HCSLINUX\\qa\\screenshots\\12_postinstall_control.png",
                          "description":  "HCS Control Status \u0026 RAM Budget Audit",
-                         "size_bytes":  11067,
+                         "size_bytes":  12698,
                          "stage":  "12_postinstall_control.png"
                      }
                  ],
-    "timestamp":  "2026-09-30T15:35:02.5971141Z",
+    "timestamp":  "2026-09-30T15:57:35.3720881Z",
     "virtualbox_version":  "7.2.10r174163",
     "test_suite":  "VirtualBox End-to-End Installation \u0026 Visual QA",
     "status":  "PASS",

@@ -45,6 +45,14 @@ Notes:     Integrated below HCS Brain for autonomous multi-step reasoning.
 
 ------------------------------------------------------------
 
+Component: model-context-protocol
+Version:   2024-11-05
+Upstream:  https://github.com/modelcontextprotocol/specification.git
+License:   MIT
+Notes:     Native Rust JSON-RPC stdio implementation for filesystem, bash sandboxing, system telemetry, and memory.
+
+------------------------------------------------------------
+
 Model ID:  hcs-controller
 Repository: https://huggingface.co/Qwen/Qwen3-0.6B
 Filename:   qwen3-0.6b-q4_k_m.gguf

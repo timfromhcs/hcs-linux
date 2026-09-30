@@ -12,6 +12,10 @@ members = [
     "src/hcs-control",
     "src/hcs-updater",
     "src/hcs",
+    "src/hcs-mcp",
+    "src/hcs-monitor",
+    "src/hcs-rag-ingest",
+    "src/hcs-diagnose",
 ]
 resolver = "2"
 
