@@ -3,13 +3,13 @@
   "dataLicense": "CC0-1.0",
   "SPDXID": "SPDXRef-DOCUMENT",
   "name": "HCS-Linux-0.1.0-alpha.1-SBOM",
-  "documentNamespace": "https://github.com/timfromhcs/hcs-linux/spdxdocs/0.1.0-alpha.1/2026-09-30T15:17:39.355950+00:00",
+  "documentNamespace": "https://github.com/timfromhcs/hcs-linux/spdxdocs/0.1.0-alpha.1/2026-09-30T15:28:05.169387+00:00",
   "creationInfo": {
     "creators": [
       "Tool: HCS SBOM Generator 1.0",
       "Organization: HCS Linux Project"
     ],
-    "created": "2026-09-30T15:17:39.355950+00:00"
+    "created": "2026-09-30T15:28:05.169387+00:00"
   },
   "packages": [
     {

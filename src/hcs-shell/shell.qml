@@ -1,12 +1,17 @@
-// HCS Shell - Quickshell Desktop Environment
+// HCS Shell - Quickshell Wayland Desktop Environment
+// Aesthetic: Neural Glass (Obsidian slate, glowing cyan accents, frosted translucency)
+// Adheres to GEMINI.md Sections 36-60 (Zero-Electron Mandate, <= 180MB RAM)
+
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Controls
 import Quickshell
 import Quickshell.Wayland
 
 ShellRoot {
     id: root
 
+    // Top Telemetry & Control Bar
     PanelWindow {
         id: topBar
         anchors {
@@ -22,7 +27,7 @@ ShellRoot {
             anchors.margins: 6
             radius: 12
             color: "#161b22"
-            opacity: 0.85
+            opacity: 0.88
             border.color: "rgba(255, 255, 255, 0.08)"
             border.width: 1
 
@@ -32,51 +37,102 @@ ShellRoot {
                 anchors.rightMargin: 16
                 spacing: 16
 
-                // Brand Emblem
-                Text {
-                    text: "HCS LINUX"
-                    font.bold: true
-                    font.pixelSize: 14
-                    color: "#38bdf8"
+                // Brand Emblem & Monogram
+                RowLayout {
+                    spacing: 8
+                    Rectangle {
+                        width: 24
+                        height: 24
+                        radius: 6
+                        color: "#0f172a"
+                        border.color: "#38bdf8"
+                        border.width: 1
+                        Text {
+                            anchors.centerIn: parent
+                            text: "H"
+                            font.bold: true
+                            font.pixelSize: 13
+                            color: "#38bdf8"
+                        }
+                    }
+                    Text {
+                        text: "HCS LINUX"
+                        font.bold: true
+                        font.pixelSize: 13
+                        font.letterSpacing: 1.5
+                        color: "#f8fafc"
+                    }
                 }
 
-                // Workspaces
+                // Workspace Pills
                 Row {
-                    spacing: 8
-                    Rectangle { width: 24; height: 6; radius: 3; color: "#38bdf8" }
-                    Rectangle { width: 12; height: 6; radius: 3; color: "rgba(255,255,255,0.2)" }
-                    Rectangle { width: 12; height: 6; radius: 3; color: "rgba(255,255,255,0.2)" }
+                    spacing: 6
+                    Rectangle { width: 28; height: 6; radius: 3; color: "#38bdf8" }
+                    Rectangle { width: 14; height: 6; radius: 3; color: "rgba(255,255,255,0.18)" }
+                    Rectangle { width: 14; height: 6; radius: 3; color: "rgba(255,255,255,0.18)" }
                 }
 
                 Item { Layout.fillWidth: true }
 
-                // Brain Status Indicator
+                // Brain Telemetry Pill (Active Model & RAM)
                 Rectangle {
-                    width: 140
+                    width: 210
                     height: 28
                     radius: 14
-                    color: "rgba(56, 189, 248, 0.15)"
-                    border.color: "#38bdf8"
+                    color: "rgba(15, 23, 42, 0.75)"
+                    border.color: "rgba(56, 189, 248, 0.4)"
+                    border.width: 1
+
+                    RowLayout {
+                        anchors.centerIn: parent
+                        spacing: 8
+                        Rectangle {
+                            width: 8
+                            height: 8
+                            radius: 4
+                            color: "#34d399"
+                            SequentialAnimation on opacity {
+                                loops: Animation.Infinite
+                                NumberAnimation { from: 1.0; to: 0.4; duration: 1200 }
+                                NumberAnimation { from: 0.4; to: 1.0; duration: 1200 }
+                            }
+                        }
+                        Text {
+                            text: "Qwen3-0.6B | 550 MB"
+                            font.pixelSize: 11
+                            font.family: "JetBrains Mono, monospace"
+                            color: "#38bdf8"
+                        }
+                    }
+                }
+
+                // Tor Privacy Indicator
+                Rectangle {
+                    width: 72
+                    height: 28
+                    radius: 14
+                    color: "rgba(49, 16, 66, 0.4)"
+                    border.color: "rgba(192, 132, 252, 0.4)"
                     border.width: 1
 
                     RowLayout {
                         anchors.centerIn: parent
                         spacing: 6
                         Rectangle {
-                            width: 8
-                            height: 8
-                            radius: 4
-                            color: "#34d399"
+                            width: 6
+                            height: 6
+                            radius: 3
+                            color: "#c084fc"
                         }
                         Text {
-                            text: "Brain Ready"
+                            text: "Tor"
                             font.pixelSize: 11
-                            color: "#f8fafc"
+                            color: "#e2e8f0"
                         }
                     }
                 }
 
-                // Clock
+                // Clock & Date
                 Text {
                     text: Qt.formatDateTime(new Date(), "hh:mm")
                     font.pixelSize: 13
@@ -87,55 +143,99 @@ ShellRoot {
         }
     }
 
-    // Glass Floating Dock
+    // Glass Floating Neural Dock
     PanelWindow {
         id: dock
         anchors {
             bottom: true
             horizontalCenter: true
         }
-        height: 64
-        width: 380
+        height: 68
+        width: 440
         color: "transparent"
 
         Rectangle {
             anchors.fill: parent
             anchors.bottomMargin: 8
-            radius: 18
-            color: "rgba(22, 27, 34, 0.85)"
+            radius: 20
+            color: "rgba(22, 27, 34, 0.88)"
             border.color: "rgba(255, 255, 255, 0.12)"
             border.width: 1
 
             RowLayout {
                 anchors.centerIn: parent
-                spacing: 20
+                spacing: 16
 
-                // App Launcher
+                // App Launcher / Grid
                 Rectangle {
-                    width: 40; height: 40; radius: 10
+                    width: 44; height: 44; radius: 12
                     color: "#1e293b"
-                    Text { anchors.centerIn: parent; text: "Apps"; color: "#38bdf8"; font.pixelSize: 11 }
+                    border.color: "rgba(56, 189, 248, 0.3)"
+                    Text { anchors.centerIn: parent; text: "Apps"; color: "#38bdf8"; font.pixelSize: 11; font.bold: true }
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: Quickshell.process("hcs-search").start()
+                    }
                 }
 
-                // HCS Chat
+                // HCS Chat AI Companion
                 Rectangle {
-                    width: 40; height: 40; radius: 10
-                    color: "#1e293b"
-                    Text { anchors.centerIn: parent; text: "Chat"; color: "#818cf8"; font.pixelSize: 11 }
+                    width: 44; height: 44; radius: 12
+                    color: "#1e1b4b"
+                    border.color: "rgba(129, 140, 248, 0.4)"
+                    Text { anchors.centerIn: parent; text: "Chat"; color: "#818cf8"; font.pixelSize: 11; font.bold: true }
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: Quickshell.process("hcs-chat").start()
+                    }
                 }
 
-                // HCS Search
+                // HCS Search / Global Finder
                 Rectangle {
-                    width: 40; height: 40; radius: 10
-                    color: "#1e293b"
-                    Text { anchors.centerIn: parent; text: "Find"; color: "#34d399"; font.pixelSize: 11 }
+                    width: 44; height: 44; radius: 12
+                    color: "#064e3b"
+                    border.color: "rgba(52, 211, 153, 0.4)"
+                    Text { anchors.centerIn: parent; text: "Find"; color: "#34d399"; font.pixelSize: 11; font.bold: true }
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: Quickshell.process("hcs-search").start()
+                    }
                 }
 
-                // HCS Settings
+                // HCS Control Center
                 Rectangle {
-                    width: 40; height: 40; radius: 10
+                    width: 44; height: 44; radius: 12
                     color: "#1e293b"
-                    Text { anchors.centerIn: parent; text: "Setup"; color: "#f8fafc"; font.pixelSize: 11 }
+                    border.color: "rgba(56, 189, 248, 0.4)"
+                    Text { anchors.centerIn: parent; text: "Ctrl"; color: "#38bdf8"; font.pixelSize: 11; font.bold: true }
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: Quickshell.process("hcs-control").start()
+                    }
+                }
+
+                // HCS Security Lab
+                Rectangle {
+                    width: 44; height: 44; radius: 12
+                    color: "#311042"
+                    border.color: "rgba(192, 132, 252, 0.4)"
+                    Text { anchors.centerIn: parent; text: "Sec"; color: "#c084fc"; font.pixelSize: 11; font.bold: true }
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: Quickshell.process("hcs-control").arg("tor").start()
+                    }
+                }
+
+                // HCS Terminal
+                Rectangle {
+                    width: 44; height: 44; radius: 12
+                    color: "#18181b"
+                    border.color: "rgba(82, 82, 91, 0.5)"
+                    Text { anchors.centerIn: parent; text: "Term"; color: "#f8fafc"; font.pixelSize: 11; font.bold: true }
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: Quickshell.process("alacritty").start()
+                    }
                 }
             }
         }
