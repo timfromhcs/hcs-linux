@@ -1,0 +1,9 @@
+[Plymouth Theme]
+Name=HCS Neural Glass
+Description=Flicker-free HCS monogram cross-fade into Niri/Quickshell
+ModuleName=script
+
+[HCS]
+Logo=/usr/share/plymouth/themes/hcs/hcs-mark.png
+WallpaperObsidian=#0b0f17
+AccentCyan=#38bdf8

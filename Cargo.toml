@@ -16,6 +16,7 @@ members = [
     "src/hcs-monitor",
     "src/hcs-rag-ingest",
     "src/hcs-diagnose",
+    "src/hcs-image",
 ]
 resolver = "2"
 

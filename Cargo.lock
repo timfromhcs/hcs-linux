@@ -349,6 +349,7 @@ dependencies = [
  "chrono",
  "clap",
  "hcs-agents",
+ "hcs-image",
  "hcs-memory",
  "hcs-modeld",
  "hcs-security",
@@ -413,6 +414,23 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+]
+
+[[package]]
+name = "hcs-image"
+version = "0.1.0-alpha.1"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "clap",
+ "hex",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tempfile",
+ "thiserror",
+ "tracing",
+ "uuid",
 ]
 
 [[package]]

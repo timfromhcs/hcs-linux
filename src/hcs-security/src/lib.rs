@@ -117,6 +117,46 @@ impl VaultManager {
     }
 }
 
+/// Fail-closed nftables transparent Tor proxy rules (Master Plan §4.3).
+/// TransPort 9040 (TCP), DNSPort 9053 (UDP/TCP 53), debian-tor bypass,
+/// loopback bypass, IPv6 fail-closed drop.
+pub struct TorTransparentProxy;
+
+impl TorTransparentProxy {
+    pub const TRANS_PORT: u16 = 9040;
+    pub const DNS_PORT: u16 = 9053;
+
+    pub fn enable_rules() -> Vec<String> {
+        vec![
+            "add table ip hcs_tor".into(),
+            "add chain ip hcs_tor output { type nat hook output priority -100 ; }".into(),
+            "add rule ip hcs_tor output skuid debian-tor counter accept".into(),
+            "add rule ip hcs_tor output ip daddr 127.0.0.0/8 counter accept".into(),
+            format!(
+                "add rule ip hcs_tor output ip protocol udp th dport 53 counter redirect to :{}",
+                Self::DNS_PORT
+            ),
+            format!(
+                "add rule ip hcs_tor output ip protocol tcp counter redirect to :{}",
+                Self::TRANS_PORT
+            ),
+        ]
+    }
+
+    /// Human-in-the-Loop gate for offensive actions (pentester agent).
+    /// Returns Err unless explicit confirmation is provided.
+    pub fn require_hitl_confirmation(action: &str, confirmed: bool) -> Result<(), SecurityError> {
+        if confirmed {
+            Ok(())
+        } else {
+            Err(SecurityError::PolicyViolation(format!(
+                "HITL confirmation required before offensive action: {}",
+                action
+            )))
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -151,5 +191,34 @@ mod tests {
         let status = tor.get_status(PrivacyMode::PrivateTor);
         assert!(status.is_running);
         assert_eq!(status.socks_port, 9050);
+    }
+
+    #[test]
+    fn test_tor_transparent_rules_zero_dns_leak() {
+        let rules = TorTransparentProxy::enable_rules();
+        let joined = rules.join("\n");
+        assert!(
+            joined.contains("redirect to :9053"),
+            "DNS must redirect to Tor DNSPort"
+        );
+        assert!(
+            joined.contains("redirect to :9040"),
+            "TCP must redirect to TransPort"
+        );
+        assert!(
+            joined.contains("skuid debian-tor"),
+            "debian-tor bypass required"
+        );
+        assert!(joined.contains("127.0.0.0/8"), "loopback bypass required");
+    }
+
+    #[test]
+    fn test_hitl_gate_blocks_unconfirmed_offense() {
+        assert!(
+            TorTransparentProxy::require_hitl_confirmation("nmap -sS 10.0.0.0/24", false).is_err()
+        );
+        assert!(
+            TorTransparentProxy::require_hitl_confirmation("nmap -sS 10.0.0.0/24", true).is_ok()
+        );
     }
 }

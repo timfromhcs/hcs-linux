@@ -1,11 +1,20 @@
-# HCS Linux Developer Mode
+# HCS Linux Developer Mode — Complete workflow (Master Plan Pillar 6)
 build-essential
 git
 cmake
 python3
 python3-pip
 python3-venv
+nodejs
+npm
+rustc
+cargo
+neovim
+codium
 strace
 gdb
+lldb
 jq
 ripgrep
+shellcheck
+sqlite3

@@ -1,12 +1,44 @@
-# HCS Linux Security Lab (Authorized Environment)
+# HCS Linux Security Lab — Curated Debian 13 (trixie) Arsenal
+# Spec: docs/V1_STABLE_RELEASE_MASTER_PLAN.md §4.3
+# Strict Debian purity: NO Kali repos. All from Debian 13.7 trixie + pinned upstream.
+
+# Network Reconnaissance & Sniffing
 nmap
-tcpdump
-wireshark-common
+wireshark
 tshark
-radare2
-binwalk
-hashcat
-aircrack-ng
-sqlmap
-whois
+tcpdump
+socat
+masscan
+netcat-traditional
 dnsutils
+
+# Web & API Security
+sqlmap
+nikto
+gobuster
+ffuf
+curl
+wget
+
+# Password Auditing & Cracking
+john
+hashcat
+hydra
+aircrack-ng
+
+# Binary Analysis & Debugging
+gdb
+lldb
+strace
+ltrace
+binwalk
+
+# Cryptography & Steganography
+steghide
+qrencode
+openssl
+
+# Tor & Anonymity (transparent proxy + browser)
+tor
+torbrowser-launcher
+nftables
