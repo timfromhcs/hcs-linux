@@ -33,8 +33,12 @@ Source: `docs/V1_STABLE_RELEASE_MASTER_PLAN.md` §7. Checked against this worksp
   SBOM/MODEL/BUILD manifests + THIRD-PARTY-NOTICES regenerated (v1.0.0),
   CI run 36750197514 green, PR #3 (dev→main) open,
   Release https://github.com/timfromhcs/hcs-linux/releases/tag/v1.0.0 (6 assets).
-- [ ] **Gate 5 VirtualBox 16-stage QA:** blocked (no VirtualBox on build host);
-  ready: `powershell -ExecutionPolicy Bypass -File scripts/qa_virtualbox_install.ps1 -IsoPath "dist/HCS-Linux-1.0.0-amd64.iso"`.
+- [x] **Gate 5 VirtualBox 16-stage QA (v1.0.1):** PASS 16/16 on VirtualBox 7.2.10
+  (2026-09-30, `qa/reports/install_qa_report.json`): GRUB menu `HCS Linux 1.0.1 Live
+  Desktop`, live banner `HCS LINUX 1.0.1`, installed HDD-boot banner `HCS LINUX 1.0.1`
+  — all screenshot-verified (`qa/screenshots/01..16_*`, entropy audit 32/32 PASS).
+  Forensics on the 1.0.0 run found + fixed: literal `${VERSION}` banner (heredoc
+  quoting), stale alpha VDI, black framebuffer timing — see CHANGELOG 1.0.1.
 - [ ] **SHA256SUMS.gpg:** blocked (no maintainer release-signing key available);
   NOT fabricated — maintainer signs with release key on merge.
 
