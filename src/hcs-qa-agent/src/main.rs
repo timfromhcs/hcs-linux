@@ -139,11 +139,11 @@ fn serve() -> Result<Agent> {
             let response = match serde_json::from_str::<Step>(trimmed) {
                 Ok(step) => {
                     let outcome = agent.run_step(step, &mut fx);
-                    if agent.is_finished() {
-                        serde_json::json!({ "outcome": outcome.to_string() })
-                    } else {
-                        serde_json::json!({ "outcome": outcome.to_string() })
-                    }
+                    serde_json::json!({
+                        "outcome": outcome.to_string(),
+                        "finished": agent.is_finished(),
+                        "step": agent.steps_taken(),
+                    })
                 }
                 Err(e) => serde_json::json!({
                     "status": "failed",

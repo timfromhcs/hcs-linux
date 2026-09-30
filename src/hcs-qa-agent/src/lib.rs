@@ -232,6 +232,12 @@ impl Agent {
             .join("\n")
     }
 
+    /// How many steps have been executed, for the journal and the driver's
+    /// progress output.
+    pub fn steps_taken(&self) -> usize {
+        self.entries.len()
+    }
+
     pub fn is_finished(&self) -> bool {
         self.finished
     }
