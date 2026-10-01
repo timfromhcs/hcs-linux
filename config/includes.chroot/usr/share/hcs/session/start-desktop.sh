@@ -161,19 +161,31 @@ log "starting the Neural Glass desktop"
 
 # ---------------------------------------------------------------- seat
 
-if [ -x /usr/bin/seatd ]; then
-    if ! pgrep -x seatd >/dev/null 2>&1; then
-        setsid /usr/bin/seatd >>/var/log/hcs/seatd.log 2>&1 &
-        # Wait for the seat to exist rather than sleeping a fixed amount: without
-        # it niri starts, cannot open the VT, and exits with an error that looks
-        # like a compositor bug.
-        for _ in $(seq 1 40); do
-            pgrep -x seatd >/dev/null 2>&1 && break
-            sleep 0.25
-        done
-        pgrep -x seatd >/dev/null 2>&1 \
-            && log "seatd is up" \
-            || log "WARN seatd did not start — see /var/log/hcs/seatd.log"
+# seatd ships as seatd-launch with a systemd unit that ExecStarts the real
+# binary. /usr/bin/seatd does not exist in the Debian package, so a test for it
+# here skips the seat silently -- and without a seat the compositor cannot open
+# the VT, which presents as a niri startup failure rather than a missing seat.
+#
+# Rely on systemd's own seatd.service, which the package enables. Only start it
+# manually if systemd has not, and name the binary that actually exists.
+if ! pgrep -x seatd >/dev/null 2>&1; then
+    if [ -x /usr/bin/seatd-launch ] && ! systemctl is-active --quiet seatd.service 2>/dev/null; then
+        systemctl start seatd.service >>/var/log/hcs/seatd.log 2>&1 || true
+    fi
+    if ! pgrep -x seatd >/dev/null 2>&1 && [ -x /usr/bin/seatd-launch ]; then
+        setsid /usr/bin/seatd-launch >>/var/log/hcs/seatd.log 2>&1 &
+    fi
+    # Wait for the seat to exist rather than sleeping a fixed amount: without it
+    # niri starts, cannot open the VT, and exits with an error that looks like a
+    # compositor bug.
+    for _ in $(seq 1 40); do
+        pgrep -x seatd >/dev/null 2>&1 && break
+        sleep 0.25
+    done
+    if pgrep -x seatd >/dev/null 2>&1; then
+        log "seatd is up"
+    else
+        log "WARN seatd did not start - see /var/log/hcs/seatd.log"
     fi
 fi
 
