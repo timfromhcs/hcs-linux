@@ -1,15 +1,25 @@
 use clap::{Parser, Subcommand};
 use hcs_security::{PrivacyMode, TorManager, VaultManager};
 use hcs_settings::HardwareProfile;
+use hcs_ui::ThemePreset;
 
 #[derive(Parser, Debug)]
 #[command(
     name = "hcs-control",
-    about = "HCS Linux System & Brain Control Center"
+    about = "HCS Linux System & Brain Control Center",
+    version
 )]
 struct Cli {
+    /// Launch the Neural Glass GUI
+    #[arg(long)]
+    gui: bool,
+
+    /// Theme preset for the GUI: obsidian (default), titanium, stealth
+    #[arg(long, default_value = "obsidian")]
+    theme: String,
+
     #[command(subcommand)]
-    command: Commands,
+    command: Option<Commands>,
 }
 
 #[derive(Subcommand, Debug)]
@@ -25,7 +35,19 @@ enum Commands {
 fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
-    match cli.command {
+    if cli.gui {
+        let theme = ThemePreset::from_str_opt(&cli.theme).unwrap_or(ThemePreset::Obsidian);
+        hcs_control::gui::run(theme)?;
+        return Ok(());
+    }
+
+    let Some(command) = cli.command else {
+        println!("run with --gui for the Neural Glass Control Center, or a subcommand:");
+        println!("  hcs-control status | privacy | hardware");
+        return Ok(());
+    };
+
+    match command {
         Commands::Status => {
             println!("==================================================");
             println!("             HCS CONTROL DASHBOARD                ");

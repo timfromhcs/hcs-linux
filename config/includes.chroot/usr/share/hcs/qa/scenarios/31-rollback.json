@@ -1,0 +1,13 @@
+[
+  {
+    "op": "settle",
+    "secs": 4
+  },
+  {
+    "op": "shot",
+    "name": "rollback_bootmenu"
+  },
+  {
+    "op": "exit"
+  }
+]

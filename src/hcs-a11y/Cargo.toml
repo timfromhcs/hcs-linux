@@ -1,0 +1,20 @@
+[package]
+name = "hcs-a11y"
+description = "HCS accessibility gate: focus order, WCAG contrast, motion, text scaling"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[lib]
+name = "hcs_a11y"
+path = "src/lib.rs"
+
+[[bin]]
+name = "hcs-a11y-check"
+path = "src/main.rs"
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+anyhow.workspace = true

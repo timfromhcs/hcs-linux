@@ -1,0 +1,124 @@
+// HCS Linux — Terminal (hcs-term), v2 plan §5 W2.8
+//
+// Pattern: GNOME 49 Ptyxis adds a container/profile search on Alt+,, and
+// Nautilus hands the current folder to the terminal with Ctrl+.. For HCS the
+// useful "containers" are the AI profiles, so the picker lists those.
+//
+// Interaction is expressed as callbacks: this Slint build has no touch-handler
+// elements, which also keeps the headless software render deterministic.
+
+import { Palette, Presets, AppHeader, GlassCard, PillButton } from "hcs_ui.slint";
+
+export component TerminalWindow inherits Window {
+    width: 900px;
+    height: 560px;
+    background: #0d1117;
+
+    in-out property <bool> theme-titanium: false;
+    in-out property <bool> theme-stealth: false;
+    in-out property <bool> theme-high-contrast: false;
+    in property <Palette> palette: root.theme-high-contrast ? Presets.high_contrast : (root.theme-stealth ? Presets.stealth : (root.theme-titanium ? Presets.titanium : Presets.obsidian));
+    in property <string> theme-name: root.palette.theme-name;
+
+    in property <string> command-line: "hcs";
+    in property <[string]> rows: [];
+    in property <int> exit-code: 0;
+
+    // Profile picker (Ptyxis Alt+, pattern)
+    in-out property <bool> profiles-visible: false;
+    in property <string> profile-query: "";
+    in property <[string]> profiles: [
+        "Default Shell",
+        "HCS Command Line",
+        "AI Profile: EDGE-8GB",
+        "AI Profile: LOWRAM-4GB",
+        "AI Profile: WORKSTATION-16GB",
+        "Rust",
+        "Python 3.12",
+        "Recovery Console"
+    ];
+
+    callback profile-toggled();
+    callback profile-chosen(string);
+    callback profiles-cancelled();
+
+    AppHeader {
+        x: 0; y: 0; width: 900px;
+        p: root.palette;
+        app-title: "Terminal";
+        subtitle: root.command-line;
+    }
+
+    Rectangle {
+        x: 12px; y: 52px; width: 876px; height: 452px;
+        background: root.palette.surface; border-radius: 6px;
+
+        // Fixed 15px rows in a monospace face: a proportional font here would
+        // break the column grid that terminal output depends on.
+        for line[rowIndex] in root.rows: Text {
+            x: 10px; y: rowIndex * 15px; width: 856px; height: 15px;
+            text: line;
+            color: root.palette.text-primary;
+            font-family: "JetBrains Mono, DejaVu Sans Mono, monospace";
+            font-size: 11px;
+            overflow: elide;
+        }
+    }
+
+    Rectangle {
+        x: 12px; y: 512px; width: 876px; height: 1px;
+        background: root.palette.border-soft;
+    }
+    Text {
+        x: 12px; y: 518px; width: 300px; height: 24px;
+        text: root.exit-code == 0 ? "exit 0" : "exit " + root.exit-code;
+        color: root.exit-code == 0 ? root.palette.success : root.palette.danger;
+        font-size: 11px; font-weight: 600; vertical-alignment: center;
+    }
+    Text {
+        x: 420px; y: 518px; width: 468px; height: 24px;
+        text: "HCS+Shift+T profiles  ·  HCS+. new folder in terminal";
+        color: root.palette.text-muted; font-size: 10px;
+        vertical-alignment: center; horizontal-alignment: right;
+    }
+
+    PillButton {
+        x: 320px; y: 516px; width: 90px; height: 26px;
+        p: root.palette; label: "Profiles";
+        clicked => { root.profile-toggled(); }
+    }
+
+    // --- profile picker ------------------------------------------------------
+    GlassCard {
+        visible: root.profiles-visible;
+        x: 260px; y: 90px; width: 380px; height: 380px;
+        p: root.palette;
+
+        Text { x: 16px; y: 14px; width: 348px; height: 22px;
+               text: "Open a profile";
+               color: root.palette.text-primary; font-size: 14px; font-weight: 600; }
+        Rectangle { x: 16px; y: 44px; width: 348px; height: 26px;
+                    background: root.palette.surface-raised; border-radius: 8px;
+                    Text { x: 8px; y: 0; width: 332px; height: 26px;
+                           text: root.profile-query;
+                           color: root.palette.text-muted; font-size: 12px;
+                           vertical-alignment: center; } }
+        Rectangle { x: 16px; y: 78px; width: 348px; height: 1px;
+                    background: root.palette.border-soft; }
+
+        for profile[profileIndex] in root.profiles: Rectangle {
+            x: 16px; y: 90px + profileIndex * 32px; width: 348px; height: 28px;
+            background: root.palette.surface; border-radius: 8px;
+            Text { x: 10px; y: 0; width: 328px; height: 28px;
+                   text: profile;
+                   color: root.palette.text-primary; font-size: 12px;
+                   vertical-alignment: center; overflow: elide; }
+        }
+
+        PillButton {
+            x: 232px; y: 330px; width: 132px; height: 30px;
+            p: root.palette; label: "Cancel";
+            clicked => { root.profiles-cancelled(); }
+        }
+    }
+}

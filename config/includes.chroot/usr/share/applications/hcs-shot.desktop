@@ -1,0 +1,10 @@
+﻿[Desktop Entry]
+Type=Application
+Name=Screenshot
+Comment=HCS Linux
+Exec=hcs-shot
+Icon=/usr/share/hcs/icons/hcs-shot.svg
+Terminal=false
+Categories=System;Utility;
+Keywords=HCS;Neural Glass;
+StartupNotify=true

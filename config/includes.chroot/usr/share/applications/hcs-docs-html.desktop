@@ -1,0 +1,10 @@
+﻿[Desktop Entry]
+Type=Application
+Name=Docs (Web Portal)
+Comment=HCS Linux
+Exec=hcs-docs-html
+Icon=/usr/share/hcs/icons/hcs-docs-html.svg
+Terminal=false
+Categories=System;Utility;
+Keywords=HCS;Neural Glass;
+StartupNotify=true

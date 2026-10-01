@@ -1,0 +1,73 @@
+// HCS Linux — System & AI Telemetry GUI (P2, v1.2.0).
+// Data source is the existing `--json` telemetry payload; the .slint is
+// view-only, all numbers come from Rust (see src/gui.rs).
+
+import { Palette, Presets } from "hcs_ui.slint";
+import { AppHeader, GlassCard, RamBar, ModelBadge, StatusRow, PillButton,
+         TorShield, LogView } from "hcs_ui.slint";
+
+export component MonitorWindow inherits Window {
+    width: 760px;
+    height: 560px;
+    background: #0d1117;
+
+    in property <bool> theme-titanium: false;
+    in property <bool> theme-stealth: false;
+    in property <bool> theme-high-contrast: false;
+    in property <Palette> palette: root.theme-high-contrast ? Presets.high_contrast : (root.theme-stealth ? Presets.stealth : (root.theme-titanium ? Presets.titanium : Presets.obsidian));
+    in property <string> theme-name: root.palette.theme-name;
+
+    in property <string> profile: "EDGE-8GB";
+    in property <float> base-mb: 820;
+    in property <float> services-mb: 210;
+    in property <float> resident-ai-mb: 550;
+    in property <float> total-rss-mb: 1580;
+    in property <float> headroom-mb: 6612;
+    in property <string> resident-model: "hcs-controller (Qwen3-0.6B)";
+    in property <string> resident-ram: "550 MB";
+    in property <string> heavy-model: "none (single-resident enforced)";
+    in property <string> status: "PASS";
+    in property <bool> tor-isolated: true;
+    callback refresh();
+
+    AppHeader { x: 0; y: 0; width: 760px; app-title: "HCS Monitor"; subtitle: "telemetry"; p: root.palette; }
+
+    GlassCard { x: 16px; y: 60px; width: 170px; height: 76px; p: root.palette;
+        card-title: "Profile"; card-value: root.profile; value-color: root.palette.accent; }
+    GlassCard { x: 200px; y: 60px; width: 170px; height: 76px; p: root.palette;
+        card-title: "Total RSS"; card-value: root.total-rss-mb + " MB"; value-color: root.palette.accent; }
+    GlassCard { x: 384px; y: 60px; width: 170px; height: 76px; p: root.palette;
+        card-title: "Headroom"; card-value: root.headroom-mb + " MB"; value-color: root.palette.success; }
+    GlassCard { x: 568px; y: 60px; width: 176px; height: 76px; p: root.palette;
+        card-title: "Budget status"; card-value: root.status;
+        value-color: root.status == "PASS" ? root.palette.success : root.palette.danger; }
+
+    // RAM budget bars against the master-plan matrix (idle 6144 / peak 8192)
+    RamBar { x: 16px; y: 152px; width: 440px; p: root.palette;
+        label: "Total active RSS vs idle budget (6144 MB)"; used-mb: root.total-rss-mb; budget-mb: 6144; }
+    RamBar { x: 16px; y: 192px; width: 440px; p: root.palette;
+        label: "Total active RSS vs peak budget (8192 MB)"; used-mb: root.total-rss-mb; budget-mb: 8192;
+        fill-color: root.palette.accent-alt; }
+    RamBar { x: 16px; y: 232px; width: 440px; p: root.palette;
+        label: "Base + services"; used-mb: root.base-mb + root.services-mb; budget-mb: 6144;
+        fill-color: root.palette.text-muted; }
+
+    // Cognitive model status
+    ModelBadge { x: 472px; y: 152px; p: root.palette; model: "hcs-controller"; ram: root.resident-ram; }
+    GlassCard { x: 472px; y: 192px; width: 272px; height: 76px; p: root.palette;
+        card-title: "Active heavy model"; card-value: root.heavy-model; value-color: root.palette.text-primary; }
+
+    // Daemons
+    StatusRow { x: 16px; y: 282px; width: 300px; p: root.palette; name: "hcsd.service"; state: "Active"; }
+    StatusRow { x: 16px; y: 306px; width: 300px; p: root.palette; name: "hcs-modeld.service"; state: "Active"; }
+    StatusRow { x: 16px; y: 330px; width: 300px; p: root.palette; name: "hcs-memory.service"; state: "Healthy"; }
+    StatusRow { x: 16px; y: 354px; width: 300px; p: root.palette; name: "hcs-mcp-hub"; state: "Ready"; }
+    TorShield { x: 336px; y: 282px; p: root.palette; isolated: root.tor-isolated; }
+
+    PillButton { x: 472px; y: 282px; width: 130px; p: root.palette; label: "Aktualisieren"; primary: true;
+        clicked => { root.refresh(); } }
+    PillButton { x: 614px; y: 282px; width: 130px; p: root.palette; label: "hcs-control"; }
+
+    LogView { x: 16px; y: 392px; width: 728px; height: 152px; p: root.palette;
+        log-text: "HCS Linux telemetry\n  desktop (Niri/Quickshell)   820 MB\n  core services             210 MB\n  resident AI (Qwen3-0.6B)  550 MB\n  total                    1580 MB / 6144 MB idle budget  [OK]\n  policy: single heavy model resident enforced"; }
+}

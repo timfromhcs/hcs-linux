@@ -1,29 +1,80 @@
-# Core Linux & Hardware Support
+# HCS Linux core chroot packages (v2 plan §5 W1 — real graphical session)
+#
+# v1 shipped only the Wayland *client* libraries, so no compositor could ever
+# start and the live ISO could only ever print a console banner. The compositor,
+# the shell and the session plumbing are now part of the core set.
+
+# --- Core Linux & Hardware Support -------------------------------------------
 linux-image-amd64
 live-boot
 live-config
 live-config-systemd
 systemd
 systemd-sysv
+systemd-sysusers
 udev
 dbus
 polkitd
 
-# Display & Wayland Foundations
+# --- Display & Wayland (compositor + shell) ---------------------------------
+#
+# niri is NOT here: no Debian suite packages it. It is provisioned from
+# config/package-lists/hcs-external.list by scripts/fetch_niri.sh, which builds
+# it from niri's own hash-pinned release bundle. Putting it in this file would
+# make `apt-get install` fail and would make verify_package_availability.py
+# report a false accusation.
 libwayland-client0
+libwayland-server0
 wayland-protocols
 pipewire
+pipewire-pulse
 wireplumber
 seatd
+xdg-desktop-portal
+xdg-desktop-portal-wlr
+xdg-desktop-portal-gtk
+gsettings-desktop-schemas
+# quickshell ships in Debian sid, which is why the base is sid rather than
+# trixie: 0.3.1 requires Qt 6.11.2 with an exact-version private ABI, and trixie
+# has Qt 6.8. Pulling this one binary into trixie would drag the whole Qt 6.11
+# stack in with it.
+quickshell
 
-# Storage & Core Libraries
+# --- Boot splash -------------------------------------------------------------
+plymouth
+# The spinner theme ships inside plymouth-themes; there is no separate
+# plymouth-theme-spinner package in Debian.
+plymouth-themes
+
+# --- Input, seat & clipboard -------------------------------------------------
+xkb-data
+x11-xkb-utils
+wl-clipboard
+wtype
+
+# --- Fonts: the software renderer needs real fonts or text renders as boxes --
+fonts-dejavu-core
+fonts-dejavu
+fonts-noto-core
+fonts-noto-cjk
+fonts-noto-color-emoji
+fontconfig
+
+# --- Locales: UI language is independent of the keyboard layout --------------
+locales
+locales-all
+xdg-utils
+keyboard-configuration
+
+# --- Storage & Core Libraries ------------------------------------------------
 sqlite3
 libsqlite3-0
 zram-tools
 cryptsetup
+btrfs-progs
 calamares
 
-# Networking & Basic Utilities
+# --- Networking & Basic Utilities -------------------------------------------
 network-manager
 wpasupplicant
 curl
@@ -32,6 +83,34 @@ sudo
 bash-completion
 nano
 htop
+tmux
+git
+less
+tree
+unzip
 tar
 zstd
 ca-certificates
+
+# --- Screenshot / screen record (hcs-shot backend) ---------------------------
+grim
+slurp
+wl-clipboard
+ffmpeg
+
+# --- QA agent support -------------------------------------------------------
+# The in-guest QA runner judges its own captures and reads text out of them.
+# Without tesseract every `assert_text` step in the VM suite would have to be
+# reported as "cannot be evaluated", which is not the same as passing.
+tesseract-ocr
+tesseract-ocr-eng
+tesseract-ocr-deu
+# The evidence disk handed back to the VirtualBox host is formatted by the
+# guest, because the host attaches it as a raw blank volume.
+dosfstools
+
+# --- Fonts for terminal rendering -------------------------------------------
+fonts-jetbrains-mono
+
+# --- Snapshot / rollback (Mint + Omarchy pattern) ----------------------------
+# btrfs-progs above provides the tools; the subvolume setup runs in the installer.

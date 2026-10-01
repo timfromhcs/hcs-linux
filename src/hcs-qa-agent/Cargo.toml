@@ -1,0 +1,24 @@
+[package]
+name = "hcs-qa-agent"
+description = "HCS deterministic guest-side QA driver for VirtualBox stages"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[lib]
+name = "hcs_qa_agent"
+path = "src/lib.rs"
+
+[[bin]]
+name = "hcs-qa-agent"
+path = "src/main.rs"
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+anyhow.workspace = true
+# Decoding the agent's own captures so a frame can be judged in the guest,
+# where the reason can be reported. The host re-checks after transfer, so this
+# is not the only opinion on a capture.
+image = { version = "0.25", default-features = false, features = ["png"] }

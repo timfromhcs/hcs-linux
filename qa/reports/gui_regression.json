@@ -1,0 +1,98 @@
+{
+  "mode": "render-only",
+  "theme": "obsidian",
+  "platform": "windows",
+  "total": 9,
+  "passed": 9,
+  "failed": 0,
+  "overall_status": "PASS",
+  "thresholds": {
+    "min_entropy": 0.5,
+    "min_size_bytes": 1500,
+    "max_mean_diff": 2.0,
+    "pixel_tolerance": 12
+  },
+  "results": [
+    {
+      "file": "chat-image-studio-obsidian.png",
+      "size_bytes": 121431,
+      "width": 860,
+      "height": 620,
+      "entropy": 3.709,
+      "unique_colors": 2555,
+      "status": "PASS"
+    },
+    {
+      "file": "chat-obsidian.png",
+      "size_bytes": 55012,
+      "width": 860,
+      "height": 620,
+      "entropy": 2.92,
+      "unique_colors": 1885,
+      "status": "PASS"
+    },
+    {
+      "file": "control-obsidian.png",
+      "size_bytes": 75824,
+      "width": 720,
+      "height": 520,
+      "entropy": 3.476,
+      "unique_colors": 2388,
+      "status": "PASS"
+    },
+    {
+      "file": "diagnose-obsidian.png",
+      "size_bytes": 83933,
+      "width": 760,
+      "height": 540,
+      "entropy": 3.152,
+      "unique_colors": 1737,
+      "status": "PASS"
+    },
+    {
+      "file": "docs-obsidian.png",
+      "size_bytes": 88120,
+      "width": 820,
+      "height": 600,
+      "entropy": 3.017,
+      "unique_colors": 1503,
+      "status": "PASS"
+    },
+    {
+      "file": "foundation-gallery-obsidian.png",
+      "size_bytes": 77872,
+      "width": 720,
+      "height": 560,
+      "entropy": 3.353,
+      "unique_colors": 2451,
+      "status": "PASS"
+    },
+    {
+      "file": "monitor-obsidian.png",
+      "size_bytes": 100847,
+      "width": 760,
+      "height": 560,
+      "entropy": 3.46,
+      "unique_colors": 2210,
+      "status": "PASS"
+    },
+    {
+      "file": "search-obsidian.png",
+      "size_bytes": 35953,
+      "width": 680,
+      "height": 480,
+      "entropy": 2.834,
+      "unique_colors": 1389,
+      "status": "PASS"
+    },
+    {
+      "file": "settings-obsidian.png",
+      "size_bytes": 138958,
+      "width": 800,
+      "height": 740,
+      "entropy": 3.388,
+      "unique_colors": 1952,
+      "status": "PASS"
+    }
+  ]
+}

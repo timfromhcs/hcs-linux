@@ -1,0 +1,13 @@
+[
+  {
+    "op": "settle",
+    "secs": 3
+  },
+  {
+    "op": "shot",
+    "name": "grub_menu"
+  },
+  {
+    "op": "exit"
+  }
+]

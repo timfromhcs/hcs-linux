@@ -1,0 +1,33 @@
+[
+  {
+    "op": "wait_session",
+    "timeout_secs": 240
+  },
+  {
+    "op": "open",
+    "app": "hcs-chat"
+  },
+  {
+    "op": "settle",
+    "secs": 5
+  },
+  {
+    "op": "type",
+    "text": "hello"
+  },
+  {
+    "op": "settle",
+    "secs": 10
+  },
+  {
+    "op": "shot",
+    "name": "ai_chat"
+  },
+  {
+    "op": "rss",
+    "process": "hcs-chat"
+  },
+  {
+    "op": "exit"
+  }
+]

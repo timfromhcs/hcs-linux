@@ -1,0 +1,21 @@
+[
+  {
+    "op": "wait_session",
+    "timeout_secs": 240
+  },
+  {
+    "op": "key",
+    "key": "Super+Return"
+  },
+  {
+    "op": "settle",
+    "secs": 3
+  },
+  {
+    "op": "shot",
+    "name": "start_menu"
+  },
+  {
+    "op": "exit"
+  }
+]

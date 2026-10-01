@@ -1,0 +1,21 @@
+[
+  {
+    "op": "wait_session",
+    "timeout_secs": 240
+  },
+  {
+    "op": "key",
+    "key": "Super+alt+t"
+  },
+  {
+    "op": "settle",
+    "secs": 4
+  },
+  {
+    "op": "shot",
+    "name": "tor_killswitch"
+  },
+  {
+    "op": "exit"
+  }
+]

@@ -1,7 +1,0 @@
-#!/bin/bash
-# hcs-docs — Offline documentation browser (Master Plan Pillar 7)
-set -euo pipefail
-DOC=/usr/share/hcs/docs/index.html
-if command -v xdg-open >/dev/null 2>&1; then xdg-open "$DOC";
-elif command -v codium >/dev/null 2>&1; then codium "$DOC";
-else echo "Open offline docs at: $DOC"; fi

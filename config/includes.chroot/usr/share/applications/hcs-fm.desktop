@@ -1,0 +1,10 @@
+﻿[Desktop Entry]
+Type=Application
+Name=HCS+E
+Comment=HCS Linux
+Exec=hcs-fm
+Icon=/usr/share/hcs/icons/hcs-fm.svg
+Terminal=false
+Categories=System;Utility;
+Keywords=HCS;Neural Glass;
+StartupNotify=true

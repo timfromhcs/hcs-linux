@@ -214,7 +214,7 @@ impl McpServer {
                     "protocolVersion": "2024-11-05",
                     "serverInfo": {
                         "name": "hcs-mcp-hub",
-                        "version": "1.0.1"
+                        "version": "1.1.0"
                     },
                     "capabilities": {
                         "tools": { "listChanged": false },

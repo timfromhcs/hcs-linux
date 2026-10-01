@@ -1,0 +1,10 @@
+﻿[Desktop Entry]
+Type=Application
+Name=AI Monitor
+Comment=RAM budget and model telemetry
+Exec=hcs-monitor --gui
+Icon=/usr/share/icons/hcs/hcs-monitor.svg
+Terminal=false
+Categories=System;Utility;
+Keywords=HCS;AI;Neural Glass;
+StartupNotify=true

@@ -17,11 +17,24 @@ members = [
     "src/hcs-rag-ingest",
     "src/hcs-diagnose",
     "src/hcs-image",
+    "src/hcs-ui",
+    "src/hcs-gui-shots",
+    # v2 additions (docs/V2_STABLE_RELEASE_MASTER_PLAN.md §4.1)
+    "src/hcs-actions",
+    "src/hcs-fm",
+    "src/hcs-term",
+    "src/hcs-shot",
+    "src/hcs-notes",
+    "src/hcs-update",
+    "src/hcs-persist",
+    "src/hcs-recall",
+    "src/hcs-qa-agent",
+    "src/hcs-a11y",
 ]
 resolver = "2"
 
 [workspace.package]
-version = "1.0.1"
+version = "2.0.0"
 edition = "2021"
 authors = ["timfromhcs <timfromhcs@gmail.com>", "HCS Linux Contributors"]
 license = "Apache-2.0"

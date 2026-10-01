@@ -1,0 +1,10 @@
+﻿[Desktop Entry]
+Type=Application
+Name=Notes
+Comment=HCS Linux
+Exec=hcs-notes
+Icon=/usr/share/hcs/icons/hcs-notes.svg
+Terminal=false
+Categories=System;Utility;
+Keywords=HCS;Neural Glass;
+StartupNotify=true

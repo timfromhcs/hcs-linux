@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="ctrlBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+    <linearGradient id="ctrlBorderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#818cf8" />
+    </linearGradient>
+  </defs>
+
+  <rect x="8" y="8" width="112" height="112" rx="26" fill="url(#ctrlBgGrad)" stroke="url(#ctrlBorderGrad)" stroke-width="2.5" />
+
+  <!-- Slider Bars -->
+  <!-- Top Slider -->
+  <line x1="32" y1="40" x2="96" y2="40" stroke="#334155" stroke-width="6" stroke-linecap="round" />
+  <line x1="32" y1="40" x2="56" y2="40" stroke="#38bdf8" stroke-width="6" stroke-linecap="round" />
+  <circle cx="56" cy="40" r="9" fill="#f8fafc" stroke="#38bdf8" stroke-width="3" />
+
+  <!-- Middle Slider -->
+  <line x1="32" y1="64" x2="96" y2="64" stroke="#334155" stroke-width="6" stroke-linecap="round" />
+  <line x1="32" y1="64" x2="76" y2="64" stroke="#818cf8" stroke-width="6" stroke-linecap="round" />
+  <circle cx="76" cy="64" r="9" fill="#f8fafc" stroke="#818cf8" stroke-width="3" />
+
+  <!-- Bottom Slider -->
+  <line x1="32" y1="88" x2="96" y2="88" stroke="#334155" stroke-width="6" stroke-linecap="round" />
+  <line x1="32" y1="88" x2="44" y2="88" stroke="#34d399" stroke-width="6" stroke-linecap="round" />
+  <circle cx="44" cy="88" r="9" fill="#f8fafc" stroke="#34d399" stroke-width="3" />
+</svg>

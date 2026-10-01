@@ -1,0 +1,10 @@
+﻿[Desktop Entry]
+Type=Application
+Name=Settings
+Comment=Theme, wallpaper and shortcuts
+Exec=hcs-settings
+Icon=/usr/share/icons/hcs/hcs-control.svg
+Terminal=false
+Categories=System;Utility;
+Keywords=HCS;AI;Neural Glass;
+StartupNotify=true

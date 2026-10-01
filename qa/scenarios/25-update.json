@@ -1,0 +1,25 @@
+[
+  {
+    "op": "wait_session",
+    "timeout_secs": 240
+  },
+  {
+    "op": "open",
+    "app": "hcs-update"
+  },
+  {
+    "op": "settle",
+    "secs": 5
+  },
+  {
+    "op": "shot",
+    "name": "update_plan"
+  },
+  {
+    "op": "rss",
+    "process": "hcs-update"
+  },
+  {
+    "op": "exit"
+  }
+]

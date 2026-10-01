@@ -1,0 +1,17 @@
+[
+  {
+    "op": "wait_session",
+    "timeout_secs": 300
+  },
+  {
+    "op": "settle",
+    "secs": 5
+  },
+  {
+    "op": "shot",
+    "name": "installed_boot"
+  },
+  {
+    "op": "exit"
+  }
+]

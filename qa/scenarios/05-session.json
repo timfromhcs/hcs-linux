@@ -1,0 +1,17 @@
+[
+  {
+    "op": "wait_session",
+    "timeout_secs": 240
+  },
+  {
+    "op": "settle",
+    "secs": 5
+  },
+  {
+    "op": "shot",
+    "name": "session_desktop"
+  },
+  {
+    "op": "exit"
+  }
+]

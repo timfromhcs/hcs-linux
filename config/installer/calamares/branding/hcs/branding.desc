@@ -5,9 +5,9 @@ componentName: hcs
 strings:
     productName:         "HCS Linux"
     shortProductName:    "HCS"
-    version:             "1.0.1"
+    version:             "1.1.0"
     shortVersion:        "1.0"
-    versionedName:       "HCS Linux 1.0.1"
+    versionedName:       "HCS Linux 1.1.0"
     shortVersionedName:  "HCS 1.0"
     bootloaderEntryName: "HCS Linux"
     productUrl:          "https://github.com/timfromhcs/hcs-linux"

@@ -1,0 +1,856 @@
+// HCS Linux â€” Neural Glass GUI kit (single .slint file on purpose).
+//
+// Slint's include_modules!() only includes the *last* file produced by the
+// build script, so all shared types must live in one file. This file is the
+// public Slint library hcs_ui: the palette type, the three presets, every
+// shared widget, and the foundation gallery window.
+//
+// Plan: docs/GUI_BUILD_PLAN.md Â§2 P0// HCS Linux Ã¢â‚¬â€ colour palette type for the Neural Glass theme.
+// Plan: docs/GUI_BUILD_PLAN.md Ã‚Â§2 P0
+//
+// The palette is a *struct* rather than a Slint global so that Rust can build
+// and set it at runtime (theme switching) while widgets stay pure/testable.
+
+export struct Palette {
+    theme-name: string,
+    surface: color,
+    surface-alt: color,
+    surface-raised: color,
+    accent: color,
+    accent-alt: color,
+    text-primary: color,
+    text-muted: color,
+    border-soft: color,
+    success: color,
+    warn: color,
+    danger: color,
+}
+
+// HCS Linux ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â shared Neural Glass widgets, used by every GUI app.
+// Plan: docs/GUI_BUILD_PLAN.md Ãƒâ€šÃ‚Â§2 P0
+//
+// Slint syntax notes: explicit geometry + `vertical-alignment` (needs an
+// explicit height) instead of QML-style anchors, so the headless software
+// renderer produces stable layouts for the visual-regression gate.
+
+
+
+// The three Neural Glass presets. Kept as globals in the same file as the
+// widgets so every widget can default to the Obsidian theme without any
+// cross-file global import. Rust overrides per-window via `p:`.
+export global Presets {
+    in-out property <Palette> obsidian: {
+        theme-name: "obsidian",
+        surface: #0d1117,
+        surface-alt: #161b22,
+        surface-raised: #1e293b,
+        accent: #38bdf8,
+        accent-alt: #818cf8,
+        text-primary: #e2e8f0,
+        text-muted: #8494a8,
+        border-soft: #1f2937,
+        success: #34d399,
+        warn: #fbbf24,
+        danger: #f87171,
+    };
+    in-out property <Palette> titanium: {
+        theme-name: "titanium",
+        surface: #e2e8f0,
+        surface-alt: #cbd5e1,
+        surface-raised: #f1f5f9,
+        accent: #0284c7,
+        accent-alt: #4f46e5,
+        text-primary: #0f172a,
+        text-muted: #475569,
+        border-soft: #94a3b8,
+        success: #059669,
+        warn: #b45309,
+        danger: #b91c1c,
+    };
+    in-out property <Palette> stealth: {
+        theme-name: "stealth",
+        surface: #0f0f16,
+        surface-alt: #17171f,
+        surface-raised: #23232e,
+        accent: #c084fc,
+        accent-alt: #818cf8,
+        text-primary: #e5e7eb,
+        text-muted: #6b7280,
+        border-soft: #2a2a35,
+        success: #34d399,
+        warn: #fbbf24,
+        danger: #f87171,
+    };
+    // High Contrast is an accessibility preset, not a brand theme. It is
+    // checked by the Gate 10 contrast audit: every text/background pair below
+    // clears WCAG AAA (7:1) so the desktop stays usable with low vision.
+    // Apple needed four Liquid Glass revisions to fix unreadable translucent
+    // controls; this preset exists so we never ship that bug.
+    in-out property <Palette> high_contrast: {
+        theme-name: "high_contrast",
+        surface: #000000,
+        surface-alt: #0a0a0a,
+        surface-raised: #141414,
+        accent: #00e5ff,
+        accent-alt: #ffff00,
+        text-primary: #ffffff,
+        text-muted: #e0e0e0,
+        border-soft: #ffffff,
+        success: #00ff88,
+        warn: #ffa500,
+        danger: #ff5555,
+    };
+}
+
+// ---------------------------------------------------------------- AppHeader
+// The 44px chrome strip every app window instantiates at y: 0.
+// It is *instantiated*, not inherited, because Slint does not generate Rust
+// setters for inherited properties; app windows therefore own their own
+// theme properties and pass `p:` down.
+export component AppHeader inherits Rectangle {
+    in property <Palette> p: Presets.obsidian;
+    in property <string> app-title: "HCS";
+    in property <string> subtitle: "";
+    height: 44px;
+    background: p.surface-alt;
+
+    Rectangle {
+        x: 0;
+        y: 43px;
+        width: parent.width;
+        height: 1px;
+        background: p.border-soft;
+    }
+    Text {
+        x: 16px;
+        y: 0;
+        width: parent.width - 200px;
+        height: 44px;
+        text: root.app-title;
+        color: p.text-primary;
+        font-size: 15px;
+        font-weight: 700;
+        vertical-alignment: center;
+    }
+    Text {
+        x: parent.width - 190px;
+        y: 0;
+        width: 110px;
+        height: 44px;
+        text: root.subtitle;
+        color: p.text-muted;
+        font-size: 11px;
+        vertical-alignment: center;
+        horizontal-alignment: right;
+    }
+    Text {
+        x: parent.width - 76px;
+        y: 0;
+        width: 60px;
+        height: 44px;
+        text: "HCS LINUX";
+        color: p.accent;
+        font-size: 10px;
+        font-weight: 700;
+        vertical-alignment: center;
+        horizontal-alignment: right;
+        opacity: 0.8;
+    }
+}
+// ---------------------------------------------------------------- GlassCard
+export component GlassCard inherits Rectangle {
+    in property <Palette> p: Presets.obsidian;
+    in property <string> card-title: "";
+    in property <string> card-value: "";
+    in property <color> value-color: p.text-primary;
+    border-radius: 14px;
+    background: p.surface-alt;
+    border-width: 1px;
+    border-color: p.border-soft;
+
+    Text {
+        x: 14px;
+        y: 10px;
+        width: parent.width - 28px;
+        height: 16px;
+        text: root.card-title;
+        color: p.text-muted;
+        font-size: 11px;
+    }
+    Text {
+        x: 14px;
+        y: 28px;
+        width: parent.width - 28px;
+        height: parent.height - 38px;
+        text: root.card-value;
+        color: root.value-color;
+        font-size: 22px;
+        font-weight: 700;
+        vertical-alignment: center;
+        // Long values (model ids, profile names) must wrap instead of
+        // overflowing the card.
+        wrap: word-wrap;
+    }
+}
+
+// ---------------------------------------------------------------- PillButton
+export component PillButton inherits Rectangle {
+    in property <Palette> p: Presets.obsidian;
+    in property <string> label: "Action";
+    in property <color> pill-color: p.accent;
+    in property <bool> primary: false;
+    in property <bool> enabled: true;
+    callback clicked();
+    height: 32px;
+    border-radius: 16px;
+    background: root.primary ? root.pill-color : p.surface-raised;
+    border-width: root.primary ? 0px : 1px;
+    border-color: root.pill-color;
+    opacity: root.enabled ? 1.0 : 0.4;
+
+    Text {
+        x: 0;
+        y: 0;
+        width: parent.width;
+        height: parent.height;
+        text: root.label;
+        color: root.primary ? p.surface : p.text-primary;
+        font-size: 12px;
+        font-weight: 700;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+    TouchArea {
+        enabled: root.enabled;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// ---------------------------------------------------------------- Toggle
+export component Toggle inherits Rectangle {
+    in property <Palette> p: Presets.obsidian;
+    in property <string> label: "";
+    in-out property <bool> checked: false;
+    in property <color> pill-color: p.success;
+    callback toggled(bool);
+    height: 30px;
+
+    Rectangle {
+        x: 0;
+        y: 3px;
+        width: 46px;
+        height: 24px;
+        border-radius: 12px;
+        background: root.checked ? root.pill-color : p.surface-raised;
+        border-width: 1px;
+        border-color: p.border-soft;
+        Rectangle {
+            x: root.checked ? 24px : 2px;
+            y: 2px;
+            width: 20px;
+            height: 20px;
+            border-radius: 10px;
+            background: root.checked ? p.surface : p.text-muted;
+        }
+    }
+    Text {
+        x: 56px;
+        y: 0;
+        width: parent.width - 56px;
+        height: parent.height;
+        text: root.label;
+        color: p.text-primary;
+        font-size: 12px;
+        vertical-alignment: center;
+    }
+    TouchArea {
+        clicked => {
+            root.checked = !root.checked;
+            root.toggled(root.checked);
+        }
+    }
+}
+
+// ---------------------------------------------------------------- SliderRow
+export component SliderRow inherits Rectangle {
+    in property <Palette> p: Presets.obsidian;
+    in property <string> label: "";
+    in property <float> value: 0;
+    in property <float> min: 0;
+    in property <float> max: 1;
+    in property <float> step: 1;
+    in property <string> unit: "";
+    callback value-changed(float);
+    callback dragged(float);
+    height: 48px;
+
+    Text {
+        x: 0;
+        y: 0;
+        width: parent.width - 80px;
+        height: 16px;
+        text: root.label;
+        color: p.text-muted;
+        font-size: 11px;
+    }
+    Text {
+        x: parent.width - 72px;
+        y: 0;
+        width: 72px;
+        height: 16px;
+        text: round(root.value) + root.unit;
+        color: p.accent;
+        font-size: 12px;
+        font-weight: 700;
+        horizontal-alignment: right;
+    }
+    Rectangle {
+        x: 0;
+        y: 22px;
+        width: parent.width;
+        height: 6px;
+        border-radius: 3px;
+        background: p.surface-raised;
+        Rectangle {
+            width: parent.width * ((root.value - root.min) / (root.max - root.min)) < 2px ? 2px : parent.width * ((root.value - root.min) / (root.max - root.min));
+            height: 6px;
+            border-radius: 3px;
+            background: p.accent;
+        }
+    }
+    TouchArea {
+        clicked => {
+            root.dragged(self.mouse-x / root.width);
+        }
+    }
+}
+
+// ---------------------------------------------------------------- ModelBadge
+export component ModelBadge inherits Rectangle {
+    in property <Palette> p: Presets.obsidian;
+    in property <string> model: "hcs-controller";
+    in property <string> ram: "550 MB";
+    in property <color> pill-color: p.accent;
+    height: 28px;
+    width: 190px;
+    border-radius: 14px;
+    background: p.surface-raised;
+    border-width: 1px;
+    border-color: root.pill-color;
+
+    Text {
+        x: 12px;
+        y: 0;
+        width: 120px;
+        height: parent.height;
+        text: root.model;
+        color: root.pill-color;
+        font-size: 11px;
+        font-weight: 700;
+        vertical-alignment: center;
+    }
+    Text {
+        x: 130px;
+        y: 0;
+        width: parent.width - 142px;
+        height: parent.height;
+        text: root.ram;
+        color: p.text-muted;
+        font-size: 11px;
+        vertical-alignment: center;
+        horizontal-alignment: right;
+    }
+}
+
+// ---------------------------------------------------------------- RamBar
+// Budget bar against the RAM caps from the master plan (idle 6144 / peak 8192).
+export component RamBar inherits Rectangle {
+    in property <Palette> p: Presets.obsidian;
+    in property <string> label: "RAM";
+    in property <float> used-mb: 0;
+    in property <float> budget-mb: 6144;
+    in property <color> fill-color: p.accent;
+    height: 34px;
+
+    Text {
+        x: 0;
+        y: 0;
+        width: parent.width - 120px;
+        height: 16px;
+        text: root.label;
+        color: p.text-muted;
+        font-size: 11px;
+    }
+    Text {
+        x: parent.width - 120px;
+        y: 0;
+        width: 120px;
+        height: 16px;
+        text: round(root.used-mb) + " / " + round(root.budget-mb) + " MB";
+        color: p.text-primary;
+        font-size: 11px;
+        font-weight: 700;
+        horizontal-alignment: right;
+    }
+    Rectangle {
+        x: 0;
+        y: 20px;
+        width: parent.width;
+        height: 10px;
+        border-radius: 5px;
+        background: p.surface-raised;
+        Rectangle {
+            width: parent.width * (root.used-mb / root.budget-mb) < 2px ? 2px : parent.width * (root.used-mb / root.budget-mb);
+            height: 10px;
+            border-radius: 5px;
+            background: root.fill-color;
+        }
+    }
+}
+
+// ---------------------------------------------------------------- TorShield
+export component TorShield inherits Rectangle {
+    in property <Palette> p: Presets.obsidian;
+    in property <bool> isolated: false;
+    height: 28px;
+    width: 128px;
+    border-radius: 14px;
+    background: p.surface-raised;
+    border-width: 1px;
+    border-color: root.isolated ? p.success : p.text-muted;
+
+    Rectangle {
+        x: 12px;
+        y: 10px;
+        width: 8px;
+        height: 8px;
+        border-radius: 4px;
+        background: root.isolated ? p.success : p.text-muted;
+    }
+    Text {
+        x: 28px;
+        y: 0;
+        width: parent.width - 36px;
+        height: parent.height;
+        text: root.isolated ? "TOR SHIELD" : "DIRECT";
+        color: root.isolated ? p.success : p.text-muted;
+        font-size: 10px;
+        font-weight: 700;
+        vertical-alignment: center;
+    }
+}
+
+// ---------------------------------------------------------------- HITLDialog
+// Human-in-the-Loop confirmation, mandatory before offensive security actions.
+export component HITLDialog inherits Rectangle {
+    in property <Palette> p: Presets.obsidian;
+    in property <string> action: "";
+    in property <string> detail: "";
+    in-out property <bool> dialog-visible: false;
+    callback confirmed();
+    callback cancelled();
+    background: p.surface;
+
+    Rectangle {
+        x: 0;
+        y: 0;
+        width: parent.width;
+        height: parent.height;
+        background: #0b0f17;
+        border-radius: 18px;
+        border-width: 1px;
+        border-color: p.warn;
+        opacity: root.dialog-visible ? 1.0 : 0.0;
+    }
+    Rectangle {
+        x: parent.width / 2 - 240px;
+        y: 40px;
+        width: 480px;
+        height: 210px;
+        border-radius: 16px;
+        background: p.surface-alt;
+        border-width: 1px;
+        border-color: p.warn;
+        opacity: root.dialog-visible ? 1.0 : 0.0;
+    }
+    Text {
+        x: parent.width / 2 - 220px;
+        y: 58px;
+        width: 440px;
+        height: 24px;
+        text: "Bestaetigung erforderlich";
+        color: p.warn;
+        font-size: 16px;
+        font-weight: 700;
+        opacity: root.dialog-visible ? 1.0 : 0.0;
+    }
+    Text {
+        x: parent.width / 2 - 220px;
+        y: 90px;
+        width: 440px;
+        height: 24px;
+        text: root.action;
+        color: p.text-primary;
+        font-size: 12px;
+        opacity: root.dialog-visible ? 1.0 : 0.0;
+    }
+    Text {
+        x: parent.width / 2 - 220px;
+        y: 120px;
+        width: 440px;
+        height: 60px;
+        text: root.detail;
+        color: p.text-muted;
+        font-size: 11px;
+        wrap: word-wrap;
+        opacity: root.dialog-visible ? 1.0 : 0.0;
+    }
+    PillButton {
+        x: parent.width / 2 - 220px;
+        y: 196px;
+        width: 120px;
+        label: "Ausfuehren";
+        primary: true;
+        pill-color: p.warn;
+        enabled: root.dialog-visible;
+        clicked => {
+            root.dialog-visible = false;
+            root.confirmed();
+        }
+    }
+    PillButton {
+        x: parent.width / 2 - 80px;
+        y: 196px;
+        width: 120px;
+        label: "Abbrechen";
+        enabled: root.dialog-visible;
+        clicked => {
+            root.dialog-visible = false;
+            root.cancelled();
+        }
+    }
+}
+
+// ---------------------------------------------------------------- LogView
+export component LogView inherits Rectangle {
+    in property <Palette> p: Presets.obsidian;
+    in property <string> log-text: "";
+    border-radius: 10px;
+    background: p.surface;
+    border-width: 1px;
+    border-color: p.border-soft;
+    Text {
+        x: 10px;
+        y: 8px;
+        width: parent.width - 20px;
+        height: parent.height - 16px;
+        text: root.log-text;
+        color: p.text-muted;
+        font-size: 11px;
+        font-family: "monospace";
+        wrap: word-wrap;
+        // Overflow used to be silent: Slint clipped the text and the render
+        // still passed the blank-frame check, so a truncated list looked like a
+        // complete one. Vertical overflow is now visible in the render, which
+        // is the only place anyone would notice it.
+        vertical-alignment: top;
+    }
+}
+
+// ---------------------------------------------------------------- StatusRow
+export component StatusRow inherits Rectangle {
+    in property <Palette> p: Presets.obsidian;
+    in property <string> name: "";
+    in property <string> state: "OK";
+    in property <bool> ok: true;
+    height: 24px;
+    Rectangle {
+        x: 0;
+        y: 8px;
+        width: 8px;
+        height: 8px;
+        border-radius: 4px;
+        background: root.ok ? p.success : p.danger;
+    }
+    Text {
+        x: 16px;
+        y: 0;
+        width: parent.width - 90px;
+        height: parent.height;
+        text: root.name;
+        color: p.text-primary;
+        font-size: 12px;
+        vertical-alignment: center;
+    }
+    Text {
+        x: parent.width - 74px;
+        y: 0;
+        width: 74px;
+        height: parent.height;
+        text: root.state;
+        color: root.ok ? p.success : p.danger;
+        font-size: 11px;
+        font-weight: 700;
+        vertical-alignment: center;
+        horizontal-alignment: right;
+    }
+}
+
+// ---------------------------------------------------------------- GalleryTile
+export component GalleryTile inherits Rectangle {
+    in property <Palette> p: Presets.obsidian;
+    in property <string> caption: "";
+    border-radius: 10px;
+    background: p.surface-raised;
+    border-width: 1px;
+    border-color: p.border-soft;
+    Text {
+        x: 0;
+        y: 0;
+        width: parent.width;
+        height: parent.height;
+        text: root.caption;
+        color: p.text-muted;
+        font-size: 10px;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+}
+
+// HCS Linux Ã¢â‚¬â€ widget gallery. Compiles the shared widget set into a real
+// component so P0 has a reference render and the widgets are exercised in CI.
+
+
+
+
+export component WidgetGallery inherits Window {
+    width: 720px;
+    height: 560px;
+    background: #0d1117;
+
+    // Theme selection lives on the window (not the base) so Rust always gets
+    // working setters for it.
+    in property <bool> theme-titanium: false;
+    in property <bool> theme-stealth: false;
+    in property <bool> theme-high-contrast: false;
+    in property <Palette> palette: root.theme-high-contrast ? Presets.high_contrast : (root.theme-stealth ? Presets.stealth : (root.theme-titanium ? Presets.titanium : Presets.obsidian));
+    in property <string> theme-name: root.palette.theme-name;
+
+    AppHeader { x: 0; y: 0; width: 720px; app-title: "HCS UI Foundation"; subtitle: "gallery"; p: root.palette; }
+
+    // Row 1: cards
+    GlassCard { x: 16px; y: 60px; width: 200px; height: 84px; p: root.palette;
+        card-title: "Total Active RSS"; card-value: "1580 MB"; value-color: root.palette.accent; }
+    GlassCard { x: 232px; y: 60px; width: 200px; height: 84px; p: root.palette;
+        card-title: "Headroom"; card-value: "6612 MB"; value-color: root.palette.success; }
+    GlassCard { x: 448px; y: 60px; width: 256px; height: 84px; p: root.palette;
+        card-title: "Resident Model"; card-value: "Qwen3-0.6B"; value-color: root.palette.accent-alt; }
+
+    // Row 2: badges + shields
+    ModelBadge { x: 16px; y: 160px; p: root.palette; }
+    TorShield { x: 222px; y: 160px; p: root.palette; isolated: true; }
+    TorShield { x: 362px; y: 160px; p: root.palette; isolated: false; }
+
+    // Row 3: sliders
+    SliderRow { x: 16px; y: 204px; width: 480px; p: root.palette;
+        label: "Sampling steps (LCM)"; value: 6; min: 1; max: 8; step: 1; }
+    SliderRow { x: 16px; y: 252px; width: 480px; p: root.palette;
+        label: "Guidance scale"; value: 1.8; min: 1.0; max: 2.5; step: 0.1; }
+
+    // Row 4: bars + status
+    RamBar { x: 16px; y: 306px; width: 480px; p: root.palette;
+        label: "RAM (idle budget 6144 MB)"; used-mb: 1580; budget-mb: 6144; }
+    StatusRow { x: 16px; y: 348px; width: 300px; p: root.palette; name: "hcsd.service"; state: "Active"; }
+    StatusRow { x: 16px; y: 372px; width: 300px; p: root.palette; name: "hcs-modeld.service"; state: "Active"; }
+    StatusRow { x: 16px; y: 396px; width: 300px; p: root.palette; name: "tor.service"; state: "Isolated"; }
+
+    // Row 5: buttons, toggle, log
+    PillButton { x: 16px; y: 428px; width: 130px; p: root.palette; label: "Generate"; primary: true; }
+    PillButton { x: 158px; y: 428px; width: 130px; p: root.palette; label: "Cancel"; }
+    PillButton { x: 300px; y: 428px; width: 130px; p: root.palette; label: "Explain"; pill-color: root.palette.accent-alt; }
+    Toggle { x: 16px; y: 470px; p: root.palette; label: "Tor transparent proxy"; checked: true; }
+
+    LogView { x: 340px; y: 428px; width: 364px; height: 116px; p: root.palette;
+        log-text: "[OK] hcs-modeld resident Qwen3-0.6B\n[OK] RAM gate PASS (free 5859 MB)\n[OK] render 512x512 steps=6 cfg=1.8"; }
+
+    GalleryTile { x: 16px; y: 508px; width: 80px; height: 36px; p: root.palette; caption: "render-042"; }
+    GalleryTile { x: 104px; y: 508px; width: 80px; height: 36px; p: root.palette; caption: "render-043"; }
+}
+// HCS Linux â€” Native offline documentation viewer (P3, v1.3.0).
+// No webview, no browser embed: markdown is parsed in Rust (pulldown-cmark)
+// and rendered as plain styled text.
+
+
+
+export component DocsWindow inherits Window {
+    width: 820px;
+    height: 600px;
+    background: #0d1117;
+
+    in property <bool> theme-titanium: false;
+    in property <bool> theme-stealth: false;
+    in property <bool> theme-high-contrast: false;
+    in property <Palette> palette: root.theme-high-contrast ? Presets.high_contrast : (root.theme-stealth ? Presets.stealth : (root.theme-titanium ? Presets.titanium : Presets.obsidian));
+    in property <string> theme-name: root.palette.theme-name;
+
+    in property <string> manual-list: "01 Getting Started\n02 AI Brain Guide\n03 CPU Image Studio\n04 Security Pentest\n05 Tor Anonymity\n06 Developer Manual";
+    in property <string> current-title: "HCS Linux Documentation";
+    in property <string> rendered: "Select a manual on the left.\n\nAll manuals are stored offline at /usr/share/hcs/docs/manuals and rendered natively (no browser, no network).";
+    in property <string> current-file: "index";
+    in property <int> manual-count: 6;
+    callback open(string);
+    callback explain();
+
+    AppHeader { x: 0; y: 0; width: 820px; app-title: "HCS Docs"; subtitle: "offline manuals"; p: root.palette; }
+
+    // Manual list
+    LogView { x: 16px; y: 60px; width: 240px; height: 300px; p: root.palette; log-text: root.manual-list; }
+
+    PillButton { x: 16px; y: 372px; width: 112px; p: root.palette; label: "01 Getting";
+        clicked => { root.open("01_getting_started"); } }
+    PillButton { x: 140px; y: 372px; width: 112px; p: root.palette; label: "02 Brain";
+        clicked => { root.open("02_ai_brain_guide"); } }
+    PillButton { x: 16px; y: 412px; width: 112px; p: root.palette; label: "03 Image";
+        clicked => { root.open("03_cpu_image_studio"); } }
+    PillButton { x: 140px; y: 412px; width: 112px; p: root.palette; label: "04 Security";
+        clicked => { root.open("04_security_pentest"); } }
+    PillButton { x: 16px; y: 452px; width: 112px; p: root.palette; label: "05 Tor";
+        clicked => { root.open("05_tor_anonymity"); } }
+    PillButton { x: 140px; y: 452px; width: 112px; p: root.palette; label: "06 Dev";
+        clicked => { root.open("06_developer_manual"); } }
+
+    // Rendered manual
+    GlassCard { x: 272px; y: 60px; width: 532px; height: 60px; p: root.palette;
+        card-title: "Manual"; card-value: root.current-title; value-color: root.palette.accent; }
+    LogView { x: 272px; y: 132px; width: 532px; height: 348px; p: root.palette; log-text: root.rendered; }
+
+    PillButton { x: 272px; y: 492px; width: 150px; p: root.palette; label: "Explain with Brain"; primary: true;
+        pill-color: root.palette.accent-alt; clicked => { root.explain(); } }
+    GlassCard { x: 434px; y: 492px; width: 190px; height: 44px; p: root.palette;
+        card-title: "Manuals"; card-value: root.manual-count + " offline"; value-color: root.palette.text-primary; }
+    StatusRow { x: 636px; y: 500px; width: 168px; p: root.palette; name: "network"; state: "offline"; }
+}
+
+// HCS Linux â€” Settings GUI (P3, v1.3.0).
+// Theme, wallpaper and keyboard-shortcut configuration.
+
+
+
+export component SettingsWindow inherits Window {
+    width: 800px;
+    height: 740px;
+    background: #0d1117;
+
+    in property <bool> theme-titanium: false;
+    in property <bool> theme-stealth: false;
+    in property <bool> theme-high-contrast: false;
+    in property <Palette> palette: root.theme-high-contrast ? Presets.high_contrast : (root.theme-stealth ? Presets.stealth : (root.theme-titanium ? Presets.titanium : Presets.obsidian));
+    in property <string> theme-name: root.palette.theme-name;
+
+    in property <string> selected-theme: "obsidian";
+    in property <string> selected-wallpaper: "neural_glass_dark.png";
+    in property <string> keyboard-layout: "de (QWERTZ)";
+    in property <string> interface-language: "English";
+    in property <bool> tor-default: true;
+    in property <bool> clipboard-redaction: true;
+    in property <string> shortcuts: "HCS             Start Menu\nHCS+Return      Start Menu\nHCS+Space       Cycle Keyboard Layout\nHCS+/           Cheatsheet\nHCS+Q           Close Window\nAlt+Tab         Window Switcher\nHCS+Left/Right  Focus Window\nHCS+K           HCS Chat\nHCS+M           Monitor\nHCS+I           Image Studio\nHCS+T           Terminal\nHCS+F           File Manager\nHCS+E           Snap Layouts\nHCS+Tab         Task View\nHCS+Alt+T       Tor Killswitch\nHCS+V           Redacted Clipboard";
+    in property <string> third-party: "Slint 1.18.1 - Royalty-free License 2.0\nDebian 13 Trixie base\nllama.cpp (MIT)\nNiri (GPL-3.0), Quickshell (LGPL-3.0)\nCalamares (GPL-3.0), Qwen models";
+    in property <string> save-log: "Changes apply to newly started GUI apps.";
+    callback pick-theme(string);
+    callback pick-wallpaper(string);
+    callback pick-keyboard-layout(string);
+    callback pick-interface-language(string);
+    callback save();
+    callback about();
+
+    AppHeader { x: 0; y: 0; width: 800px; app-title: "HCS Settings"; subtitle: "system"; p: root.palette; }
+
+    // --- Theme. Four presets, and High Contrast is not optional decoration: it
+    // is the preset that makes the UI readable at WCAG AAA, so it gets the same
+    // button as the three brand themes.
+    GlassCard { x: 16px; y: 60px; width: 200px; height: 60px; p: root.palette;
+        card-title: "Theme"; card-value: root.selected-theme; value-color: root.palette.accent; }
+    PillButton { x: 232px; y: 68px; width: 130px; p: root.palette;
+        label: "Obsidian"; primary: root.selected-theme == "obsidian";
+        clicked => { root.pick-theme("obsidian"); } }
+    PillButton { x: 372px; y: 68px; width: 130px; p: root.palette;
+        label: "Titanium"; primary: root.selected-theme == "titanium";
+        clicked => { root.pick-theme("titanium"); } }
+    PillButton { x: 512px; y: 68px; width: 130px; p: root.palette;
+        label: "Stealth"; primary: root.selected-theme == "stealth";
+        clicked => { root.pick-theme("stealth"); } }
+    PillButton { x: 652px; y: 68px; width: 132px; p: root.palette;
+        label: "High Contrast"; primary: root.selected-theme == "high_contrast";
+        clicked => { root.pick-theme("high_contrast"); } }
+
+    // --- Wallpaper
+    GlassCard { x: 16px; y: 132px; width: 200px; height: 60px; p: root.palette;
+        card-title: "Wallpaper"; card-value: "3 available"; value-color: root.palette.accent-alt; }
+    PillButton { x: 232px; y: 140px; width: 170px; p: root.palette;
+        label: "Neural Glass"; primary: root.selected-wallpaper == "neural_glass_dark.png";
+        clicked => { root.pick-wallpaper("neural_glass_dark.png"); } }
+    PillButton { x: 412px; y: 140px; width: 150px; p: root.palette;
+        label: "Titanium"; primary: root.selected-wallpaper == "frosted_titanium.png";
+        clicked => { root.pick-wallpaper("frosted_titanium.png"); } }
+    PillButton { x: 572px; y: 140px; width: 150px; p: root.palette;
+        label: "Stealth"; primary: root.selected-wallpaper == "cybernetic_stealth.png";
+        clicked => { root.pick-wallpaper("cybernetic_stealth.png"); } }
+
+    // --- Keyboard. The HCS key sits where the Windows key sits, and it is a
+    // modifier, so no layout can move it. QWERTZ is the default.
+    GlassCard { x: 16px; y: 204px; width: 200px; height: 60px; p: root.palette;
+        card-title: "Keyboard"; card-value: root.keyboard-layout; value-color: root.palette.accent; }
+    PillButton { x: 232px; y: 212px; width: 110px; p: root.palette;
+        label: "QWERTZ"; primary: root.keyboard-layout == "de (QWERTZ)";
+        clicked => { root.pick-keyboard-layout("de"); } }
+    PillButton { x: 352px; y: 212px; width: 110px; p: root.palette;
+        label: "EN-US"; primary: root.keyboard-layout == "us (QWERTY)";
+        clicked => { root.pick-keyboard-layout("us"); } }
+    PillButton { x: 472px; y: 212px; width: 110px; p: root.palette;
+        label: "FR"; primary: root.keyboard-layout == "fr (AZERTY)";
+        clicked => { root.pick-keyboard-layout("fr"); } }
+    PillButton { x: 592px; y: 212px; width: 110px; p: root.palette;
+        label: "ES"; primary: root.keyboard-layout == "es (QWERTY)";
+        clicked => { root.pick-keyboard-layout("es"); } }
+    PillButton { x: 712px; y: 212px; width: 72px; p: root.palette;
+        label: "More"; primary: false;
+        clicked => { root.pick-keyboard-layout("cycle"); } }
+
+    // --- Interface language, deliberately separate from the keyboard layout.
+    GlassCard { x: 16px; y: 276px; width: 200px; height: 60px; p: root.palette;
+        card-title: "Language"; card-value: root.interface-language; value-color: root.palette.accent-alt; }
+    PillButton { x: 232px; y: 284px; width: 110px; p: root.palette;
+        label: "English"; primary: root.interface-language == "English";
+        clicked => { root.pick-interface-language("en"); } }
+    PillButton { x: 352px; y: 284px; width: 110px; p: root.palette;
+        label: "Deutsch"; primary: root.interface-language == "Deutsch";
+        clicked => { root.pick-interface-language("de"); } }
+    PillButton { x: 472px; y: 284px; width: 110px; p: root.palette;
+        label: "Francais"; primary: root.interface-language == "Francais";
+        clicked => { root.pick-interface-language("fr"); } }
+    PillButton { x: 592px; y: 284px; width: 110px; p: root.palette;
+        label: "Espanol"; primary: root.interface-language == "Espanol";
+        clicked => { root.pick-interface-language("es"); } }
+    PillButton { x: 712px; y: 284px; width: 72px; p: root.palette;
+        label: "More"; primary: false;
+        clicked => { root.pick-interface-language("cycle"); } }
+
+    // --- Privacy
+    Toggle { x: 16px; y: 348px; p: root.palette; label: "Tor transparent proxy by default"; checked: root.tor-default; }
+    Toggle { x: 320px; y: 348px; p: root.palette; label: "Redacted clipboard"; checked: root.clipboard-redaction; }
+
+    // --- Shortcuts. 16 rows of monospace, so the box is sized for the list
+    // rather than for a guess: at 246px the last two entries were clipped and
+    // the gate scored a cropped list as a pass.
+    LogView { x: 16px; y: 390px; width: 380px; height: 300px; p: root.palette; log-text: root.shortcuts; }
+
+    // --- About / third party
+    LogView { x: 408px; y: 390px; width: 376px; height: 200px; p: root.palette; log-text: root.third-party; }
+    PillButton { x: 408px; y: 602px; width: 180px; p: root.palette; label: "Save"; primary: true;
+        clicked => { root.save(); } }
+    PillButton { x: 604px; y: 602px; width: 180px; p: root.palette; label: "About Slint";
+        clicked => { root.about(); } }
+    StatusRow { x: 16px; y: 702px; width: 380px; p: root.palette; name: "status"; state: root.save-log; }
+}

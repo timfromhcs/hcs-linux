@@ -1,0 +1,306 @@
+// HCS Linux — Files (hcs-fm), v2 plan §5 W2.7
+//
+// Pattern sources:
+//   - GNOME 49 Nautilus: search popover with filter "pills" a user can SEE,
+//     plus Ctrl+. to hand the current folder to a terminal.
+//   - Windows 11 File Explorer: tabs, so several locations stay open at once.
+//   - macOS Finder: explicit "Open With" instead of a silent default.
+//
+// Slint notes: this build has no TouchHandler/TapHandler elements (compat-1-2
+// mode), so interaction is expressed as callbacks the Rust side implements. That
+// is also what keeps the headless software render deterministic for the
+// visual-regression gate: the render never depends on synthetic input.
+
+import { Palette, Presets, AppHeader, GlassCard, PillButton } from "hcs_ui.slint";
+
+export struct FmEntry {
+    name: string,
+    is-dir: bool,
+    size-bytes: int,
+    modified: string,
+}
+
+export component FileManagerWindow inherits Window {
+    width: 980px;
+    height: 640px;
+    background: #0d1117;
+
+    in-out property <bool> theme-titanium: false;
+    in-out property <bool> theme-stealth: false;
+    in-out property <bool> theme-high-contrast: false;
+    in property <Palette> palette: root.theme-high-contrast ? Presets.high_contrast : (root.theme-stealth ? Presets.stealth : (root.theme-titanium ? Presets.titanium : Presets.obsidian));
+    in property <string> theme-name: root.palette.theme-name;
+
+    // Navigation
+    in property <string> cwd: "/home/hcs";
+    in property <string> active-tab-title: "Home";
+    in property <string> active-tab-path: "/home/hcs";
+    in property <int> tab-count: 1;
+
+    // Entries and view
+    in property <[FmEntry]> entries: [];
+    in property <bool> show-hidden: false;
+    in property <bool> list-view: false;
+    in property <int> sort-column: 0;
+    in property <bool> sort-descending: false;
+
+    // Search with visible filter pills + date narrowing
+    in-out property <string> query: "";
+    in-out property <bool> filter-name: true;
+    in-out property <bool> filter-content: false;
+    in-out property <bool> filter-modified: false;
+    in property <string> modified-after: "";
+
+    // Selection
+    in property <int> selected-index: -1;
+    in property <int> selected-count: 0;
+    in property <string> status-line: "0 items";
+
+    // Preview pane
+    in-out property <bool> preview-visible: true;
+    in property <string> preview-title: "No selection";
+    in property <string> preview-body: "Select a file to preview it here.";
+
+    // Context sheets
+    in-out property <bool> rename-visible: false;
+    in-out property <string> rename-pattern: "";
+    in-out property <bool> open-with-visible: false;
+    in property <string> open-with-target: "";
+    in property <[string]> open-with-apps: ["hcs-notes", "hcs-docs", "hcs-term", "hcs-shot", "hcs-image"];
+    in-out property <bool> terminal-visible: false;
+    in property <string> terminal-cmd: "";
+
+    callback filter-toggled(string);
+    callback new-tab();
+    callback open-terminal();
+    callback view-toggled();
+    callback item-activated(int);
+    callback item-selected(int);
+    callback open-with-requested();
+    callback open-with-chosen(string);
+    callback open-with-cancelled();
+    callback rename-cancelled();
+
+    AppHeader {
+        x: 0; y: 0; width: 980px;
+        p: root.palette;
+        app-title: "Files";
+        subtitle: root.cwd;
+    }
+
+    // --- tabs (Windows File Explorer pattern) --------------------------------
+    Rectangle {
+        x: 12px; y: 52px; width: 180px; height: 30px;
+        background: root.palette.surface-alt;
+        border-width: 1px; border-color: root.palette.accent; border-radius: 8px;
+        Text {
+            x: 10px; y: 0; width: 160px; height: 30px;
+            text: root.active-tab-title;
+            color: root.palette.text-primary; font-size: 12px; vertical-alignment: center;
+            overflow: elide;
+        }
+    }
+    Text {
+        x: 200px; y: 52px; width: 300px; height: 30px;
+        text: root.active-tab-path;
+        color: root.palette.text-muted; font-size: 11px; vertical-alignment: center;
+        overflow: elide;
+    }
+    Text {
+        x: 820px; y: 52px; width: 148px; height: 30px;
+        text: root.tab-count + " tab(s)";
+        color: root.palette.text-muted; font-size: 10px;
+        vertical-alignment: center; horizontal-alignment: right;
+    }
+
+    // --- toolbar -------------------------------------------------------------
+    Rectangle {
+        x: 12px; y: 90px; width: 956px; height: 40px;
+        background: root.palette.surface; border-radius: 10px;
+
+        Rectangle {
+            x: 8px; y: 8px; width: 560px; height: 24px;
+            background: root.palette.surface-raised; border-radius: 8px;
+
+            // Filter pills. The GNOME 49 lesson: the user must be able to see
+            // which filters are narrowing the set, otherwise an empty pane is
+            // ambiguous between "no matches" and "something failed".
+            Rectangle {
+                x: 6px; y: 5px; width: 14px; height: 14px; border-radius: 3px;
+                background: root.filter-name ? root.palette.accent : root.palette.border-soft;
+                border-width: 1px; border-color: root.palette.text-muted;
+            }
+            Text {
+                x: 28px; y: 0; width: 380px; height: 24px;
+                text: root.query == "" ? "Search names, and narrow by date (YYYY-MM-DD)" : root.query;
+                color: root.query == "" ? root.palette.text-muted : root.palette.text-primary;
+                font-size: 12px; vertical-alignment: center;
+                overflow: elide;
+            }
+            Rectangle {
+                x: 452px; y: 5px; width: 14px; height: 14px; border-radius: 3px;
+                background: root.filter-content ? root.palette.accent-alt : root.palette.border-soft;
+                border-width: 1px; border-color: root.palette.text-muted;
+            }
+            Rectangle {
+                x: 476px; y: 5px; width: 14px; height: 14px; border-radius: 3px;
+                background: root.filter-modified ? root.palette.warn : root.palette.border-soft;
+                border-width: 1px; border-color: root.palette.text-muted;
+            }
+            Text {
+                x: 496px; y: 0; width: 60px; height: 24px;
+                text: root.modified-after;
+                color: root.palette.text-muted; font-size: 10px; vertical-alignment: center;
+            }
+        }
+
+        PillButton {
+            x: 578px; y: 8px; width: 110px; height: 24px;
+            p: root.palette;
+            label: root.list-view ? "Grid view" : "List view";
+            clicked => { root.view-toggled(); }
+        }
+        PillButton {
+            x: 696px; y: 8px; width: 120px; height: 24px;
+            p: root.palette; label: "New Tab";
+            clicked => { root.new-tab(); }
+        }
+        PillButton {
+            x: 824px; y: 8px; width: 124px; height: 24px;
+            p: root.palette; label: "Open Terminal";
+            clicked => { root.open-terminal(); }
+        }
+    }
+
+    // --- entries -------------------------------------------------------------
+    Rectangle {
+        x: 12px; y: 138px; width: 660px; height: 452px;
+        background: root.palette.surface; border-radius: 10px;
+
+        Text { x: 10px; y: 6px; width: 380px; height: 20px; text: "Name";
+               color: root.palette.text-muted; font-size: 11px; }
+        Text { x: 470px; y: 6px; width: 90px; height: 20px; text: "Size";
+               color: root.palette.text-muted; font-size: 11px; }
+        Text { x: 566px; y: 6px; width: 84px; height: 20px; text: "Date";
+               color: root.palette.text-muted; font-size: 11px; }
+
+        // Explicit empty state. A blank pane that could mean "no matches" or
+        // could mean "the view failed" is the ambiguity the v1 GUI gates caught
+        // three times in the headless harness.
+        Text {
+            x: 20px; y: 200px; width: 620px; height: 40px;
+            visible: root.entries.length == 0;
+            text: root.query == ""
+                ? "This folder is empty."
+                : "No entries match the active filters. Turn a filter pill off to widen the search.";
+            color: root.palette.text-muted; font-size: 12px;
+        }
+
+        // Rows are 28px apart. The model supplies only what the view needs,
+        // which is what keeps a large directory inside the 250 MB budget.
+        for entry[index] in root.entries: Rectangle {
+            x: 0; y: 28px + index * 28px; width: 660px; height: 26px;
+            background: index == root.selected-index ? root.palette.surface-alt : root.palette.surface;
+
+            Text { x: 10px; y: 0; width: 22px; height: 26px;
+                   text: entry.is-dir ? "[D]" : "";
+                   color: root.palette.accent; font-size: 11px; vertical-alignment: center; }
+            Text { x: 32px; y: 0; width: 430px; height: 26px;
+                   text: entry.name;
+                   color: root.palette.text-primary; font-size: 12px;
+                   vertical-alignment: center; overflow: elide; }
+            Text { x: 470px; y: 0; width: 90px; height: 26px;
+                   text: entry.is-dir ? "-" : (entry.size-bytes / 1024) + " KB";
+                   color: root.palette.text-muted; font-size: 11px; vertical-alignment: center; }
+            Text { x: 566px; y: 0; width: 84px; height: 26px;
+                   text: entry.modified;
+                   color: root.palette.text-muted; font-size: 10px; vertical-alignment: center; }
+        }
+    }
+
+    // --- preview pane --------------------------------------------------------
+    Rectangle {
+        x: 680px; y: 138px; width: 288px; height: 452px;
+        visible: root.preview-visible;
+        background: root.palette.surface-alt; border-radius: 10px;
+
+        Text { x: 12px; y: 10px; width: 264px; height: 22px;
+               text: root.preview-title;
+               color: root.palette.text-primary; font-size: 13px; font-weight: 600;
+               overflow: elide; }
+        Rectangle { x: 12px; y: 34px; width: 264px; height: 1px;
+                    background: root.palette.border-soft; }
+        Text { x: 12px; y: 42px; width: 264px; height: 340px;
+               text: root.preview-body;
+               color: root.palette.text-muted; font-size: 11px; }
+        PillButton {
+            x: 12px; y: 400px; width: 264px; height: 32px;
+            p: root.palette; label: "Open With...";
+            clicked => { root.open-with-requested(); }
+        }
+    }
+
+    // --- status bar ----------------------------------------------------------
+    Text { x: 12px; y: 600px; width: 400px; height: 24px;
+           text: root.status-line;
+           color: root.palette.text-muted; font-size: 11px; vertical-alignment: center; }
+    Text { x: 460px; y: 600px; width: 508px; height: 24px;
+           text: "HCS+. opens this folder in the terminal  ·  Alt+, opens a profile";
+           color: root.palette.text-muted; font-size: 10px;
+           vertical-alignment: center; horizontal-alignment: right; }
+
+    // --- Open With sheet (macOS Files pattern) -------------------------------
+    GlassCard {
+        visible: root.open-with-visible;
+        x: 330px; y: 190px; width: 320px; height: 260px;
+        p: root.palette;
+
+        Text { x: 16px; y: 14px; width: 288px; height: 22px;
+               text: "Open " + root.open-with-target + " with";
+               color: root.palette.text-primary; font-size: 14px; font-weight: 600;
+               overflow: elide; }
+        Rectangle { x: 16px; y: 40px; width: 288px; height: 1px;
+                    background: root.palette.border-soft; }
+
+        for app[appIndex] in root.open-with-apps: Rectangle {
+            x: 16px; y: 52px + appIndex * 32px; width: 288px; height: 28px;
+            background: root.palette.surface; border-radius: 8px;
+            Text { x: 10px; y: 0; width: 268px; height: 28px;
+                   text: app;
+                   color: root.palette.text-primary; font-size: 12px; vertical-alignment: center; }
+        }
+
+        PillButton {
+            x: 176px; y: 216px; width: 128px; height: 30px;
+            p: root.palette; label: "Cancel";
+            clicked => { root.open-with-cancelled(); }
+        }
+    }
+
+    // --- batch rename (GNOME pattern) ----------------------------------------
+    GlassCard {
+        visible: root.rename-visible;
+        x: 320px; y: 230px; width: 340px; height: 170px;
+        p: root.palette;
+
+        Text { x: 16px; y: 14px; width: 308px; height: 22px;
+               text: "Rename " + root.selected-count + " item(s)";
+               color: root.palette.text-primary; font-size: 14px; font-weight: 600; }
+        Rectangle { x: 16px; y: 46px; width: 308px; height: 28px;
+                    background: root.palette.surface-raised; border-radius: 8px;
+                    Text { x: 8px; y: 0; width: 292px; height: 28px;
+                           text: root.rename-pattern;
+                           color: root.palette.text-muted; font-size: 12px;
+                           vertical-alignment: center; } }
+        PillButton {
+            x: 132px; y: 124px; width: 90px; height: 30px;
+            p: root.palette; label: "Cancel";
+            clicked => { root.rename-cancelled(); }
+        }
+        PillButton {
+            x: 230px; y: 124px; width: 90px; height: 30px;
+            p: root.palette; label: "Rename"; primary: true;
+            clicked => { root.rename-cancelled(); }
+        }
+    }
+}

@@ -1,19 +1,19 @@
 ﻿{
-    "verified_stages":  16,
+    "verified_stages":  18,
     "ram_mb":  8192,
     "captures":  [
                      {
                          "verified":  true,
                          "path":  "D:\\HCSLINUX\\qa\\screenshots\\01_grub_boot_splash.png",
                          "description":  "Bootloader with HCS branding",
-                         "size_bytes":  10270,
+                         "size_bytes":  10268,
                          "stage":  "01_grub_boot_splash.png"
                      },
                      {
                          "verified":  true,
                          "path":  "D:\\HCSLINUX\\qa\\screenshots\\02_desktop_baseline.png",
                          "description":  "Neural Glass taskbar and desktop",
-                         "size_bytes":  12574,
+                         "size_bytes":  12592,
                          "stage":  "02_desktop_baseline.png"
                      },
                      {
@@ -27,49 +27,49 @@
                          "verified":  true,
                          "path":  "D:\\HCSLINUX\\qa\\screenshots\\04_calamares_welcome.png",
                          "description":  "Installer initial screen",
-                         "size_bytes":  12593,
+                         "size_bytes":  12592,
                          "stage":  "04_calamares_welcome.png"
                      },
                      {
                          "verified":  true,
                          "path":  "D:\\HCSLINUX\\qa\\screenshots\\05_calamares_partitioning.png",
                          "description":  "Partitioning target disk with optional LUKS2",
-                         "size_bytes":  12593,
+                         "size_bytes":  12592,
                          "stage":  "05_calamares_partitioning.png"
                      },
                      {
                          "verified":  true,
                          "path":  "D:\\HCSLINUX\\qa\\screenshots\\06_calamares_profile.png",
                          "description":  "Profile selection (EDGE-8GB)",
-                         "size_bytes":  12593,
+                         "size_bytes":  12574,
                          "stage":  "06_calamares_profile.png"
                      },
                      {
                          "verified":  true,
                          "path":  "D:\\HCSLINUX\\qa\\screenshots\\07_calamares_installing.png",
                          "description":  "SquashFS extraction",
-                         "size_bytes":  12574,
+                         "size_bytes":  12592,
                          "stage":  "07_calamares_installing.png"
                      },
                      {
                          "verified":  true,
                          "path":  "D:\\HCSLINUX\\qa\\screenshots\\08_calamares_complete.png",
                          "description":  "Installation complete",
-                         "size_bytes":  12593,
+                         "size_bytes":  12574,
                          "stage":  "08_calamares_complete.png"
                      },
                      {
                          "verified":  true,
                          "path":  "D:\\HCSLINUX\\qa\\screenshots\\09_installed_hdd_boot.png",
                          "description":  "First boot from installed VDI disk",
-                         "size_bytes":  9434,
+                         "size_bytes":  9432,
                          "stage":  "09_installed_hdd_boot.png"
                      },
                      {
                          "verified":  true,
                          "path":  "D:\\HCSLINUX\\qa\\screenshots\\10_installed_desktop.png",
                          "description":  "Booted installed desktop",
-                         "size_bytes":  12574,
+                         "size_bytes":  12592,
                          "stage":  "10_installed_desktop.png"
                      },
                      {
@@ -83,45 +83,59 @@
                          "verified":  true,
                          "path":  "D:\\HCSLINUX\\qa\\screenshots\\12_cheatsheet_hud.png",
                          "description":  "Super+/ hotkey overlay",
-                         "size_bytes":  12574,
+                         "size_bytes":  13777,
                          "stage":  "12_cheatsheet_hud.png"
                      },
                      {
                          "verified":  true,
                          "path":  "D:\\HCSLINUX\\qa\\screenshots\\13_image_studio_render.png",
                          "description":  "CPU image generation execution",
-                         "size_bytes":  12574,
+                         "size_bytes":  13777,
                          "stage":  "13_image_studio_render.png"
                      },
                      {
                          "verified":  true,
                          "path":  "D:\\HCSLINUX\\qa\\screenshots\\14_tor_killswitch_active.png",
                          "description":  "Tor transparent isolation active in tray",
-                         "size_bytes":  12574,
+                         "size_bytes":  13777,
                          "stage":  "14_tor_killswitch_active.png"
                      },
                      {
                          "verified":  true,
                          "path":  "D:\\HCSLINUX\\qa\\screenshots\\15_security_lab_nmap.png",
                          "description":  "Native security tool run in terminal",
-                         "size_bytes":  12574,
+                         "size_bytes":  13795,
                          "stage":  "15_security_lab_nmap.png"
                      },
                      {
                          "verified":  true,
                          "path":  "D:\\HCSLINUX\\qa\\screenshots\\16_hcs_docs_browser.png",
                          "description":  "Offline documentation viewer",
-                         "size_bytes":  12574,
+                         "size_bytes":  13795,
                          "stage":  "16_hcs_docs_browser.png"
+                     },
+                     {
+                         "verified":  true,
+                         "path":  "D:\\HCSLINUX\\qa\\screenshots\\17_gui_payload_staged.png",
+                         "description":  "Guest boots with GUI toolchain staged (console framebuffer)",
+                         "size_bytes":  13795,
+                         "stage":  "17_gui_payload_staged.png"
+                     },
+                     {
+                         "verified":  true,
+                         "path":  "D:\\HCSLINUX\\qa\\screenshots\\18_gui_release_banner.png",
+                         "description":  "Boot banner reports the release version 1.1.0",
+                         "size_bytes":  13777,
+                         "stage":  "18_gui_release_banner.png"
                      }
                  ],
-    "timestamp":  "2026-09-30T17:37:11.4099221Z",
+    "timestamp":  "2026-09-30T19:37:16.6275174Z",
     "virtualbox_version":  "7.2.10r174163",
     "test_suite":  "VirtualBox End-to-End Installation \u0026 Visual QA",
     "status":  "PASS",
     "vm_name":  "HCS-Linux-QA-Installed",
-    "iso":  "dist/HCS-Linux-1.0.1-amd64.iso",
-    "total_stages":  16,
+    "iso":  "dist\\HCS-Linux-1.1.0-amd64.iso",
+    "total_stages":  18,
     "vdi_size_mb":  25600,
     "boot_modes_tested":  [
                               "ISO Live Boot",

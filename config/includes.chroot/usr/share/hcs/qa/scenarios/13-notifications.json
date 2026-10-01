@@ -1,0 +1,21 @@
+[
+  {
+    "op": "wait_session",
+    "timeout_secs": 240
+  },
+  {
+    "op": "key",
+    "key": "Super+shift+n"
+  },
+  {
+    "op": "settle",
+    "secs": 3
+  },
+  {
+    "op": "shot",
+    "name": "notification_center"
+  },
+  {
+    "op": "exit"
+  }
+]

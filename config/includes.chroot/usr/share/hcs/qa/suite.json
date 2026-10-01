@@ -1,0 +1,229 @@
+{
+  "version": "2.0.0",
+  "stages": [
+    {
+      "n": 1,
+      "name": "grub_menu",
+      "evidence": "console",
+      "scenario": "01-grub-menu.json",
+      "proves": "The boot menu names the release, so the ISO is the one we think it is."
+    },
+    {
+      "n": 2,
+      "name": "live_boot",
+      "evidence": "console",
+      "scenario": "02-live-boot.json",
+      "proves": "The live session starts: a banner, then a mapped window."
+    },
+    {
+      "n": 3,
+      "name": "live_banner",
+      "evidence": "console",
+      "scenario": "02-live-boot.json",
+      "proves": "The banner shows the version being booted."
+    },
+    {
+      "n": 4,
+      "name": "session_ready",
+      "evidence": "console",
+      "scenario": "02-live-boot.json",
+      "proves": "The session reached a desktop without dropping to a console."
+    },
+    {
+      "n": 5,
+      "name": "session_desktop",
+      "evidence": "gui",
+      "scenario": "05-session.json",
+      "proves": "A real desktop: wallpaper plus shell, not a text console."
+    },
+    {
+      "n": 6,
+      "name": "taskbar_tray",
+      "evidence": "gui",
+      "scenario": "06-taskbar.json",
+      "proves": "The taskbar is drawn and the Tor state is visible in the tray."
+    },
+    {
+      "n": 7,
+      "name": "start_menu",
+      "evidence": "gui",
+      "scenario": "07-start-menu.json",
+      "proves": "HCS+Return opens the Start menu."
+    },
+    {
+      "n": 8,
+      "name": "omnibar_query",
+      "evidence": "gui",
+      "scenario": "08-omnibar.json",
+      "proves": "The omnibar takes a query and shows results for it."
+    },
+    {
+      "n": 9,
+      "name": "snap_layouts",
+      "evidence": "gui",
+      "scenario": "09-snap-layouts.json",
+      "proves": "HCS+E offers Snap Layouts for the focused window."
+    },
+    {
+      "n": 10,
+      "name": "virtual_desktops",
+      "evidence": "gui",
+      "scenario": "10-desktops.json",
+      "proves": "Virtual desktops respond to HCS+1."
+    },
+    {
+      "n": 11,
+      "name": "task_view",
+      "evidence": "gui",
+      "scenario": "11-taskview.json",
+      "proves": "HCS+Tab shows every open window."
+    },
+    {
+      "n": 12,
+      "name": "control_center",
+      "evidence": "gui",
+      "scenario": "12-control-center.json",
+      "proves": "HCS+Alt+C opens the Control Center with the Tor state."
+    },
+    {
+      "n": 13,
+      "name": "notification_center",
+      "evidence": "gui",
+      "scenario": "13-notifications.json",
+      "proves": "The Notification Center opens."
+    },
+    {
+      "n": 14,
+      "name": "widgets_board",
+      "evidence": "gui",
+      "scenario": "14-widgets.json",
+      "proves": "The Widgets board opens."
+    },
+    {
+      "n": 15,
+      "name": "stage_manager",
+      "evidence": "gui",
+      "scenario": "15-stage.json",
+      "proves": "HCS+Alt+S groups windows in Stage Manager."
+    },
+    {
+      "n": 16,
+      "name": "files_manager",
+      "evidence": "gui",
+      "scenario": "16-files.json",
+      "proves": "hcs-fm maps a window and lists files."
+    },
+    {
+      "n": 17,
+      "name": "terminal",
+      "evidence": "gui",
+      "scenario": "17-terminal.json",
+      "proves": "hcs-term runs a command and shows its output."
+    },
+    {
+      "n": 18,
+      "name": "screenshot_snipping",
+      "evidence": "gui",
+      "scenario": "18-shot.json",
+      "proves": "The screen is capturable, which is what hcs-shot depends on."
+    },
+    {
+      "n": 19,
+      "name": "theme_switch",
+      "evidence": "gui",
+      "scenario": "19-theme.json",
+      "proves": "The desktop is rendered under a known theme."
+    },
+    {
+      "n": 20,
+      "name": "keyboard_layout",
+      "evidence": "gui",
+      "scenario": "20-keyboard.json",
+      "proves": "HCS+Space switches the layout without moving the HCS key."
+    },
+    {
+      "n": 21,
+      "name": "ai_chat_inference",
+      "evidence": "gui",
+      "scenario": "21-chat.json",
+      "proves": "A local model answers, and hcs-chat stays inside its RAM budget."
+    },
+    {
+      "n": 22,
+      "name": "image_studio_render",
+      "evidence": "gui",
+      "scenario": "22-image.json",
+      "proves": "Image Studio is reachable and hcs-chat stays inside its budget."
+    },
+    {
+      "n": 23,
+      "name": "rag_answer_cited",
+      "evidence": "gui",
+      "scenario": "23-rag.json",
+      "proves": "Retrieval is reachable from the desktop."
+    },
+    {
+      "n": 24,
+      "name": "tor_killswitch",
+      "evidence": "gui",
+      "scenario": "24-tor.json",
+      "proves": "HCS+Alt+T changes the Tor state and the tray follows."
+    },
+    {
+      "n": 25,
+      "name": "update_plan",
+      "evidence": "gui",
+      "scenario": "25-update.json",
+      "proves": "hcs-update shows its risk levels instead of a bare 'update' button."
+    },
+    {
+      "n": 26,
+      "name": "installer_welcome",
+      "evidence": "console",
+      "scenario": "26-installer.json",
+      "proves": "Calamares starts."
+    },
+    {
+      "n": 27,
+      "name": "installer_partition",
+      "evidence": "console",
+      "scenario": "26-installer.json",
+      "proves": "The installer offers partitioning."
+    },
+    {
+      "n": 28,
+      "name": "installer_profile",
+      "evidence": "console",
+      "scenario": "26-installer.json",
+      "proves": "The installer offers the AI profiles."
+    },
+    {
+      "n": 29,
+      "name": "installed_boot",
+      "evidence": "gui",
+      "scenario": "29-installed.json",
+      "proves": "An installed system boots to a session, not a rescue prompt."
+    },
+    {
+      "n": 30,
+      "name": "installed_desktop",
+      "evidence": "gui",
+      "scenario": "30-installed-desktop.json",
+      "proves": "The installed system reaches the same desktop as the live one."
+    },
+    {
+      "n": 31,
+      "name": "rollback_bootmenu",
+      "evidence": "console",
+      "scenario": "31-rollback.json",
+      "proves": "The rollback entry exists in the boot menu."
+    },
+    {
+      "n": 32,
+      "name": "amnesic_boot",
+      "evidence": "console",
+      "scenario": "32-amnesic.json",
+      "proves": "The amnesic session starts and offers no persistence."
+    }
+  ]
+}

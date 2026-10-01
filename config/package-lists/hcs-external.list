@@ -1,0 +1,25 @@
+# Components the image needs that the base distribution does not package.
+#
+# Split out from hcs-core.list.chroot on purpose. `verify_package_availability.py`
+# checks that every name in the apt list actually exists in the target suite, and
+# a name that has to come from somewhere else would make that check lie in the
+# other direction — reporting a package as missing when the real answer is "this
+# one is provisioned differently, here is how".
+#
+# Each entry declares where it comes from. The build refuses to treat an entry as
+# satisfied unless the named script installed it and recorded its provenance in
+# the base, so a component cannot be quietly skipped by deleting a line here.
+#
+# Format: <name>  <script>  <one-line note>
+#
+# niri is here because it is packaged nowhere. Not Debian 12 or 13, not Ubuntu
+# 24.04/25.04/26.04, not Fedora, and niri's own GitHub releases attach no binary:
+# the only asset on v26.04 is a vendored source tarball. fetch_niri.sh therefore
+# verifies that tarball against the SHA-256 upstream publishes and builds it
+# offline from its vendored dependency set. That is upstream's own artefact, not
+# a third party's package, which is a stronger guarantee than an .deb from an
+# unknown build server.
+#
+# quickshell is deliberately NOT here. Debian packages it in sid, and it is
+# installed as an ordinary pinned package, which is why the base is sid.
+niri  scripts/fetch_niri.sh  Built from niri's own hash-pinned vendored release bundle; no official binary exists.

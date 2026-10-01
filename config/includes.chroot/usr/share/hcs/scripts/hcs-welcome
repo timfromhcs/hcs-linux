@@ -1,11 +1,86 @@
 #!/bin/bash
-# hcs-welcome — First-Boot onboarding tour (Master Plan Pillar 1)
-# Introduces AI agents, Tor privacy toggle, offline docs.
-set -euo pipefail
-echo "=== Welcome to HCS Linux v1.0.0 Stable ==="
-echo "1. AI Brain: press Super+Return (HCS Chat) — resident Qwen3-0.6B, on-demand 1.7B/4B."
-echo "2. Privacy: click TOR SHIELD in the taskbar tray (or Super+Alt+T)."
-echo "3. Docs: open Start Menu → HCS Docs (fully offline) or run: hcs-docs"
-echo "4. Hotkeys: press Super+/ (or F1) for the cheatsheet HUD."
-echo "5. Create: Image Studio (Super+I), Code Studio, Security Lab."
-xdg-open /usr/share/hcs/docs/index.html 2>/dev/null || echo "Docs: /usr/share/hcs/docs/index.html"
+# HCS Linux — First-Boot onboarding (v2 plan §5 W1.6)
+#
+# Pattern: Linux Mint's Welcome screen — five guided steps that make the first
+# five minutes painless, and it is skippable. Nothing here is mandatory, because
+# a forced tour is the fastest way to make users disable it forever.
+#
+# Two v2 specifics:
+#   - The Windows-key position is the HCS key. Every hint below says "HCS",
+#     never "Win", so muscle memory transfers and the docs stay unambiguous.
+#   - Language follows the keyboard layout on first boot, but is a separate
+#     choice afterwards (a Swiss user wants a German UI on a French keyboard).
+set -uo pipefail
+
+LANG_CODE="$(cat /etc/hcs/locale 2>/dev/null || echo de)"
+
+t() {
+    case "${LANG_CODE}" in
+        de) printf '%s' "$1" ;;
+        fr) printf '%s' "$2" ;;
+        es) printf '%s' "$3" ;;
+        it) printf '%s' "$4" ;;
+        *)  printf '%s' "$5" ;;
+    esac
+}
+
+cat <<BANNER
+
+================================================================================
+   HCS Linux
+   $(t "Willkommen bei HCS Linux." \
+      "Bienvenue dans HCS Linux." \
+      "Bienvenido a HCS Linux." \
+      "Benvenuto in HCS Linux." \
+      "Welcome to HCS Linux.")
+================================================================================
+
+$(t "1. KI-Gehirn:  HCS+Eingabe  →  Chat.  HCS+I  →  Bildstudio (CPU, offline)." \
+   "1. Cerveau IA :  HCS+Retour  →  Chat.  HCS+I  →  Studio d'images (CPU, hors ligne)." \
+   "1. Cerebro IA:  HCS+Intro    →  Chat.  HCS+I  →  Estudio de imágenes (CPU, sin red)." \
+   "1. Cervello IA: HCS+Invio    →  Chat.  HCS+I  →  Image Studio (CPU, offline)." \
+   "1. AI Brain:   HCS+Return    →  Chat.  HCS+I  →  Image Studio (CPU, offline).")
+
+$(t "2. Datenschutz: HCS+Alt+T schaltet den Tor-Killswitch. 0 DNS-Leaks." \
+   "2. Confidentialité : HCS+Alt+T active le coupe-circuit Tor. 0 fuite DNS." \
+   "2. Privacidad: HCS+Alt+T activa el cortacircuitos Tor. 0 fugas DNS." \
+   "2. Privacy: HCS+Alt+T attiva il killswitch Tor. 0 fughe DNS." \
+   "2. Privacy: HCS+Alt+T toggles the Tor kill switch. 0 DNS leaks.")
+
+$(t "3. Handbücher:  HCS+D  →  Dokumentation (vollständig offline, ohne Browser)." \
+   "3. Documentation : HCS+D → manuels (100 % hors ligne, sans navigateur)." \
+   "3. Documentación: HCS+D → documentación (100 % sin red, sin navegador)." \
+   "4. Documentazione: HCS+D → documentazione (100 % offline, senza browser)." \
+   "3. Docs:        HCS+D → documentation (fully offline, no browser).")
+
+$(t "4. Tasten:      HCS+/  →  alle Tastenkürzel ansehen." \
+   "4. Raccourcis : HCS+/  →  voir tous les raccourcis." \
+   "4. Atajos:     HCS+/  →  ver todos los atajos." \
+   "4. Scorciatoie: HCS+/ →  tutte le scorciatoie." \
+   "4. Shortcuts:  HCS+/  →  show every keyboard shortcut.")
+
+$(t "5. Suchen:     HCS+Leertaste  →  alles finden UND tun." \
+   "5. Rechercher : HCS+Espace → tout trouver ET tout faire." \
+   "5. Buscar:     HCS+Espacio → encontrar Y actuar." \
+   "5. Cerca:      HCS+Spazio → trova E agisci." \
+   "5. Search:     HCS+Space  →  find things AND do things.")
+
+$(t "Tastenbelegung: HCS+Leertaste wechselt QWERTZ/EN-US/FR/ES. Sprache: hcs settings." \
+   "Dispositions : HCS+Espace bascule QWERTZ/EN-US/FR/ES. Langue : hcs settings." \
+   "Distribución: HCS+Espacio alterna QWERTZ/EN-US/FR/ES. Idioma: hcs settings." \
+   "Disposizioni: HCS+Spazio cambia QWERTZ/EN-US/FR/ES. Lingua: hcs settings." \
+   "Layouts:      HCS+Space cycles QWERTZ/EN-US/FR/ES. Language: hcs settings.")
+
+================================================================================
+
+BANNER
+
+# Launch the native docs viewer, not the HTML portal. The GUI viewer is the
+# offline-first path (no browser, no network), which is the point of Pillar 7.
+if command -v hcs-docs >/dev/null 2>&1 && [ -x /usr/bin/hcs-docs ]; then
+    setsid /usr/bin/hcs-docs >/dev/null 2>&1 &
+elif command -v xdg-open >/dev/null 2>&1; then
+    xdg-open /usr/share/hcs/docs/index.html >/dev/null 2>&1 &
+fi
+
+exit 0

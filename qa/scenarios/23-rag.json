@@ -1,0 +1,17 @@
+[
+  {
+    "op": "wait_session",
+    "timeout_secs": 240
+  },
+  {
+    "op": "settle",
+    "secs": 3
+  },
+  {
+    "op": "shot",
+    "name": "rag_answer"
+  },
+  {
+    "op": "exit"
+  }
+]

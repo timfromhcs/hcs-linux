@@ -1,0 +1,21 @@
+[
+  {
+    "op": "shot",
+    "name": "live_banner"
+  },
+  {
+    "op": "wait_session",
+    "timeout_secs": 240
+  },
+  {
+    "op": "settle",
+    "secs": 4
+  },
+  {
+    "op": "shot",
+    "name": "session_ready"
+  },
+  {
+    "op": "exit"
+  }
+]

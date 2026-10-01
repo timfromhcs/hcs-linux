@@ -53,6 +53,17 @@ qa/latest/
 qa/screenshots/run_*
 qa/logs/
 
+# VirtualBox gate artefacts (v2).
+#
+# These are produced by a run, not source: the evidence disk alone is 512 MB and
+# the frames are re-captured on every run. The first version of the driver
+# committed the evidence VHD, and GitHub refused the push with GH001 — a 512 MB
+# file against a 100 MB limit. Committed screenshots from a *previous* release
+# stay tracked, so the ignore is scoped to the v2 run directory rather than to
+# all of qa/screenshots.
+qa/screenshots/v2/
+
+
 # Secrets and local configurations
 .env
 *.token

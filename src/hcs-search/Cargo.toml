@@ -5,9 +5,26 @@ edition.workspace = true
 authors.workspace = true
 license.workspace = true
 
+[lib]
+name = "hcs_search"
+path = "src/lib.rs"
+
+[[bin]]
+name = "hcs-search"
+path = "src/main.rs"
+
 [dependencies]
 hcs-memory = { path = "../hcs-memory" }
+hcs-ui = { path = "../hcs-ui" }
+slint = { version = "1.18.1", default-features = false, features = [
+    "compat-1-2",
+    "renderer-software",
+    "software-renderer-systemfonts",
+    "backend-winit",
+    "std",
+] }
 clap.workspace = true
-serde.workspace = true
-serde_json.workspace = true
 anyhow.workspace = true
+
+[build-dependencies]
+slint-build = { version = "1.18.1", features = ["experimental-module-builds"] }

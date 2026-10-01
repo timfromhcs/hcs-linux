@@ -1,0 +1,23 @@
+[package]
+name = "hcs-shot"
+description = "HCS screenshot tool: region/window capture, OCR extract, colour pick, record"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[lib]
+name = "hcs_shot"
+path = "src/lib.rs"
+
+[[bin]]
+name = "hcs-shot"
+path = "src/main.rs"
+
+[dependencies]
+clap.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+chrono.workspace = true

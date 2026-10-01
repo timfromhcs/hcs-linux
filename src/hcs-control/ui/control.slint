@@ -1,0 +1,73 @@
+// HCS Linux — System & Brain Control Center GUI (P2, v1.2.0).
+
+import { Palette, Presets } from "hcs_ui.slint";
+import { AppHeader, GlassCard, PillButton, Toggle, StatusRow, TorShield,
+         RamBar, LogView, ModelBadge } from "hcs_ui.slint";
+
+export component ControlWindow inherits Window {
+    width: 720px;
+    height: 520px;
+    background: #0d1117;
+
+    in property <bool> theme-titanium: false;
+    in property <bool> theme-stealth: false;
+    in property <bool> theme-high-contrast: false;
+    in property <Palette> palette: root.theme-high-contrast ? Presets.high_contrast : (root.theme-stealth ? Presets.stealth : (root.theme-titanium ? Presets.titanium : Presets.obsidian));
+    in property <string> theme-name: root.palette.theme-name;
+
+    in property <bool> tor-isolated: false;
+    in property <string> ai-profile: "EDGE-8GB";
+    in property <string> profile-hint: "8 GB RAM, 0.6B resident controller";
+    in property <string> vault-state: "LUKS2 aes-xts-plain64 / 512 bit";
+    in property <string> tor-rules: "nftables table ip hcs_tor: 6 rules, not applied";
+    in property <string> last-action: "no action yet";
+    callback toggle-tor();
+    callback select-profile(string);
+    callback unlock-vault();
+
+    AppHeader { x: 0; y: 0; width: 720px; app-title: "HCS Control"; subtitle: "control center"; p: root.palette; }
+
+    // --- Privacy / Tor
+    GlassCard { x: 16px; y: 60px; width: 200px; height: 76px; p: root.palette;
+        card-title: "Tor transparent proxy"; card-value: root.tor-isolated ? "ISOLATED" : "DIRECT";
+        value-color: root.tor-isolated ? root.palette.success : root.palette.text-muted; }
+    TorShield { x: 232px; y: 78px; p: root.palette; isolated: root.tor-isolated; }
+    PillButton { x: 380px; y: 72px; width: 150px; p: root.palette;
+        label: root.tor-isolated ? "Tor deaktivieren" : "Tor aktivieren";
+        primary: !root.tor-isolated; pill-color: root.palette.success;
+        clicked => { root.toggle-tor(); } }
+
+    GlassCard { x: 16px; y: 152px; width: 340px; height: 76px; p: root.palette;
+        card-title: "nftables ruleset (fail-closed)"; card-value: root.tor-rules;
+        value-color: root.tor-isolated ? root.palette.success : root.palette.text-primary; }
+
+    // --- AI profile
+    GlassCard { x: 380px; y: 152px; width: 324px; height: 76px; p: root.palette;
+        card-title: "AI profile"; card-value: root.ai-profile; value-color: root.palette.accent; }
+    Text { x: 380px; y: 234px; width: 324px; height: 18px;
+        text: root.profile-hint; color: root.palette.text-muted; font-size: 11px; }
+    PillButton { x: 380px; y: 256px; width: 100px; p: root.palette;
+        label: "4 GB"; primary: root.ai-profile == "LOWRAM-4GB"; clicked => { root.select-profile("LOWRAM-4GB"); } }
+    PillButton { x: 492px; y: 256px; width: 100px; p: root.palette;
+        label: "8 GB"; primary: root.ai-profile == "EDGE-8GB"; clicked => { root.select-profile("EDGE-8GB"); } }
+    PillButton { x: 604px; y: 256px; width: 100px; p: root.palette;
+        label: "16 GB"; primary: root.ai-profile == "WORKSTATION-16GB"; clicked => { root.select-profile("WORKSTATION-16GB"); } }
+
+    // --- Vault
+    GlassCard { x: 16px; y: 292px; width: 340px; height: 76px; p: root.palette;
+        card-title: "Vault (LUKS2)"; card-value: root.vault-state; value-color: root.palette.accent-alt; }
+    PillButton { x: 380px; y: 306px; width: 150px; p: root.palette; label: "Vault entsperren";
+        clicked => { root.unlock-vault(); } }
+
+    // --- Hardware
+    ModelBadge { x: 16px; y: 384px; p: root.palette; model: "hcs-controller"; ram: "550 MB"; }
+    StatusRow { x: 240px; y: 386px; width: 240px; p: root.palette; name: "CPU AVX2"; state: "OK"; }
+    StatusRow { x: 240px; y: 410px; width: 240px; p: root.palette; name: "nftables"; state: "OK"; }
+    StatusRow { x: 240px; y: 434px; width: 240px; p: root.palette; name: "tor.service"; state: "ready"; }
+
+    RamBar { x: 16px; y: 462px; width: 340px; p: root.palette;
+        label: "RAM vs idle budget"; used-mb: 1580; budget-mb: 6144; }
+
+    LogView { x: 500px; y: 384px; width: 204px; height: 120px; p: root.palette;
+        log-text: root.last-action; }
+}

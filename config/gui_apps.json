@@ -1,0 +1,48 @@
+{
+  "_comment": "GUI apps measured by scripts/gui_ram_audit.py, in addition to hcs-gui-shots. Each app must expose a headless mode so its RSS can be sampled without a display. Budget: 250 MB per app (v2 plan §6).",
+  "_headless_note": "These binaries fall back to a non-GUI path when WAYLAND_DISPLAY and DISPLAY are both unset, so the audit measures the real process rather than a stub. --hold-seconds keeps each one alive long enough to be sampled.",
+  "apps": [
+    {
+      "name": "hcs-fm",
+      "crate": "hcs-fm",
+      "note": "file manager: listing, filter pills, date narrowing, preview pane",
+      "args": ["--json", "--path", "config", "--hold-seconds", "6"]
+    },
+    {
+      "name": "hcs-term",
+      "crate": "hcs-term",
+      "note": "terminal: profile search and grid rendering",
+      "args": ["--profiles", "--hold-seconds", "6"]
+    },
+    {
+      "name": "hcs-notes",
+      "crate": "hcs-notes",
+      "note": "notes: Markdown store with offline search",
+      "args": ["list", "--json", "--hold-seconds", "6"]
+    },
+    {
+      "name": "hcs-actions",
+      "crate": "hcs-actions",
+      "note": "action registry: ranking, quick keys, privileged-action gating",
+      "args": ["search", "privacy", "--json", "--hold-seconds", "6"]
+    },
+    {
+      "name": "hcs-update",
+      "crate": "hcs-update",
+      "note": "level-based update manager: risk levels, snapshots, rollback plan",
+      "args": ["plan", "--hold-seconds", "6"]
+    },
+    {
+      "name": "hcs-persist",
+      "crate": "hcs-persist",
+      "note": "amnesic session and persistent storage state machine",
+      "args": ["status", "--json", "--hold-seconds", "6"]
+    },
+    {
+      "name": "hcs-recall",
+      "crate": "hcs-recall",
+      "note": "local timeline: credential and payment filtering before storage",
+      "args": ["status", "--json", "--hold-seconds", "6"]
+    }
+  ]
+}

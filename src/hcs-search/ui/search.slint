@@ -1,0 +1,57 @@
+// HCS Linux — Spotlight-style hybrid Search GUI (P2, v1.2.0).
+// Keyboard-first: type to filter, Enter to open, Esc to dismiss.
+
+import { Palette, Presets } from "hcs_ui.slint";
+import { AppHeader, PillButton, LogView, StatusRow } from "hcs_ui.slint";
+
+export component SearchWindow inherits Window {
+    width: 680px;
+    height: 480px;
+    background: #0d1117;
+
+    in property <bool> theme-titanium: false;
+    in property <bool> theme-stealth: false;
+    in property <bool> theme-high-contrast: false;
+    in property <Palette> palette: root.theme-high-contrast ? Presets.high_contrast : (root.theme-stealth ? Presets.stealth : (root.theme-titanium ? Presets.titanium : Presets.obsidian));
+    in property <string> theme-name: root.palette.theme-name;
+
+    in-out property <string> query: "";
+    in property <string> results: "Start typing to search apps, files and cognitive memory.";
+    in property <int> hit-count: 0;
+    in property <string> source: "idle";
+    callback search(string);
+    callback open-selected();
+    callback clear();
+
+    AppHeader { x: 0; y: 0; width: 680px; app-title: "HCS Search"; subtitle: "spotlight"; p: root.palette; }
+
+    // Omnibar
+    Rectangle {
+        x: 16px; y: 60px; width: 648px; height: 44px; border-radius: 14px;
+        background: root.palette.surface-alt; border-width: 1px; border-color: root.palette.accent;
+        Text { x: 14px; y: 0; width: 560px; height: 44px;
+            text: root.query == "" ? "Search apps, files or Ask Brain..." : root.query;
+            color: root.query == "" ? root.palette.text-muted : root.palette.text-primary;
+            font-size: 14px; vertical-alignment: center; }
+        Text { x: 590px; y: 0; width: 44px; height: 44px;
+            text: "hits " + root.hit-count; color: root.palette.accent; font-size: 11px;
+            vertical-alignment: center; horizontal-alignment: right; }
+    }
+
+    // Result list
+    LogView { x: 16px; y: 116px; width: 648px; height: 244px; p: root.palette; log-text: root.results; }
+
+    // Sources
+    StatusRow { x: 16px; y: 372px; width: 200px; p: root.palette; name: "source"; state: root.source; }
+    PillButton { x: 16px; y: 404px; width: 120px; p: root.palette; label: "Suchen"; primary: true;
+        clicked => { root.search(root.query); } }
+    PillButton { x: 148px; y: 404px; width: 120px; p: root.palette; label: "Oeffnen";
+        enabled: root.hit-count > 0; clicked => { root.open-selected(); } }
+    PillButton { x: 280px; y: 404px; width: 120px; p: root.palette; label: "Leeren";
+        clicked => { root.clear(); } }
+    Text { x: 416px; y: 404px; width: 248px; height: 32px;
+        text: "Enter = oeffnen   Esc = schliessen";
+        color: root.palette.text-muted; font-size: 11px; vertical-alignment: center; }
+
+    StatusRow { x: 16px; y: 444px; width: 200px; p: root.palette; name: "hcs-memory"; state: "FTS5"; }
+}

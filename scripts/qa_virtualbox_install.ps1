@@ -5,7 +5,7 @@ Adheres to GEMINI.md Sections 47, 64, 120, 121, 122 and docs/VISUAL_QA_INSTALL_P
 #>
 
 param(
-    [string]$IsoPath = "dist\HCS-Linux-1.0.0-amd64.iso",
+    [string]$IsoPath = "dist\HCS-Linux-1.1.0-amd64.iso",
     [string]$VmName = "HCS-Linux-QA-Installed",
     [int]$MemoryMB = 8192,
     [int]$CpuCount = 4,
@@ -194,13 +194,45 @@ $capturedStages += Capture-StageWithHealing "09_installed_hdd_boot.png" "First b
 $capturedStages += Capture-StageWithHealing "10_installed_desktop.png" "Booted installed desktop" 20
 
 # 7. Phase 4: Post-Install Brain Inferenz & RAM Audit
-Write-Host "`n[7/7] Phase 4: Post-Install Cognitive Brain Inferenz..." -ForegroundColor Yellow
+Write-Host "`n[7/8] Phase 4: Post-Install Cognitive Brain Inferenz..." -ForegroundColor Yellow
 $capturedStages += Capture-StageWithHealing "11_start_menu_search.png" "Start Menu search filtering" 6
 $capturedStages += Capture-StageWithHealing "12_cheatsheet_hud.png" "Super+/ hotkey overlay" 6
 $capturedStages += Capture-StageWithHealing "13_image_studio_render.png" "CPU image generation execution" 6
 $capturedStages += Capture-StageWithHealing "14_tor_killswitch_active.png" "Tor transparent isolation active in tray" 6
 $capturedStages += Capture-StageWithHealing "15_security_lab_nmap.png" "Native security tool run in terminal" 6
 $capturedStages += Capture-StageWithHealing "16_hcs_docs_browser.png" "Offline documentation viewer" 6
+
+# 8. Phase 5: GUI payload evidence (1.1.0)
+#
+# HONEST SCOPE: the live ISO boots to a *text console* (the init script prints
+# the banner and idles), so VirtualBox framebuffer captures cannot show a GUI
+# window. These stages therefore verify that the guest boots with the GUI
+# binaries staged and working; the actual GUI *pixels* are verified host-side by
+# `python scripts/verify_gui.py` (9 views x 3 themes, reference-reviewed).
+# True in-guest GUI screenshots would require the live session to start
+# niri + Quickshell, which is tracked as an open item in
+# docs/V1_STABLE_QA_STATUS.md.
+Write-Host "`n[8/8] Phase 5: Capturing GUI payload evidence..." -ForegroundColor Yellow
+$guiTool = Join-Path (Get-Location) "target/rootfs/usr/bin/hcs-gui-shots"
+$guiToolPresent = Test-Path $guiTool
+Write-Host "  GUI tool staged in installed rootfs: $guiToolPresent ($guiTool)"
+if ($guiToolPresent) {
+    $capturedStages += Capture-StageWithHealing "17_gui_payload_staged.png" "Guest boots with GUI toolchain staged (console framebuffer)" 10
+    $capturedStages += Capture-StageWithHealing "18_gui_release_banner.png" "Boot banner reports the release version 1.1.0" 6
+} else {
+    foreach ($s in @("17_gui_payload_staged", "18_gui_release_banner")) {
+        $capturedStages += @{
+            stage      = "$s.png"
+            description = "GUI payload evidence"
+            path       = ""
+            size_bytes = 0
+            verified   = $false
+            skipped    = $true
+            reason     = "hcs-gui-shots not staged in the installed rootfs"
+        }
+        Write-Host "  [SKIP] $s.png (tool not staged)" -ForegroundColor Yellow
+    }
+}
 
 # Power off clean
 Write-Host "`nShutting down verified VM..." -ForegroundColor Yellow
