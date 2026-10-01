@@ -1,0 +1,22 @@
+[Unit]
+Description=HCS console banner
+Documentation=docs/V2_STABLE_QA_STATUS.md
+# The banner is what the console QA stages photograph, so it has to reach tty1
+# before anything else takes the VT. Ordering it after the getty free target and
+# before the desktop is what makes it visible in a screenshot.
+DefaultDependencies=no
+After=systemd-ttygetty-free.service
+Before=hcs-desktop.service
+ConditionPathExists=/usr/share/hcs/theme/colors.toml
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+# Written straight to the VT: this is the text a person (or a camera) sees
+# during boot, not a line in the journal.
+ExecStart=/bin/sh -c 'printf "\033[2J\033[H" > /dev/tty1; cat /usr/share/hcs/branding/issue-banner.txt > /dev/tty1 2>/dev/null || cat /etc/issue > /dev/tty1'
+StandardOutput=null
+StandardError=null
+
+[Install]
+WantedBy=multi-user.target

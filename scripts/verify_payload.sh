@@ -314,6 +314,60 @@ if [ -d "${ROOTFS_DIR}/bin" ]; then
     fi
 fi
 
+# ---------------------------------------------------------------- PID 1
+
+# systemd must be PID 1.
+#
+# This is the second time the image has shipped with something else at
+# /sbin/init. The first was a banner script in an image with no systemd to
+# displace; the second was that same script written over a perfectly good base,
+# with GRUB told to run it — which suppressed systemd entirely and left the image
+# booting to a console and stopping there. Both were invisible to the gates,
+# because no gate had ever looked at this file.
+#
+# So the gate looks at it now, and it checks that it is a *symlink to systemd*,
+# not merely that something exists there.
+if [ -L "${ROOTFS_DIR}/sbin/init" ]; then
+    INIT_TARGET=$(readlink "${ROOTFS_DIR}/sbin/init")
+    case "${INIT_TARGET}" in
+        *systemd*)
+            echo "  [OK] PID 1 is systemd (/sbin/init -> ${INIT_TARGET})"
+            CHECKED=$((CHECKED + 1))
+            ;;
+        *)
+            echo "  [FAIL] /sbin/init points at ${INIT_TARGET}, not systemd." >&2
+            FAILURES=$((FAILURES + 1))
+            ;;
+    esac
+else
+    echo "  [FAIL] /sbin/init is not a symlink. Something is overriding systemd." >&2
+    FAILURES=$((FAILURES + 1))
+fi
+
+# And no GRUB entry may ask the kernel for a different init.
+if grep -q 'init=/sbin/init' "${REPO_ROOT}/scripts/build_iso.sh" 2>/dev/null; then
+    echo "  [FAIL] a GRUB entry still passes init=/sbin/init" >&2
+    FAILURES=$((FAILURES + 1))
+else
+    echo "  [OK] no GRUB entry overrides init"
+    CHECKED=$((CHECKED + 1))
+fi
+
+# The session has to be started by something. Without a unit, systemd boots, the
+# image is clean, and there is still no desktop — which is precisely the state
+# the last VM run reached.
+check_file /usr/lib/systemd/system/hcs-desktop.service "session unit"    100
+check_file /usr/lib/systemd/system/hcs-banner.service  "boot banner unit" 100
+check_file /usr/share/hcs/session/start-desktop.sh     "desktop starter"  500
+check_file /usr/share/hcs/branding/issue-banner.txt    "console banner"   50
+if [ -L "${ROOTFS_DIR}/etc/systemd/system/multi-user.target.wants/hcs-desktop.service" ]; then
+    echo "  [OK] the desktop session is enabled by default"
+    CHECKED=$((CHECKED + 1))
+else
+    echo "  [FAIL] hcs-desktop.service is not enabled — the desktop would never start" >&2
+    FAILURES=$((FAILURES + 1))
+fi
+
 # ---------------------------------------------------------------- QA suite
 
 # The guest drives the VM run itself, so the manifest and every scenario it
