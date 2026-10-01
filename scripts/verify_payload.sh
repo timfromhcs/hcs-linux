@@ -441,11 +441,24 @@ check_file /usr/lib/systemd/system/hcs-desktop.service "session unit"    100
 check_file /usr/lib/systemd/system/hcs-banner.service  "boot banner unit" 100
 check_file /usr/share/hcs/session/start-desktop.sh     "desktop starter"  500
 check_file /usr/share/hcs/branding/issue-banner.txt    "console banner"   50
+# Resolve against the staged tree, not against /. See build_iso.sh for why: an
+# absolute unit path is correct in the guest's namespace and absent from the
+# build host's, so [ -e ] on the raw link gets both cases exactly backwards.
+hcs_link_resolves() {
+    local link="$1" target resolved
+    target=$(readlink "${link}" 2>/dev/null) || return 1
+    case "${target}" in
+        /*) resolved="${ROOTFS_DIR}${target}" ;;
+        *)  resolved="$(dirname "${link}")/${target}" ;;
+    esac
+    [ -e "${resolved}" ]
+}
+
 if [ -L "${ROOTFS_DIR}/etc/systemd/system/multi-user.target.wants/hcs-desktop.service" ]; then
     # Enabled is not the same as reachable. A link that resolves to a path with no
     # unit in it is treated by systemd as "nothing to do", so the session is
     # silently never started and there is no failed unit to look at afterwards.
-    if [ -e "${ROOTFS_DIR}/etc/systemd/system/multi-user.target.wants/hcs-desktop.service" ]; then
+    if hcs_link_resolves "${ROOTFS_DIR}/etc/systemd/system/multi-user.target.wants/hcs-desktop.service"; then
         echo "  [OK] the desktop session is enabled and the link resolves"
         CHECKED=$((CHECKED + 1))
     else
@@ -460,8 +473,8 @@ fi
 
 # The same trap for the banner, and for the units themselves.
 for _u in hcs-desktop.service hcs-banner.service; do
-    if [ -e "${ROOTFS_DIR}/usr/lib/systemd/system/${_u}" ] \
-       && [ -e "${ROOTFS_DIR}/etc/systemd/system/multi-user.target.wants/${_u}" ]; then
+    _l="${ROOTFS_DIR}/etc/systemd/system/multi-user.target.wants/${_u}"
+    if [ -e "${ROOTFS_DIR}/usr/lib/systemd/system/${_u}" ] && hcs_link_resolves "${_l}"; then
         echo "  [OK] ${_u} exists and is reachable"
         CHECKED=$((CHECKED + 1))
     else

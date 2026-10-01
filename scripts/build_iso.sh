@@ -380,12 +380,37 @@ ln -sf /usr/lib/systemd/system/hcs-desktop.service \
 ln -sf /usr/lib/systemd/system/hcs-banner.service \
       "${ROOTFS_DIR}/etc/systemd/system/multi-user.target.wants/hcs-banner.service"
 
-# Prove each link resolves to a unit that exists. A dangling enablement is the
-# quietest possible failure in this whole system.
+# Prove each link resolves to a unit that exists -- INSIDE THE GUEST.
+#
+# This needs care, and getting it wrong is exactly how the dangling link survived
+# so long. `test -e` follows a symlink against the *host's* root, so an absolute
+# target of /usr/lib/systemd/system/foo.service is looked up in the build host's
+# /usr and found missing -- even though it is present in the staged image, which
+# is the only place it will ever be looked up. A plain [ -e ] on an absolute link
+# therefore reports every correct link as broken.
+#
+# And the original relative link was genuinely broken for the mirror-image
+# reason: ../hcs-desktop.service from multi-user.target.wants resolves to
+# /etc/systemd/system/hcs-desktop.service, and no such file exists.
+#
+# So: read the link, and resolve it against ROOTFS_DIR rather than against /.
+check_unit_link() {
+    local link="$1" target resolved
+    target=$(readlink "${link}") || return 1
+    case "${target}" in
+        /*) resolved="${ROOTFS_DIR}${target}" ;;          # absolute, guest namespace
+        *)  resolved="$(dirname "${link}")/${target}" ;;  # relative, resolve in place
+    esac
+    [ -e "${resolved}" ]
+}
+
 for _unit in hcs-desktop.service hcs-banner.service; do
     _link="${ROOTFS_DIR}/etc/systemd/system/multi-user.target.wants/${_unit}"
-    if [ ! -e "${_link}" ]; then
-        echo "  [ERROR] ${_unit} is enabled but the link does not resolve." >&2
+    if check_unit_link "${_link}"; then
+        echo "       ${_unit} -> $(readlink "${_link}") resolves"
+    else
+        echo "  [ERROR] ${_unit} is enabled but does not resolve to a unit." >&2
+        echo "          It points at $(readlink "${_link}" 2>/dev/null || 'nothing')." >&2
         echo "          The desktop would never start and systemd would not say so." >&2
         exit 1
     fi
