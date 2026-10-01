@@ -323,6 +323,53 @@ if [ ! -x "${HOOK}" ] && [ ! -r "${HOOK}" ]; then
     die "the base would boot without a live user"
 fi
 
+# ------------------------------------------------- 3c. initramfs: overlayfs
+#
+# "oeum: overlay not supported" and then nothing, forever.
+#
+# live-boot mounts the squashfs read-write by stacking an overlayfs on it. The
+# kernel ships overlay.ko.zst in /lib/modules, and it is simply NOT in the
+# initramfs -- Debian's default initrd does not include it, because a normal
+# installed system never needs it. A live image does.
+#
+# The result is a boot that mounts the medium, prints one line about overlay, and
+# stops. No panic, no error code, no prompt. It looks exactly like a slow boot for
+# as long as you are willing to wait, which is ten minutes.
+#
+# So the module is added explicitly. udevadm can do this by itself, which also
+# means the initramfs keeps working if the list changes.
+say "adding overlayfs to the initramfs (live-boot cannot mount the medium without it)"
+INITRD=$(ls "${BASE_DIR}"/boot/initrd.img-* 2>/dev/null | head -1)
+if [ -z "${INITRD}" ]; then
+    die "no initrd.img in the base; the image cannot mount its own medium"
+fi
+KVER=$(basename "${INITRD}" | sed 's/^initrd\.img-//')
+
+if ! lsinitramfs "${INITRD}" 2>/dev/null | grep -q 'fs/overlay'; then
+    if chroot "${BASE_DIR}" /usr/bin/update-initramfs -u "-${KVER}" \
+            >>"${BASE_DIR}/var/log/hcs-base-build.log" 2>&1 \
+       && lsinitramfs "${INITRD}" 2>/dev/null | grep -q 'fs/overlay'; then
+        say "    overlayfs is now in the initramfs"
+    else
+        # update-initramfs consults /etc/initramfs-tools/modules, so fall back to
+        # writing it and asking again rather than shipping an image that cannot
+        # mount itself.
+        say "    update-initramfs did not add it; writing /etc/initramfs-tools/modules"
+        mkdir -p "${BASE_DIR}/etc/initramfs-tools"
+        printf 'overlay\n' > "${BASE_DIR}/etc/initramfs-tools/modules"
+        chroot "${BASE_DIR}" /usr/bin/update-initramfs -u "-${KVER}" \
+            >>"${BASE_DIR}/var/log/hcs-base-build.log" 2>&1 || true
+        if lsinitramfs "${INITRD}" 2>/dev/null | grep -q 'fs/overlay'; then
+            say "    overlayfs is now in the initramfs"
+        else
+            say "    overlayfs is STILL missing after two attempts"
+            die "the image would boot to 'overlay not supported' and stop"
+        fi
+    fi
+else
+    say "    overlayfs was already in the initramfs"
+fi
+
 say "running the chroot bootstrap hook (live user, getty, keyboard, payload)"
 if chroot "${BASE_DIR}" /bin/sh -c "true" 2>/dev/null; then
     :
