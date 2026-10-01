@@ -144,18 +144,26 @@ function Remove-QAVM {
 }
 
 function New-EvidenceVhd {
-    # 512 MB dynamic. The frames are PNGs of a 1280x800 desktop; 32 of them plus
-    # the journal is a few tens of megabytes, and FAT32 needs headroom anyway.
-    Invoke-VBox @("createvm", "--name", "$VmName-disk", "--ostype", "Debian_64",
-                  "--register", "--vhd") | Out-Null
-    try {
-        Invoke-VBox @("modifyvhd", "$VmName-disk.vhd", "--resize", "512") | Out-Null
-    } finally {
-        & $VBoxManage unregistervm "$VmName-disk" --delete 2>$null | Out-Null
-    }
+    # 512 MB fixed VHD. FAT32 — which the guest formats — needs headroom, and 32
+    # desktop PNGs plus a journal is a few tens of megabytes.
+    #
+    # `createmedium`, not `createvhd`: this VirtualBox build has no `createvhd`
+    # subcommand at all, and the driver failed on its first line twice before
+    # being checked against `VBoxManage help`.
+    if (Test-Path -LiteralPath $evidenceVhd) { Remove-Item -LiteralPath $evidenceVhd -Force }
+    # VirtualBox keeps disks in its own media registry, so deleting the file
+    # leaves the registration behind and the next createmedium fails with
+    # "a hard disk with UUID … already exists". Drop the registration first,
+    # whether or not the file is still there.
+    & $VBoxManage closemedium disk $evidenceVhd --delete 2>$null | Out-Null
+    & $VBoxManage unregistervm "$VmName" --delete 2>$null | Out-Null
+    Invoke-VBox @("createmedium", "disk", "--filename", $evidenceVhd, "--size", "512",
+                  "--format", "VHD", "--variant", "Fixed") | Out-Null
     if (-not (Test-Path -LiteralPath $evidenceVhd)) {
-        throw "VHD was not created at $evidenceVhd"
+        throw "createmedium reported success but $evidenceVhd does not exist"
     }
+    $sz = [math]::Round((Get-Item $evidenceVhd).Length / 1MB)
+    Write-Host "[setup] evidence disk: $evidenceVhd ($sz MB)"
 }
 
 function New-QAVM {
@@ -168,14 +176,32 @@ function New-QAVM {
     # this gate exists to catch.
     Invoke-VBox @("modifyvm", $VmName, "--graphicscontroller", "vmsvga",
                   "--vram", "32") | Out-Null
+    # BIOS firmware: a hybrid ISO with GRUB in El Torito boots from the DVD
+    # without the UEFI Secure Boot dance that a distro image would otherwise
+    # need, and the image provides its own kernel and initrd anyway.
+    Invoke-VBox @("modifyvm", $VmName, "--firmware", "bios") | Out-Null
     # 1280x800 to match the render specs, so a VM frame is comparable with a
     # headless-render reference.
-    Invoke-VBox @("modifyvm", $VmName, "--firmware", "bios") | Out-Null
+    Invoke-VBox @("modifyvm", $VmName, "--boot1", "dvd", "--boot2", "disk") | Out-Null
+
+    # The storage controller has to be created before anything can be attached.
+    #
+    # A default VM in this VirtualBox has "Storage Controllers: <none>", and
+    # neither `modifyvm --add storagectl` nor `modifyvm --disk` exists — both
+    # were guessed and both failed. The command for it is `storagectl`, named in
+    # `VBoxManage help storageattach`: "a storage controller that was previously
+    # added with the VBoxManage storagectl command".
+    Invoke-VBox @("storagectl", $VmName, "--name", "SATA",
+                  "--add", "sata", "--portcount", "2") | Out-Null
+
+    # `--device` takes a *number* (the unit on the port), not a type name.
+    # Passing "dvddrive"/"harddisk" produces a bare usage dump, which is what
+    # two earlier attempts did.
     Invoke-VBox @("storageattach", $VmName, "--storagectl", "SATA",
-                  "--port", "0", "--device", "dvddrive", "--type", "dvddrive",
+                  "--port", "0", "--device", "0", "--type", "dvddrive",
                   "--medium", $isoFull) | Out-Null
     Invoke-VBox @("storageattach", $VmName, "--storagectl", "SATA",
-                  "--port", "1", "--device", "harddisk", "--type", "hdd",
+                  "--port", "1", "--device", "0", "--type", "hdd",
                   "--medium", $evidenceVhd) | Out-Null
     # No NAT forwarding and no guest additions: nothing needs to reach the guest,
     # and the agent does not listen on anything.

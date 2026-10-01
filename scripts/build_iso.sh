@@ -82,10 +82,57 @@ if [ ! -f "${REPO_ROOT}/target/release/hcsd" ] && [ ! -f "${REPO_ROOT}/target/re
     cargo build --release --workspace
 fi
 
+# ------------------------------------------------------------------ 1b. base
+
+# The base system is built by scripts/build_base.sh, not here.
+#
+# For two releases this script staged a directory of HCS binaries and assets and
+# called it a rootfs, then copied the *build host's* kernel and initrd into the
+# image. The result had 152 files and no /bin/sh, no libc and no compositor, so
+# it could not boot; the package list was read by nothing. See
+# docs/V2_STABLE_QA_STATUS.md.
+#
+# The base is a real debootstrapped Debian system with the declared package list
+# installed into it, and the image takes its kernel and initrd from there. It is
+# built separately because it takes a long time and rarely changes: build it once
+# with `sudo scripts/build_base.sh sid`, then reuse it.
+BASE_DIR="${REPO_ROOT}/target/base"
+if [ ! -d "${BASE_DIR}" ] || [ ! -f "${BASE_DIR}/bin/bash" ]; then
+    echo "[1b] No base system at ${BASE_DIR}." >&2
+    echo "" >&2
+    echo "     Build it first:" >&2
+    echo "         sudo bash scripts/build_base.sh sid" >&2
+    echo "" >&2
+    echo "     It debootstraps Debian, installs the declared package list and" >&2
+    echo "     provisions niri. It needs root and takes a while. Reuse it with" >&2
+    echo "     --cache on subsequent runs." >&2
+    exit 1
+fi
+echo "[1b] Using the base system at ${BASE_DIR}"
+if [ -f "${BASE_DIR}/etc/hcs-build-base" ]; then
+    # Printed so the image's provenance is visible in the build log rather than
+    # being something you have to go looking for afterwards.
+    sed 's/^/       /' "${BASE_DIR}/etc/hcs-build-base"
+fi
+
 # ------------------------------------------------------------------ 2. layout
 
-echo "[2/7] Constructing root filesystem payload..."
+echo "[2/7] Assembling the image root filesystem from the base..."
+# The base *is* the root filesystem. It is copied rather than moved so a failed
+# build leaves the base intact for the next attempt.
 rm -rf "${ROOTFS_DIR}"
+mkdir -p "$(dirname "${ROOTFS_DIR}")"
+# The extraction target has to exist before tar writes into it: `tar -x -C` does
+# not create the directory it is told to extract into, and the error surfaces as
+# "Cannot open: No such file or directory" with no mention of which path.
+mkdir -p "${ROOTFS_DIR}"
+# -a preserves ownership, symlinks and device nodes; the exclusions are the
+# mount points and the kernel the image supplies itself.
+tar -C "${BASE_DIR}" -cf - \
+    --exclude=./proc --exclude=./sys --exclude=./dev --exclude=./run \
+    --exclude=./tmp --exclude=./boot \
+    . | tar -C "${ROOTFS_DIR}" -xf -
+echo "       root filesystem: $(find "${ROOTFS_DIR}" -xdev -type f 2>/dev/null | wc -l) file(s)"
 
 # Every directory a later copy targets MUST exist up front. In v1 these were
 # missing, which is exactly why `cp ... || true` was masking real failures.
@@ -438,23 +485,47 @@ mkdir -p "${ISO_STAGING}/live" "${ISO_STAGING}/boot/grub"
 
 mksquashfs "${ROOTFS_DIR}" "${ISO_STAGING}/live/filesystem.squashfs" -comp xz -noappend
 
-if [ -f "/boot/vmlinuz" ]; then
-    echo "  Embedding distribution kernel from /boot/vmlinuz..."
-    cp -L "/boot/vmlinuz" "${ISO_STAGING}/live/vmlinuz"
-elif [ -f "/boot/vmlinuz-$(uname -r)" ]; then
-    echo "  Embedding distribution kernel from /boot/vmlinuz-$(uname -r)..."
-    cp -L "/boot/vmlinuz-$(uname -r)" "${ISO_STAGING}/live/vmlinuz"
+# The kernel and initrd come from the BASE, never from the build host.
+#
+# This is the line that was wrong for two releases. `cp -L /boot/vmlinuz` on the
+# build host put Ubuntu 26.04's kernel into a "Debian" image, and the initrd
+# that came with it contained a single file. Nothing in the image was Debian's;
+# the ISO could not boot, and no gate noticed because none of them looked.
+#
+# The base's own kernel is the one whose modules and ABI match the Debian
+# userspace now sitting in the squashfs.
+echo "  Embedding the base system's kernel..."
+BASE_KVER=$(sed -n 's/^kernel=vmlinuz-//p' "${BASE_DIR}/etc/hcs-build-base" 2>/dev/null | head -1)
+if [ -z "${BASE_KVER}" ]; then
+    BASE_KVER=$(ls "${BASE_DIR}"/boot/vmlinuz-* 2>/dev/null | sed 's|.*/vmlinuz-||' | sort -V | tail -1)
+fi
+[ -n "${BASE_KVER}" ] && [ -f "${BASE_DIR}/boot/vmlinuz-${BASE_KVER}" ] || {
+    echo "  [ERROR] The base has no kernel in ${BASE_DIR}/boot." >&2
+    echo "          Is linux-image-amd64 in config/package-lists/hcs-core.list.chroot?" >&2
+    exit 1
+}
+cp -L "${BASE_DIR}/boot/vmlinuz-${BASE_KVER}" "${ISO_STAGING}/live/vmlinuz"
+echo "  kernel: vmlinuz-${BASE_KVER}"
+
+if [ -f "${BASE_DIR}/boot/initrd.img-${BASE_KVER}" ]; then
+    cp -L "${BASE_DIR}/boot/initrd.img-${BASE_KVER}" "${ISO_STAGING}/live/initrd.img"
+elif [ -f "${BASE_DIR}/boot/initrd.img" ]; then
+    cp -L "${BASE_DIR}/boot/initrd.img" "${ISO_STAGING}/live/initrd.img"
 else
-    echo "  [ERROR] No valid Linux kernel found in /boot! Aborting ISO build." >&2
+    echo "  [ERROR] The base has no initrd for ${BASE_KVER}. Aborting." >&2
     exit 1
 fi
+echo "  initrd: $(basename "${ISO_STAGING}/live/initrd.img") ($(du -h "${ISO_STAGING}/live/initrd.img" | cut -f1))"
 
-if [ -f "/boot/initrd.img" ]; then
-    cp -L "/boot/initrd.img" "${ISO_STAGING}/live/initrd.img"
-elif [ -f "/boot/initrd.img-$(uname -r)" ]; then
-    cp -L "/boot/initrd.img-$(uname -r)" "${ISO_STAGING}/live/initrd.img"
+# The kernel modules must be in the squashfs, or the kernel boots and then cannot
+# find a single driver for its own root filesystem.
+echo "  Staging kernel modules into the root filesystem..."
+mkdir -p "${ROOTFS_DIR}/lib/modules/${BASE_KVER}"
+if [ -d "${BASE_DIR}/lib/modules/${BASE_KVER}" ]; then
+    cp -a "${BASE_DIR}/lib/modules/${BASE_KVER}/." "${ROOTFS_DIR}/lib/modules/${BASE_KVER}/"
+    echo "       $(find "${ROOTFS_DIR}/lib/modules/${BASE_KVER}" -type f | wc -l) module file(s)"
 else
-    echo "  [ERROR] No valid initrd found in /boot! Aborting ISO build." >&2
+    echo "  [ERROR] The base has no modules for ${BASE_KVER}. Aborting." >&2
     exit 1
 fi
 

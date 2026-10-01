@@ -5,33 +5,65 @@ alternative is a release note that says things are better than they are.
 
 ## The headline
 
-**No v2.0.0 ISO has booted to a desktop. The image the build produces is not a
-bootable Linux system.**
+**The image boots, but it does not reach a desktop.** That is one real step
+further than it was, and it is worth being precise about the difference.
 
-`HCS-Linux-2.0.0-qa-amd64.iso` (303 MB) builds cleanly, passes the payload
-contract with 143 checks, and passes ISO9660 structural verification. It also
-contains 152 files, of which 27 are HCS binaries, 105 are HCS data files, 17
-are HCS config files, and one is an HCS init script.
+`HCS-Linux-2.0.0-qa-amd64.iso` (1.4 GB) builds, passes the payload contract with
+157 checks, and **boots**. It is a real Debian system: 37,051 files, its own
+kernel `7.2.8+deb14-amd64` with 4,216 modules, niri 26.04, quickshell, systemd,
+Calamares, grim, tesseract. It mounts, starts, and runs HCS binaries.
 
-It contains no `/bin/sh`, no libc, no systemd, no `niri`, no `quickshell`, no
-`grim`, no `tesseract`. There is no Debian base system in it at all.
+What it does not do is show a desktop. It boots into `hcs-live`, prints the
+banner, and sits there. The reason is below, and it is a single leftover file.
 
-## Why
+## What is now true
 
-`scripts/build_iso.sh` never assembles a base system. It stages a directory of
-HCS binaries and assets, then copies **the build host's own kernel and initrd**
+- A real base system is assembled by `scripts/build_base.sh`: Debian sid,
+  debootstrapped, the declared package list installed into it, verified to be a
+  system and not a directory.
+- The image takes the **base's** kernel and initrd. It no longer copies the build
+  host's.
+- niri is built from its own pinned commit and dependency bundle, with both
+  artefact digests verified. quickshell comes from Debian sid as a pinned package.
+- The payload gate asserts the image is a Linux system — a shell, libc, init,
+  compositor, shell, the QA tools, kernel modules for the *shipped* kernel, and a
+  minimum file count. It would now fail the 152-file payload that two releases
+  shipped.
+
+## Why it still does not reach a desktop
+
+The image overrides `init=/sbin/init`, and `/sbin/init` is a 120-line shell
+script left over from the era when there was no system to run. It prints a
+banner, starts niri by hand, and then either `exec`s systemd or loops. In the
+real run the banner repeats, so it is being re-entered — and no desktop appears.
+
+The fix is architectural, not a patch: **stop overriding init.** The base's own
+`/sbin/init` is a symlink to systemd, `live-boot` is already installed to mount
+the squashfs, and the session should be started by a systemd unit rather than by
+a PID 1 shell script. The banner script predates the base system and has no
+reason to exist now.
+
+Until that is done, the honest verdict is: **the 32-stage VirtualBox suite cannot
+pass**, because no desktop is drawn.
+
+## What was wrong before
+
+`scripts/build_iso.sh` never assembled a base system. It staged a directory of
+HCS binaries and assets, then copied **the build host's own kernel and initrd**
 into the image:
 
 ```
 scripts/build_iso.sh:441   cp -L "/boot/vmlinuz" "${ISO_STAGING}/live/vmlinuz"
-scripts/build_iso.sh:453   cp -L "/boot/initrd.img" "${ISO_STAGING}/live/initrd.img"
 ```
 
 Those two lines are the whole kernel story. On the WSL host used for this build
 they resolved to Ubuntu 26.04's kernel and a companion cpio containing one file.
-`config/package-lists/hcs-core.list.chroot`, which declares 75 packages, is read
-by nothing in the build. `debootstrap` and `live-build` are installed on the
-build host and never invoked.
+`config/package-lists/hcs-core.list.chroot` was read by nothing.
+`debootstrap` and `live-build` were installed on the build host and never invoked.
+
+The result had 152 files: 27 HCS binaries, 105 HCS data files, 17 HCS config
+files, and one HCS init script. No `/bin/sh`, no libc, no systemd, no compositor.
+It could not boot at all.
 
 ## Why the checks did not catch it
 
@@ -43,43 +75,37 @@ grep -q "^${pkg}\$" config/package-lists/hcs-core.list.chroot
 ```
 
 That asserts a word appears in a text file. It is the same class of mistake as
-v1's "clippy 0 warnings" claim, and it was added in the same commit series.
+v1's "clippy 0 warnings" claim. `scripts/verify_package_availability.py` is the
+replacement: it asks the distribution, honours `Provides` so virtual package
+names are not falsely accused, and reports what is genuinely absent.
 
-## The part that cannot be fixed by writing more code
+## The base-system decision, as taken
 
-`niri` and `quickshell` — the compositor and the shell the entire v2 desktop
-design is built on — are **not packaged in any Debian or Ubuntu suite**. Checked
-against the full binary-amd64 indexes:
+The decision was to take the desktop stack from external sources rather than
+compile it in-tree. What that turned into:
 
-| base                    | niri | quickshell |
-|-------------------------|------|------------|
-| Debian 13 (trixie)      | no   | no         |
-| Debian 12 (bookworm)    | no   | no         |
-| Ubuntu 24.04 (noble)    | no   | no         |
-| Ubuntu 25.04 (plucky)   | no   | no         |
-| Ubuntu 26.04 (questing) | no   | no         |
+| component | source | provenance |
+|---|---|---|
+| quickshell 0.3.1 | Debian **sid**, ordinary pinned package | first-party Debian |
+| niri 26.04 | niri's own repo, pinned commit, digests verified | first-party upstream |
+| everything else | Debian sid package list | first-party Debian |
 
-So `apt-get install` against that list cannot succeed, and no amount of
-correctness in the rest of the pipeline produces a desktop. This is a base
-decision with three honest options:
+The base moved from trixie to sid because quickshell 0.3.1-1+b1 requires
+`libqt6core6t64 >= 6.11.2` and `qt6-base-private-abi (= 6.11.2)`, and trixie ships
+Qt 6.8 — so taking that one binary in a trixie base would have dragged the whole
+Qt 6.11 stack with it.
 
-1. **Build niri and quickshell from source into the image.** Both are Rust
-   projects and both build against Qt 6, which trixie does ship. This keeps the
-   Debian base and the supply chain unchanged, and costs build time and a
-   vendoring/pinning decision.
-2. **Choose a compositor and shell trixie does ship** — sway or wayfire with
-   waybar/fuzzel, or GNOME. Cheapest and most honest, but it abandons the
-   niri + Quickshell design the plan is written around, and the QML shell would
-   need porting to whatever the alternative shell is.
-3. **Adopt a third-party binary repository.** Fastest, and it changes where
-   every binary in the image comes from. That is a supply-chain decision with
-   real consequences and should be made deliberately and recorded, not adopted
-   because it was convenient.
+niri is not packaged in Debian 12 or 13, in Ubuntu 24.04/25.04/26.04, or in
+Fedora, and its own releases attach no binary. So for that component the
+"external binary" route does not exist and the build uses niri's own artefacts.
 
-Also missing from trixie and needing a decision either way:
-`xdg-desktop-portal-hyprland` (irrelevant if the compositor is not Hyprland),
-`qt6-declarative` (a virtual name; the real packages are `qml6-module-qtquick*`),
-and `plymouth-theme-spinner` (shipped as part of `plymouth-themes`).
+Two limits, stated rather than hidden:
+
+- The build is **not offline**. niri pins smithay and smithay-drm-extras to git
+  commit hashes rather than crates.io versions, and the release's vendored bundle
+  contains no git checkouts, so `--offline` fails at resolution. Versions still
+  come from the tag's `Cargo.lock` and both digests are verified.
+- **sid is an unstable base.** That is a real cost of the decision.
 
 ## What is genuinely verified
 
@@ -99,10 +125,11 @@ These are real, reproducible, and did not depend on a booting image:
 | Shell bindings | PASS | 44/44 resolve to real commands; no duplicate combos |
 | Cheatsheet consistency | PASS | generated from config.kdl, not hand-maintained |
 | RAG retrieval | PASS | answers cite a manual section; out-of-scope refused |
-| ISO payload contract | PASS | 143 checks against a real staged tree |
+| ISO payload contract | PASS | 157 checks against a real staged tree |
 | ISO structure | PASS | ISO9660 verified, checksum recorded |
-| **Graphical session in a VM** | **NOT RUN** | no bootable image exists |
-| **32-stage VirtualBox suite** | **NOT RUN** | driver is fixed and tested; nothing to run it against |
+| **Image boots** | **PASS** | 1.4 GB image, Debian sid base, own kernel 7.2.8 |
+| **Graphical session in a VM** | **FAIL** | boots to a console; `/sbin/init` overrides systemd |
+| **32-stage VirtualBox suite** | **NOT RUN** | nothing to photograph until a desktop is drawn |
 
 ## About the VirtualBox gate itself
 
@@ -127,5 +154,14 @@ pass, an abort is not a pass, a counter that disagrees with the stage rows is
 not a pass, and the host's independent re-grade of every frame overrides the
 guest's own verdict.
 
-It is correct and it is tested. It has never been executed against a booting
-image, and this file does not pretend otherwise.
+It is correct and it is tested. It has been run against the real image, and the
+run is what found the remaining blocker: the driver got the VM booted, attached
+the evidence disk and polled for the DONE marker exactly as designed, and the
+guest never wrote one — because there is no desktop for the QA agent to
+photograph.
+
+The driver itself needed four fixes that only a real run could reveal: this
+VirtualBox build has no `createvhd` (it is `createmedium`), no storage
+controller on a default VM (it is `storagectl --add`), `--device` takes a number
+rather than a type name, and `--bootorder` does not exist. All four produced a
+bare usage dump and no other clue.

@@ -139,6 +139,44 @@ say "cargo vendored-sources configured"
 
 # ------------------------------------------------------------------ 3. build
 
+# Build dependencies for the host, not for the image.
+#
+# niri links against libinput, libseat, libgbm, libdrm, libxkbcommon, PipeWire and
+# libdisplay-info. The *runtime* halves of those are already in the base via the
+# package list; the headers are needed here, and the failure without them is the
+# familiar "The system library `glib-2.0` required by crate `glib-sys` was not
+# found" from whichever crate happens to be compiled first.
+#
+# Declared here rather than in a README so the build cannot silently depend on
+# whatever happened to be installed on someone's machine.
+HOST_BUILD_DEPS=(
+    pkg-config
+    libudev-dev libinput-dev libseat-dev libgbm-dev libdrm-dev
+    libxkbcommon-dev libpipewire-0.3-dev libdisplay-info-dev
+    libglib2.0-dev libpango1.0-dev libcairo2-dev
+    # libclang: bindgen shells out to it to generate bindings for the pipewire
+    # and input APIs, and panics at build time with a message about
+    # "LIBCLANG_PATH" if it is absent. Not obvious from the failure.
+    libclang-dev clang
+    # wayland-scanner generates the protocol bindings from XML at build time.
+    libwayland-dev wayland-protocols
+)
+
+say "ensuring the host build dependencies for niri are present"
+MISSING_HOST=()
+for d in "${HOST_BUILD_DEPS[@]}"; do
+    dpkg-query -W -f='${Status}' "${d}" 2>/dev/null | grep -q 'ok installed' \
+        || MISSING_HOST+=("${d}")
+done
+if [ "${#MISSING_HOST[@]}" -gt 0 ]; then
+    say "  installing on the host: ${MISSING_HOST[*]}"
+    sudo apt-get update -qq >/dev/null 2>&1 || true
+    sudo apt-get install -y -qq --no-install-recommends "${MISSING_HOST[@]}" \
+        >/dev/null || die "could not install the host build dependencies: ${MISSING_HOST[*]}"
+else
+    say "  all present"
+fi
+
 # NOT `--offline`, and the reason is worth recording rather than hiding.
 #
 # niri depends on git snapshots — smithay and smithay-drm-extras are pinned to

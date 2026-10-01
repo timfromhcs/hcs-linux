@@ -258,6 +258,62 @@ grep -q "VERSION=\"${VERSION}\"" "${ROOTFS_DIR}/etc/os-release" 2>/dev/null || {
 }
 CHECKED=$((CHECKED + 1))
 
+# ---------------------------------------------------------------- base system
+
+# The check that would have caught two unbootable releases.
+#
+# v1 and v2 both produced an "ISO" with 152 files: HCS binaries, HCS data, and
+# one HCS init script. No /bin/sh, no libc, no systemd, no compositor. The
+# payload gate passed anyway, because every check it made was about *HCS's own
+# files* — the launchers, icons, manuals and binaries it staged — and never once
+# asked whether the image was a Linux system.
+#
+# So: a real system has a userspace. If any of these are missing, the image is a
+# directory of files wearing an ISO's clothes.
+check_file /bin/bash   "base: shell"            500
+check_file /bin/sh     "base: POSIX shell"      100
+check_dir  /lib/x86_64-linux-gnu "base: libc"   50
+check_file /usr/lib/systemd/systemd "base: init system" 100
+check_file /usr/bin/niri        "base: compositor (niri)"    100
+check_file /usr/bin/quickshell  "base: desktop shell"        100
+check_file /usr/bin/grim        "base: screenshot capture"   50
+check_file /usr/bin/tesseract   "base: OCR (QA assert_text)" 50
+check_file /usr/bin/wtype       "base: synthetic input"      20
+check_dir  /lib/modules         "base: kernel modules"       1
+check_file /etc/hcs-build-base  "base: provenance record"   10
+check_file /etc/hcs-niri-provenance "base: niri provenance"  10
+
+# The image cannot boot with a kernel whose modules are missing, and it cannot
+# boot with the *build host's* kernel either. The modules directory has to match
+# the kernel the image ships, so read the version out of the provenance record
+# and confirm the modules for exactly that version are present.
+if [ -f "${ROOTFS_DIR}/etc/hcs-build-base" ]; then
+    KVER=$(sed -n 's/^kernel=vmlinuz-//p' "${ROOTFS_DIR}/etc/hcs-build-base" | head -1)
+    if [ -n "${KVER}" ] && [ -d "${ROOTFS_DIR}/lib/modules/${KVER}" ]; then
+        NMOD=$(find "${ROOTFS_DIR}/lib/modules/${KVER}" -name '*.ko*' 2>/dev/null | wc -l)
+        echo "  [OK] kernel modules for ${KVER} (${NMOD} module(s))"
+        CHECKED=$((CHECKED + 1))
+    else
+        echo "  [MISS] kernel modules for ${KVER:-<unknown>} — the image cannot boot" >&2
+        FAILURES=$((FAILURES + 1))
+    fi
+fi
+
+# A shell that is not really a shell, and a libc that is not really a libc, are
+# both possible and both invisible to an existence check.
+if [ -d "${ROOTFS_DIR}/bin" ]; then
+    NFILE=$(find "${ROOTFS_DIR}" -xdev -type f 2>/dev/null | wc -l)
+    if [ "${NFILE}" -lt 5000 ]; then
+        echo "  [THIN] the root filesystem holds only ${NFILE} files." >&2
+        echo "          A bootable Linux system has tens of thousands. This looks" >&2
+        echo "          like a payload directory rather than a system." >&2
+        FAILURES=$((FAILURES + 1))
+    else
+        echo "  [OK] root filesystem holds ${NFILE} file(s)"
+        CHECKED=$((CHECKED + 1))
+    fi
+fi
+
 # ---------------------------------------------------------------- QA suite
 
 # The guest drives the VM run itself, so the manifest and every scenario it
