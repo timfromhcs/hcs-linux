@@ -277,6 +277,64 @@ if [ -n "${AUDIT}" ]; then
     die "the base is not in a clean package state"
 fi
 
+# ------------------------------------------------- 3d. chroot bootstrap hook
+
+# RUN THE HOOK. This was missing, and it is the reason three build cycles of
+# autologin fixes did nothing at all.
+#
+# config/hooks/live/01-hcs-setup.hook.chroot is where the live user is created,
+# where getty@tty1 is given an autologin override, where the QWERTZ default is
+# written and where the payload is asserted present. It had been sitting in the
+# repository, correct, committed, and completely unreached: build_base.sh never
+# invoked it.
+#
+# So the image booted as live-config's own `user`, our getty override did not
+# exist, and the console showed "Authentication failure" -- which reads like a
+# login problem and is actually a hook that never ran. Three fixes were applied
+# to the hook before anyone checked whether the hook ran at all.
+#
+# The lesson is worth stating because it will recur: a file that is never
+# executed is not a component. It looks exactly like one in review, in grep and
+# in the diff, and no gate in this project had ever asserted that it ran.
+HOOK="${REPO_ROOT}/config/hooks/live/01-hcs-setup.hook.chroot"
+if [ ! -x "${HOOK}" ] && [ ! -r "${HOOK}" ]; then
+    say "bootstrap hook is missing or unreadable: ${HOOK}"
+    die "the base would boot without a live user"
+fi
+
+say "running the chroot bootstrap hook (live user, getty, keyboard, payload)"
+if chroot "${BASE_DIR}" /bin/sh -c "true" 2>/dev/null; then
+    :
+else
+    say "chroot cannot execute -- mounts from step 3b are required here"
+    die "cannot run the bootstrap hook"
+fi
+
+if ! chroot "${BASE_DIR}" /bin/sh "${HOOK}" \
+        >>"${BASE_DIR}/var/log/hcs-base-build.log" 2>&1; then
+    say "the bootstrap hook failed:"
+    tail -30 "${BASE_DIR}/var/log/hcs-base-build.log" | while read -r l; do say "    ${l}"; done
+    die "the base has no session; refusing to build an image that cannot log in"
+fi
+ok "bootstrap hook completed"
+
+# And assert the result rather than trusting that a script ran. This is the
+# check whose absence produced three identical failed cycles.
+if ! chroot "${BASE_DIR}" /usr/bin/id hcs >/dev/null 2>&1; then
+    say "the hook ran but created no 'hcs' user"
+    die "the base would boot to live-config's default user, not the HCS session"
+fi
+if [ ! -f "${BASE_DIR}/etc/systemd/system/getty@tty1.service.d/override.conf" ]; then
+    say "the hook ran but wrote no getty@tty1 autologin override"
+    die "the base would stop at a login prompt"
+fi
+if ! chroot "${BASE_DIR}" /usr/bin/grep -q 'autologin hcs' \
+        "${BASE_DIR}/etc/systemd/system/getty@tty1.service.d/override.conf"; then
+    say "the getty override does not name the hcs user"
+    die "the base would ask for credentials on a live USB"
+fi
+ok "verified: user hcs exists and getty@tty1 autologins as hcs"
+
 # ------------------------------------------------------------------ 4. verify
 
 # The external provisioning scripts need the mounts from step 3b to still be in
@@ -288,7 +346,8 @@ say "verifying the base is a real system, not a directory of files"
 MISSING_SYS=()
 for probe in bin/bash bin/sh sbin/init usr/lib/systemd/systemd \
              usr/bin/quickshell usr/bin/grim usr/bin/wtype \
-             usr/bin/tesseract; do
+             usr/bin/tesseract usr/bin/niri usr/bin/vulkaninfo \
+             usr/bin/glxinfo lib/x86_64-linux-gnu/libgbm.so.1; do
     [ -e "${BASE_DIR}/${probe}" ] || MISSING_SYS+=("${probe}")
 done
 if [ "${#MISSING_SYS[@]}" -gt 0 ]; then
