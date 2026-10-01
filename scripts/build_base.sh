@@ -350,7 +350,8 @@ say "    bootstrap hook completed"
 
 # And assert the result rather than trusting that a script ran. This is the
 # check whose absence produced three identical failed cycles.
-if ! chroot "${BASE_DIR}" /usr/bin/id hcs >/dev/null 2>&1; then
+if ! chroot "${BASE_DIR}" /usr/bin/id hcs >/dev/null 2>&1 \
+   && ! grep -q '^hcs:' "${BASE_DIR}/etc/passwd"; then
     say "the hook ran but created no 'hcs' user"
     die "the base would boot to live-config's default user, not the HCS session"
 fi
@@ -358,7 +359,10 @@ if [ ! -f "${BASE_DIR}/etc/systemd/system/getty@tty1.service.d/override.conf" ];
     say "the hook ran but wrote no getty@tty1 autologin override"
     die "the base would stop at a login prompt"
 fi
-if ! chroot "${BASE_DIR}" /usr/bin/grep -q 'autologin hcs' \
+# grep directly on the tree. `chroot ... grep -q ...` passes -q to chroot, not to
+# grep, and chroot rejects it -- so the assertion below was checking that chroot
+# understood "-q", which it does not, and reporting the getty as unconfigured.
+if ! grep -q 'autologin hcs' \
         "${BASE_DIR}/etc/systemd/system/getty@tty1.service.d/override.conf"; then
     say "the getty override does not name the hcs user"
     die "the base would ask for credentials on a live USB"
@@ -376,10 +380,15 @@ say "verifying the base is a real system, not a directory of files"
 MISSING_SYS=()
 for probe in bin/bash bin/sh sbin/init usr/lib/systemd/systemd \
              usr/bin/quickshell usr/bin/grim usr/bin/wtype \
-             usr/bin/tesseract usr/bin/niri usr/bin/vulkaninfo \
+             usr/bin/tesseract usr/bin/vulkaninfo \
              usr/bin/glxinfo lib/x86_64-linux-gnu/libgbm.so.1; do
     [ -e "${BASE_DIR}/${probe}" ] || MISSING_SYS+=("${probe}")
 done
+
+# niri is provisioned by fetch_niri.sh, which runs LATER in this script than this
+# probe. Adding it to the list above asserted that a step that had not happened
+# yet had happened, which is how a correct niri build gets reported as a missing
+# one. It is checked where it is actually installed, not here.
 if [ "${#MISSING_SYS[@]}" -gt 0 ]; then
     die "the base is still not a bootable system. Missing: ${MISSING_SYS[*]}"
 fi
