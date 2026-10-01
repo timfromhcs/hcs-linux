@@ -24,16 +24,7 @@ ARCH="${2:-amd64}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 DIST_DIR="${REPO_ROOT}/dist"
-ISO_NAME="HCS-Linux-${VERSION}-${ARCH}.iso"
-FINAL_ISO="${DIST_DIR}/${ISO_NAME}"
 ROOTFS_DIR="${REPO_ROOT}/target/rootfs"
-
-echo "=================================================="
-echo "          HCS Linux ISO Build Pipeline            "
-echo "=================================================="
-echo "Version: ${VERSION}"
-echo "Arch:    ${ARCH}"
-echo "Target:  ${FINAL_ISO}"
 
 # --stage-only stops after the payload is staged and verified, before squashfs.
 #
@@ -61,10 +52,26 @@ QA=0
 for a in "$@"; do
     [ "${a}" = "--qa" ] && QA=1
 done
+
+# Resolved before the banner prints, so the build log names the image it is
+# actually making. It used to print the production name during a QA build, which
+# is exactly the sort of small lie that makes a release note wrong.
+ISO_NAME="HCS-Linux-${VERSION}-${ARCH}.iso"
+[ "${QA}" -eq 1 ] && ISO_NAME="HCS-Linux-${VERSION}-qa-${ARCH}.iso"
+FINAL_ISO="${DIST_DIR}/${ISO_NAME}"
+
+echo "=================================================="
+echo "          HCS Linux ISO Build Pipeline            "
+echo "=================================================="
+echo "Version: ${VERSION}"
+echo "Arch:    ${ARCH}"
 if [ "${QA}" -eq 1 ]; then
-    ISO_NAME="HCS-Linux-${VERSION}-qa-${ARCH}.iso"
-    FINAL_ISO="${DIST_DIR}/${ISO_NAME}"
+    echo "Mode:    QA image (the automated boot entry is the default)"
 fi
+if [ "${STAGE_ONLY}" -eq 1 ]; then
+    echo "Mode:    stage only (no squashfs, no ISO)"
+fi
+echo "Target:  ${FINAL_ISO}"
 
 mkdir -p "${DIST_DIR}"
 
