@@ -325,20 +325,22 @@ fi
 
 # ------------------------------------------------- 3c. initramfs: overlayfs
 #
-# "oeum: overlay not supported" and then nothing, forever.
+# CORRECTION. The first version of this block asserted that overlayfs was absent
+# from the initramfs, on the strength of a grep that returned zero. Re-running it
+# properly shows three matches, including kernel/fs/overlayfs/overlay.ko.xz. The
+# module was there all along and the original diagnosis was wrong.
 #
-# live-boot mounts the squashfs read-write by stacking an overlayfs on it. The
-# kernel ships overlay.ko.zst in /lib/modules, and it is simply NOT in the
-# initramfs -- Debian's default initrd does not include it, because a normal
-# installed system never needs it. A live image does.
+# That matters more than the code. "overlay not supported" was read as "the
+# module is missing" when the message comes from live-boot's 9990-overlay.sh
+# shutdown hook, not from a mount failure -- so the boot reached the end of a
+# session rather than dying before one. Attributing a stop to a missing module
+# because the module name appeared nowhere in a grep is exactly the failure mode
+# this whole project keeps hitting: a plausible story, an unverified cause.
 #
-# The result is a boot that mounts the medium, prints one line about overlay, and
-# stops. No panic, no error code, no prompt. It looks exactly like a slow boot for
-# as long as you are willing to wait, which is ten minutes.
-#
-# So the module is added explicitly. udevadm can do this by itself, which also
-# means the initramfs keeps working if the list changes.
-say "adding overlayfs to the initramfs (live-boot cannot mount the medium without it)"
+# The check stays, because "the initramfs can mount an overlay" is a real
+# precondition for shipping a live image and nothing else asserted it. It is
+# simply no longer justified by a story about this particular boot.
+say "verifying the initramfs can mount an overlay"
 INITRD=$(ls "${BASE_DIR}"/boot/initrd.img-* 2>/dev/null | head -1)
 if [ -z "${INITRD}" ]; then
     die "no initrd.img in the base; the image cannot mount its own medium"
