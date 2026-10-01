@@ -38,8 +38,11 @@ if ! id "hcs" >/dev/null 2>&1; then
 fi
 if id "hcs" >/dev/null 2>&1; then
     usermod -aG sudo,video,audio,input,render hcs || true
+    # mkdir -p, not just .config. environment.d is a subdirectory and writing a
+    # file into a directory that does not exist fails; the hook then exits under
+    # `set -e` and the whole session setup is lost with no explanation.
     # Wayland-only (GNOME 49 lesson): no DISPLAY, only WAYLAND_DISPLAY.
-    mkdir -p /home/hcs/.config
+    mkdir -p /home/hcs/.config/environment.d
     cat > /home/hcs/.config/environment.d/10-hcs-session.conf << 'EOF'
 XDG_SESSION_TYPE=wayland
 XDG_CURRENT_DESKTOP=HCS

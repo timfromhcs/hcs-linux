@@ -277,6 +277,27 @@ if [ -n "${AUDIT}" ]; then
     die "the base is not in a clean package state"
 fi
 
+# The payload tree has to exist BEFORE the hook asserts its contents.
+#
+# The hook checks for /usr/share/hcs/shell/shell.qml and friends and exits if
+# they are absent. That assertion is correct and worth keeping -- but the payload
+# was only ever staged into the rootfs by build_iso.sh, which runs AFTER this.
+# So the hook was asserting against a tree that did not exist yet, and the
+# assertion did its job by refusing to let a sessionless image through.
+#
+# Order matters more than either script: base contents -> payload -> hook.
+PAYLOAD_SRC="${REPO_ROOT}/config/includes.chroot"
+if [ ! -d "${PAYLOAD_SRC}" ]; then
+    die "config/includes.chroot is missing; the base would have no shell or session"
+fi
+say "staging the payload tree into the base"
+if command -v rsync >/dev/null 2>&1; then
+    rsync -a "${PAYLOAD_SRC}/" "${BASE_DIR}/"
+else
+    (cd "${PAYLOAD_SRC}" && tar cf - .) | (cd "${BASE_DIR}" && tar xf -)
+fi
+say "    payload staged into the base"
+
 # ------------------------------------------------- 3d. chroot bootstrap hook
 
 # RUN THE HOOK. This was missing, and it is the reason three build cycles of
@@ -310,13 +331,22 @@ else
     die "cannot run the bootstrap hook"
 fi
 
-if ! chroot "${BASE_DIR}" /bin/sh "${HOOK}" \
+# COPY IT IN. chroot has a different root, so a path on the build host does not
+# exist inside it -- "No such file or directory" for a file that is right there
+# on disk. Binding it into place avoids that entirely.
+HOOK_IN_CHROOT="/tmp/hcs-bootstrap-hook.sh"
+cp -f "${HOOK}" "${BASE_DIR}${HOOK_IN_CHROOT}"
+chmod 755 "${BASE_DIR}${HOOK_IN_CHROOT}"
+
+if ! chroot "${BASE_DIR}" /bin/sh "${HOOK_IN_CHROOT}" \
         >>"${BASE_DIR}/var/log/hcs-base-build.log" 2>&1; then
+    rm -f "${BASE_DIR}${HOOK_IN_CHROOT}"
     say "the bootstrap hook failed:"
     tail -30 "${BASE_DIR}/var/log/hcs-base-build.log" | while read -r l; do say "    ${l}"; done
     die "the base has no session; refusing to build an image that cannot log in"
 fi
-ok "bootstrap hook completed"
+rm -f "${BASE_DIR}${HOOK_IN_CHROOT}"
+say "    bootstrap hook completed"
 
 # And assert the result rather than trusting that a script ran. This is the
 # check whose absence produced three identical failed cycles.
@@ -333,7 +363,7 @@ if ! chroot "${BASE_DIR}" /usr/bin/grep -q 'autologin hcs' \
     say "the getty override does not name the hcs user"
     die "the base would ask for credentials on a live USB"
 fi
-ok "verified: user hcs exists and getty@tty1 autologins as hcs"
+say "    verified: user hcs exists and getty@tty1 autologins as hcs"
 
 # ------------------------------------------------------------------ 4. verify
 
