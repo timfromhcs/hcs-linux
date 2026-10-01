@@ -353,9 +353,76 @@ else
     CHECKED=$((CHECKED + 1))
 fi
 
-# The session has to be started by something. Without a unit, systemd boots, the
-# image is clean, and there is still no desktop — which is precisely the state
-# the last VM run reached.
+# ---------------------------------------------------------------- graphics
+
+# A compositor with no drivers for it is not a desktop.
+#
+# For three releases this image shipped a Wayland compositor and zero graphics
+# packages, and no gate noticed, because every gate checked that files were
+# PRESENT and none checked that the compositor had anything to talk to. These
+# checks are about the renderer existing, not about the renderer working — the
+# working part can only be proven inside a running VM.
+#
+# The three failure modes are deliberately separate, because conflating them is
+# how "drivers installed, nothing renders" happens:
+#   * DRM/GBM  — does the image have a way to talk to a display device at all
+#   * GL/EGL   — can it rasterise
+#   * Vulkan   — does it have ICDs
+check_file /usr/lib/x86_64-linux-gnu/libgbm.so.1  "GBM (DRM access)"   100
+check_file /usr/lib/x86_64-linux-gnu/libEGL.so.1  "EGL"               100
+check_file /usr/lib/x86_64-linux-gnu/dri/swrast_dri.so "llvmpipe (software GL)" 100
+check_file /usr/bin/vulkaninfo                     "vulkaninfo"         20
+check_file /usr/bin/glxinfo                        "glxinfo"            20
+
+# The loader and the ICDs are different things. A missing loader finds no device;
+# a loader with no ICD finds no device. Both look identical from the guest.
+if [ -x "${ROOTFS_DIR}/usr/bin/vulkaninfo" ]; then
+    ICD_COUNT=0
+    for icd in "${ROOTFS_DIR}"/usr/share/vulkan/icd.d/*.json; do
+        [ -f "${icd}" ] && ICD_COUNT=$((ICD_COUNT + 1))
+    done
+    if [ "${ICD_COUNT}" -gt 0 ]; then
+        echo "  [OK] ${ICD_COUNT} Vulkan ICD(s) present"
+        CHECKED=$((CHECKED + 1))
+    else
+        echo "  [FAIL] no Vulkan ICD. mesa-vulkan-drivers was not installed into the base." >&2
+        FAILURES=$((FAILURES + 1))
+    fi
+fi
+
+# lavapipe specifically: the software Vulkan floor the CPU-first claim rests on.
+if [ -f "${ROOTFS_DIR}/usr/share/vulkan/icd.d/lvp_icd.x86_64.json" ]; then
+    echo "  [OK] lavapipe present — CPU-only rendering has a floor"
+    CHECKED=$((CHECKED + 1))
+else
+    echo "  [FAIL] no lavapipe ICD — a machine with no GPU cannot reach a desktop" >&2
+    FAILURES=$((FAILURES + 1))
+fi
+
+# Firmware. Without it Wi-Fi and many GPUs come up silently broken.
+FW_MISSING=0
+for fw in usr/lib/firmware/iwlwifi usr/lib/firmware/ath10k usr/lib/firmware/rtl; do
+    [ -e "${ROOTFS_DIR}/${fw}" ] || FW_MISSING=$((FW_MISSING + 1))
+done
+if [ "${FW_MISSING}" -eq 0 ]; then
+    echo "  [OK] firmware families present (iwlwifi, ath10k, rtl)"
+    CHECKED=$((CHECKED + 1))
+else
+    echo "  [WARN] ${FW_MISSING} firmware family/families missing — Wi-Fi may be silently broken"
+fi
+
+# And the session must not be told to render in a way that needs hardware it
+# cannot prove it has.
+if grep -q 'HCS_RENDERER:-software' \
+    "${ROOTFS_DIR}/usr/share/hcs/session/start-desktop.sh" 2>/dev/null; then
+    echo "  [OK] software rendering is the default; hardware is opt-in"
+    CHECKED=$((CHECKED + 1))
+else
+    echo "  [FAIL] the session does not default to software rendering" >&2
+    FAILURES=$((FAILURES + 1))
+fi
+
+# ---------------------------------------------------------------- QA suite
 check_file /usr/lib/systemd/system/hcs-desktop.service "session unit"    100
 check_file /usr/lib/systemd/system/hcs-banner.service  "boot banner unit" 100
 check_file /usr/share/hcs/session/start-desktop.sh     "desktop starter"  500

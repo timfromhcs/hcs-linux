@@ -16,6 +16,76 @@ udev
 dbus
 polkitd
 
+# --- Graphics: GBM, Mesa renderers and Vulkan --------------------------------
+#
+# THE ENTIRE GRAPHICS STACK WAS MISSING UNTIL NOW.
+#
+# grep this file for mesa|vulkan|libgl|firmware|xf86 used to return nothing. The
+# image shipped a Wayland compositor and no drivers for it, so niri started and
+# then had nothing to talk to. "CPU-first" had been read as "no GPU needed" when
+# the truth was "no GPU support was ever written".
+#
+# Three DIFFERENT things live here and must not be conflated:
+#
+#   1. DRM/GBM    — talking to the kernel's DRM device. libgbm1.
+#   2. GL/EGL     — rendering. libgl1-mesa-dri (llvmpipe, iris, radeonsi, ...).
+#   3. Vulkan      — vulkan ICDs. mesa-vulkan-drivers (lavapipe, iris, radov...).
+#
+# Installing mesa-vulkan-drivers alone is the classic trap: it gives a Vulkan ICD
+# and still no GL, which presents as "drivers installed, nothing renders". libgbm1
+# and libgl1-mesa-dri are separate packages and both are mandatory.
+#
+# llvmpipe is the guaranteed floor. It rasterises in the CPU and needs no GPU at
+# all, which is what makes the CPU-first claim true rather than aspirational, and
+# it is the only reason a machine with no supported graphics can reach a desktop.
+libgbm1
+libegl-mesa0
+libgl1-mesa-dri
+libglx-mesa0
+libdrm2
+libdrm-amdgpu1
+libdrm-intel1
+libdrm-nouveau2
+libdrm-radeon1
+# Mesa's Vulkan loader plus every Mesa ICD: lavapipe (CPU), iris (Intel),
+# radv (AMD). The loader picks per actual hardware; the metapackage is not a
+# universal driver and makes no promise about any specific GPU.
+mesa-vulkan-drivers
+# VA-API, for hcs-shot and any video work.
+mesa-va-drivers
+# Not a runtime dependency: vulkaninfo and glxinfo are how we PROVE a renderer
+# exists. A graphics stack nobody can query is one nobody can verify.
+vulkan-tools
+mesa-utils
+mesa-utils-bin
+xvfb
+x11-utils
+
+# --- Firmware ----------------------------------------------------------------
+#
+# Without these, Wi-Fi and many GPUs come up silently with no output at all.
+# On NVIDIA the display simply stays dark, with no diagnostic anywhere.
+#
+# LICENCE NOTE: non-free-firmware is a redistribution EXCEPTION, not a free
+# software licence. It is named here, in the third-party notices and in the
+# README. It is not buried in this list.
+firmware-linux-free
+non-free-firmware
+firmware-iwlwifi
+firmware-atheros
+firmware-realtek
+firmware-brcm80211
+
+# --- X11 fallback: QA only ---------------------------------------------------
+#
+# NOT the product. HCS ships niri. This exists because VirtualBox's umugfx driver
+# offers no usable mode (128x48) in some host configurations, and a legacy X
+# stack may be the only thing that can present a frame there. Its purpose is to
+# let the QA gate prove the image boots and draws; the compositor choice is
+# secondary to that proof.
+xserver-xorg-video-fbdev
+x11-xserver-utils
+
 # --- Display & Wayland (compositor + shell) ---------------------------------
 #
 # niri is NOT here: no Debian suite packages it. It is provisioned from

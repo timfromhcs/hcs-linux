@@ -68,15 +68,91 @@ export GDK_BACKEND=wayland
 export XDG_DATA_DIRS="/usr/local/share:/usr/share:${XDG_DATA_DIRS:-}"
 export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 # CPU-only is the default path: no GPU may be required to reach a desktop.
-export HCS_SOFTWARE_RENDERER=1
-export LIBGL_ALWAYS_SOFTWARE=1
-export WLR_RENDERER="${WLR_RENDERER:-pixman}"
+#
+# pixman is smithay's pure-software GL renderer. It is not a fallback here, it is
+# the floor: llvmpipe needs no GPU, so a machine with no supported graphics can
+# still reach a desktop. HCS_RENDERER=hardware is the opt-in for real
+# acceleration and is set by the bare-metal profile.
+export HCS_RENDERER="${HCS_RENDERER:-software}"
+if [ "${HCS_RENDERER}" = "software" ]; then
+    export LIBGL_ALWAYS_SOFTWARE=1
+    export WLR_RENDERER="${WLR_RENDERER:-pixman}"
+    export GALLIUM_DRIVER=llvmpipe
+fi
+export MESA_LOADER_DRIVER_OVERRIDE="${MESA_LOADER_DRIVER_OVERRIDE:-llvmpipe}"
+export LIBGL_DRIVERS_PATH="${LIBGL_DRIVERS_PATH:-/usr/lib/x86_64-linux-gnu/dri}"
+export __EGL_VENDOR_LIBRARY_FILENAMES="${__EGL_VENDOR_LIBRARY_FILENAMES:-/usr/share/glvnd/egl_vendor.d/50_mesa.json}"
+# Mesa installs its Vulkan ICDs under a versioned path. An unset loader path finds
+# no ICD at all, which is indistinguishable from a missing driver — so the glob is
+# resolved explicitly here.
+for _icd in /usr/share/vulkan/icd.d/lvp_icd.x86_64.json \
+           /usr/share/vulkan/icd.d/intel_icd.x86_64.json \
+           /usr/share/vulkan/icd.d/amd_icd.x86_64.json \
+           /usr/share/vulkan/icd.d/virtio_icd.json; do
+    if [ -f "${_icd}" ]; then
+        export VK_ICD_FILENAMES="${_icd}"
+        break
+    fi
+done
+unset _icd
 export HCS_RAM_BUDGET_IDLE_MB="${HCS_RAM_BUDGET_IDLE_MB:-6144}"
 export HCS_RAM_BUDGET_PEAK_MB="${HCS_RAM_BUDGET_PEAK_MB:-8192}"
 export HCS_GUI_APP_BUDGET_MB="${HCS_GUI_APP_BUDGET_MB:-250}"
 
 mkdir -p "${XDG_RUNTIME_DIR}"
 chmod 700 "${XDG_RUNTIME_DIR}"
+
+# ---------------------------------------------------------------- renderers
+
+# Prove a renderer exists before claiming a desktop is coming.
+#
+# A running compositor with no renderer is the exact failure that stayed invisible
+# for three releases: the process was alive, the gates were green, and not one
+# pixel was ever drawn. So this is measured and recorded, not assumed, and a
+# failure is written to the log with the reason.
+check_renderer() {
+    local vulkan_ok=0 gl_ok=0
+
+    if [ -x /usr/bin/vulkaninfo ]; then
+        if /usr/bin/vulkaninfo --summary >/var/log/hcs/vulkan.log 2>&1; then
+            vulkan_ok=1
+            local dev
+            dev=$(grep -m1 -oE 'deviceName *= *[A-Za-z0-9 ]+' /var/log/hcs/vulkan.log \
+                  | sed 's/deviceName *= *//' | head -1)
+            log "Vulkan available: ${dev:-unnamed device}"
+        else
+            log "WARN vulkaninfo found no usable device — see /var/log/hcs/vulkan.log"
+        fi
+    else
+        log "WARN vulkaninfo is not installed; Vulkan cannot be verified"
+    fi
+
+    # llvmpipe must work even where no DRM device offers a usable mode.
+    if [ -x /usr/bin/glxinfo ]; then
+        if DISPLAY=:/dev/null glxinfo -B >/var/log/hcs/glxinfo.log 2>&1; then
+            gl_ok=1
+            log "GL available: $(grep -m1 -oE 'OpenGL renderer string: .*' \
+                 /var/log/hcs/glxinfo.log | sed 's/.*: //')"
+        fi
+    fi
+
+    printf '%s %s\n' "${vulkan_ok}" "${gl_ok}" > /run/hcs/renderers
+    if [ "${vulkan_ok}" -eq 0 ] && [ "${gl_ok}" -eq 0 ]; then
+        log "FAIL no Vulkan and no GL renderer — a desktop cannot be drawn"
+        return 1
+    fi
+    return 0
+}
+
+check_renderer || exit 1
+
+# What the QA agent and the host grader read to decide whether a frame is real.
+mkdir -p /run/hcs
+{
+    printf 'renderer=%s\n' "${HCS_RENDERER}"
+    printf 'vulkan_icd=%s\n' "${VK_ICD_FILENAMES:-none}"
+    printf 'dri_path=%s\n' "${LIBGL_DRIVERS_PATH:-none}"
+} > /run/hcs/renderer.info
 
 log "starting the Neural Glass desktop"
 
