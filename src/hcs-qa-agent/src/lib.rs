@@ -1,6 +1,6 @@
-//! HCS QA Agent — the deterministic guest-side driver for VirtualBox QA.
+//! HCS QA Agent â€” the deterministic guest-side driver for VirtualBox QA.
 //!
-//! Gap closed from the v2 audit (§7.3). v1 captured VM screenshots by racing a
+//! Gap closed from the v2 audit (Â§7.3). v1 captured VM screenshots by racing a
 //! timer against boot, then "fixed" black frames by adding a 40-second delay.
 //! That produced flaky evidence and no explanation of where a failure happened.
 //!
@@ -8,9 +8,9 @@
 //! command line, and waits on real signals instead of sleeping:
 //!
 //! ```text
-//! host  ──▶ unix socket /run/hcs/qa.sock  ──▶ hcs-qa-agent
-//!          scenario steps: wait_session · open · key · type · shot
-//!                            assert_window · assert_text · rss · exit
+//! host  â”€â”€â–¶ unix socket /run/hcs/qa.sock  â”€â”€â–¶ hcs-qa-agent
+//!          scenario steps: wait_session Â· open Â· key Â· type Â· shot
+//!                            assert_window Â· assert_text Â· rss Â· exit
 //! ```
 //!
 //! Every step appends to a JSONL journal, so a failure names the step that
@@ -19,6 +19,9 @@
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::fmt;
+
+pub mod capture;
+pub mod suite;
 
 /// One instruction from the host.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -107,6 +110,24 @@ pub trait Effects {
     fn rss_mb(&mut self, process: &str) -> Option<u64>;
     /// Wait a bounded number of seconds.
     fn settle(&mut self, secs: u64) -> StepOutcome;
+
+    /// The windows the compositor currently has mapped, keyed by title.
+    ///
+    /// Queried by `AssertWindow` rather than held by the agent, because the
+    /// agent has no other way to learn what is on screen. The default is empty
+    /// so a runner that cannot enumerate windows reports a real failure
+    /// ("no window matching X") instead of the agent inventing an answer.
+    fn windows(&mut self) -> BTreeMap<String, String> {
+        BTreeMap::new()
+    }
+
+    /// The text found in a capture, by OCR. `None` when OCR is unavailable.
+    ///
+    /// Also defaulted, for the same reason: an agent that guessed at the text
+    /// would make `AssertText` a tautology.
+    fn capture_text(&mut self, _name: &str) -> Option<String> {
+        None
+    }
 }
 
 /// The agent's state machine, separated from all I/O so every transition is
@@ -157,7 +178,16 @@ impl Agent {
             Step::Open { app } => fx.open(app),
             Step::Key { key } => fx.key(key),
             Step::Type { text } => fx.type_text(text),
-            Step::Shot { name } => fx.shot(name),
+            Step::Shot { name } => {
+                let out = fx.shot(name);
+                if matches!(out, StepOutcome::Ok) {
+                    // The capture becomes the subject of any later AssertText.
+                    // Only refreshed on success: OCR-ing a file that was never
+                    // written would produce a confusing error later on.
+                    self.last_capture_text = fx.capture_text(name);
+                }
+                out
+            }
             Step::Settle { secs } => fx.settle(*secs),
             Step::Rss { process } => match fx.rss_mb(process) {
                 Some(_) => StepOutcome::Ok,
@@ -166,11 +196,23 @@ impl Agent {
                 },
             },
             Step::AssertWindow { title } => {
+                // Asked of the runner at the moment of the assertion. The v2
+                // agent never called this, so `windows` stayed empty and every
+                // AssertWindow failed â€” the check was decorative.
+                self.windows = fx.windows();
                 if self.windows.keys().any(|w| w.contains(title.as_str())) {
                     StepOutcome::Ok
                 } else {
+                    let seen = if self.windows.is_empty() {
+                        "the compositor reported no windows at all".to_string()
+                    } else {
+                        format!(
+                            "only these were open: {}",
+                            self.windows.keys().cloned().collect::<Vec<_>>().join(", ")
+                        )
+                    };
                     StepOutcome::Failed {
-                        reason: format!("no window matching '{title}'"),
+                        reason: format!("no window matching '{title}' â€” {seen}"),
                     }
                 }
             }
@@ -257,9 +299,49 @@ mod tests {
         opened: Vec<String>,
         shots: Vec<String>,
         fail_shot: bool,
+        /// What the runner reports as mapped. The agent asks for this at the
+        /// moment of an AssertWindow, so the fake models the real contract
+        /// instead of pre-filling the agent's own field.
+        windows: BTreeMap<String, String>,
+        /// What OCR finds in the most recent capture.
+        ocr: Option<String>,
+    }
+
+    impl FakeFx {
+        fn new() -> Self {
+            Self {
+                session_up: true,
+                opened: Vec::new(),
+                shots: Vec::new(),
+                fail_shot: false,
+                windows: BTreeMap::new(),
+                ocr: None,
+            }
+        }
+
+        fn with_windows(mut self, w: &[(&str, &str)]) -> Self {
+            self.windows = w
+                .iter()
+                .map(|(a, b)| ((*a).to_string(), (*b).to_string()))
+                .collect();
+            self
+        }
+
+        fn with_ocr(mut self, t: &str) -> Self {
+            self.ocr = Some(t.to_string());
+            self
+        }
     }
 
     impl Effects for FakeFx {
+        fn windows(&mut self) -> BTreeMap<String, String> {
+            self.windows.clone()
+        }
+
+        fn capture_text(&mut self, _name: &str) -> Option<String> {
+            self.ocr.clone()
+        }
+
         fn wait_session(&mut self, timeout_secs: u64) -> StepOutcome {
             if self.session_up {
                 StepOutcome::Ok
@@ -298,22 +380,14 @@ mod tests {
         }
     }
 
-    fn agent_with_windows() -> Agent {
-        let mut a = Agent::new();
-        a.windows.insert("AI Chat".into(), "hcs-chat".into());
-        a.windows.insert("Files".into(), "hcs-fm".into());
-        a
+    fn agent_with_windows() -> FakeFx {
+        FakeFx::new().with_windows(&[("AI Chat", "hcs-chat"), ("Files", "hcs-fm")])
     }
 
     #[test]
     fn scenario_runs_to_completion() {
         let mut a = Agent::new();
-        let mut fx = FakeFx {
-            session_up: true,
-            opened: vec![],
-            shots: vec![],
-            fail_shot: false,
-        };
+        let mut fx = FakeFx::new();
         let steps = vec![
             Step::WaitSession { timeout_secs: 60 },
             Step::Open {
@@ -335,9 +409,7 @@ mod tests {
         let mut a = Agent::new();
         let mut fx = FakeFx {
             session_up: false,
-            opened: vec![],
-            shots: vec![],
-            fail_shot: false,
+            ..FakeFx::new()
         };
         let outcome = a.run_step(Step::WaitSession { timeout_secs: 30 }, &mut fx);
         assert_eq!(outcome, StepOutcome::Timeout { secs: 30 });
@@ -345,26 +417,16 @@ mod tests {
 
     #[test]
     fn assert_window_finds_a_substring_match() {
-        let mut a = agent_with_windows();
-        let mut fx = FakeFx {
-            session_up: true,
-            opened: vec![],
-            shots: vec![],
-            fail_shot: false,
-        };
+        let mut a = Agent::new();
+        let mut fx = agent_with_windows();
         let outcome = a.run_step(Step::AssertWindow { title: "AI".into() }, &mut fx);
         assert_eq!(outcome, StepOutcome::Ok);
     }
 
     #[test]
     fn assert_window_reports_the_missing_title() {
-        let mut a = agent_with_windows();
-        let mut fx = FakeFx {
-            session_up: true,
-            opened: vec![],
-            shots: vec![],
-            fail_shot: false,
-        };
+        let mut a = Agent::new();
+        let mut fx = agent_with_windows();
         let outcome = a.run_step(
             Step::AssertWindow {
                 title: "Nonexistent".into(),
@@ -377,14 +439,43 @@ mod tests {
     }
 
     #[test]
+    fn assert_window_says_so_when_the_compositor_reports_nothing() {
+        // The v2 agent never asked the runner for windows, so this always
+        // failed with a bare "no window matching X". The message has to say
+        // whether the compositor was reachable at all.
+        let mut a = Agent::new();
+        let mut fx = FakeFx::new();
+        let outcome = a.run_step(Step::AssertWindow { title: "AI".into() }, &mut fx);
+        let StepOutcome::Failed { reason } = outcome else {
+            panic!("expected a failure");
+        };
+        assert!(
+            reason.contains("compositor reported no windows"),
+            "unhelpful reason: {reason}"
+        );
+    }
+
+    #[test]
+    fn assert_window_lists_what_was_actually_open() {
+        let mut a = Agent::new();
+        let mut fx = agent_with_windows();
+        let outcome = a.run_step(
+            Step::AssertWindow {
+                title: "Nope".into(),
+            },
+            &mut fx,
+        );
+        let StepOutcome::Failed { reason } = outcome else {
+            panic!("expected a failure");
+        };
+        assert!(reason.contains("AI Chat"), "{reason}");
+        assert!(reason.contains("Files"), "{reason}");
+    }
+
+    #[test]
     fn assert_text_without_a_capture_fails_with_a_reason() {
         let mut a = Agent::new();
-        let mut fx = FakeFx {
-            session_up: true,
-            opened: vec![],
-            shots: vec![],
-            fail_shot: false,
-        };
+        let mut fx = FakeFx::new();
         let outcome = a.run_step(
             Step::AssertText {
                 name: "chat".into(),
@@ -396,15 +487,54 @@ mod tests {
     }
 
     #[test]
+    fn a_capture_feeds_the_next_assert_text() {
+        // The end-to-end contract: shoot, then assert on what was shot. Before
+        // this, `last_capture_text` was never assigned, so every AssertText in
+        // every scenario failed.
+        let mut a = Agent::new();
+        let mut fx = FakeFx::new().with_ocr("HCS Settings â€” QWERTZ");
+        assert_eq!(
+            a.run_step(
+                Step::Shot {
+                    name: "settings".into()
+                },
+                &mut fx
+            ),
+            StepOutcome::Ok
+        );
+        assert_eq!(
+            a.run_step(
+                Step::AssertText {
+                    name: "settings".into(),
+                    needle: "qwertz".into(),
+                },
+                &mut fx,
+            ),
+            StepOutcome::Ok
+        );
+    }
+
+    #[test]
+    fn a_failed_capture_does_not_feed_assert_text() {
+        // OCR-ing a file that was never written would fail later with a
+        // confusing "not found" instead of the real cause.
+        let mut a = Agent::new();
+        let mut fx = FakeFx {
+            fail_shot: true,
+            ..FakeFx::new().with_ocr("stale text")
+        };
+        assert!(matches!(
+            a.run_step(Step::Shot { name: "x".into() }, &mut fx),
+            StepOutcome::Failed { .. }
+        ));
+        assert!(a.last_capture_text.is_none());
+    }
+
+    #[test]
     fn assert_text_is_case_insensitive() {
         let mut a = Agent::new();
         a.last_capture_text = Some("hcs linux neural glass".into());
-        let mut fx = FakeFx {
-            session_up: true,
-            opened: vec![],
-            shots: vec![],
-            fail_shot: false,
-        };
+        let mut fx = FakeFx::new();
         let outcome = a.run_step(
             Step::AssertText {
                 name: "boot".into(),
@@ -418,12 +548,7 @@ mod tests {
     #[test]
     fn rss_reports_missing_process() {
         let mut a = Agent::new();
-        let mut fx = FakeFx {
-            session_up: true,
-            opened: vec![],
-            shots: vec![],
-            fail_shot: false,
-        };
+        let mut fx = FakeFx::new();
         let outcome = a.run_step(
             Step::Rss {
                 process: "not-running".into(),
@@ -439,10 +564,8 @@ mod tests {
     fn scenario_stops_at_the_first_failure() {
         let mut a = Agent::new();
         let mut fx = FakeFx {
-            session_up: true,
-            opened: vec![],
-            shots: vec![],
             fail_shot: true,
+            ..FakeFx::new()
         };
         let steps = vec![
             Step::Shot {
@@ -465,12 +588,7 @@ mod tests {
     #[test]
     fn exit_finishes_the_scenario_and_ignores_later_steps() {
         let mut a = Agent::new();
-        let mut fx = FakeFx {
-            session_up: true,
-            opened: vec![],
-            shots: vec![],
-            fail_shot: false,
-        };
+        let mut fx = FakeFx::new();
         a.run_step(Step::Exit, &mut fx);
         assert!(a.is_finished());
         let outcome = a.run_step(
@@ -487,12 +605,7 @@ mod tests {
     #[test]
     fn journal_jsonl_has_one_record_per_step() {
         let mut a = Agent::new();
-        let mut fx = FakeFx {
-            session_up: true,
-            opened: vec![],
-            shots: vec![],
-            fail_shot: false,
-        };
+        let mut fx = FakeFx::new();
         a.run_step(
             Step::Open {
                 app: "hcs-fm".into(),

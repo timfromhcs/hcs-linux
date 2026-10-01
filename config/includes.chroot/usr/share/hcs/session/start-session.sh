@@ -148,6 +148,10 @@ step "first run" maybe_first_run
 
 # ---------------------------------------------------------------- 6. QA agent
 
+# The agent drives itself: it reads the suite manifest that ships in the image
+# and writes its evidence to a disk the host attached. Nothing listens on a
+# socket, and the host needs neither guest additions nor a shared folder, so
+# there is no attack surface here beyond what the QA boot flag already implies.
 maybe_qa_agent() {
     if ! grep -q 'hcs\.qa=1' /proc/cmdline 2>/dev/null; then
         return 0
@@ -156,10 +160,47 @@ maybe_qa_agent() {
         log "hcs.qa=1 but /usr/bin/hcs-qa-agent missing"
         return 1
     fi
-    log "QA agent enabled (hcs.qa=1)"
-    setsid /usr/bin/hcs-qa-agent >>"${LOG}" 2>&1 &
+    local evidence="${HCS_QA_EVIDENCE_DIR:-/mnt/hcs-qa}"
+    local device="${HCS_QA_EVIDENCE_DEVICE:-/dev/vdb}"
+    log "QA agent enabled (hcs.qa=1), evidence -> ${evidence}"
+
+    # The manifest is validated before anything is mounted or photographed, so a
+    # broken suite fails in one second with a named error instead of producing
+    # thirty anonymous failures.
+    if ! /usr/bin/hcs-qa-agent validate-suite; then
+        log "QA manifest is not usable — see the error above"
+        return 1
+    fi
+
+    prepare_evidence "${device}" "${evidence}" || {
+        log "no evidence disk at ${device}; results will stay on this guest only"
+    }
+    setsid /usr/bin/hcs-qa-agent run-suite \
+        --evidence-dir "${evidence}" \
+        --profile "$(cat /run/hcs/qa-profile 2>/dev/null || echo unknown)" \
+        >>"${LOG}" 2>&1 &
     return 0
 }
+
+# Format and mount the evidence disk.
+#
+# The host hands over a blank volume, so the guest owns the filesystem. FAT32
+# rather than ext4 because the host must be able to read it back with nothing
+# but the operating system it already has — no loop mounts, no ext4 driver, no
+# third-party tooling to trust with release evidence.
+prepare_evidence() {
+    local device="$1" mountpoint="$2"
+    [ -b "${device}" ] || return 1
+    command -v mkfs.vfat >/dev/null 2>&1 || return 1
+    if ! blkid "${device}" >/dev/null 2>&1; then
+        mkfs.vfat -F 32 -n HCSQA "${device}" >>"${LOG}" 2>&1 || return 1
+    fi
+    mkdir -p "${mountpoint}" || return 1
+    mount -o rw,noatime "${device}" "${mountpoint}" 2>/dev/null || return 1
+    log "evidence disk mounted at ${mountpoint}"
+    return 0
+}
+
 step "QA agent" maybe_qa_agent
 
 log "session bootstrap complete"

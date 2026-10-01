@@ -38,7 +38,7 @@
         "--hold-seconds",
         "6"
       ],
-      "peak_rss_mb": 10.6,
+      "peak_rss_mb": 10.8,
       "budget_mb": 250,
       "status": "PASS"
     },
@@ -52,7 +52,7 @@
         "--hold-seconds",
         "6"
       ],
-      "peak_rss_mb": 10.8,
+      "peak_rss_mb": 10.9,
       "budget_mb": 250,
       "status": "PASS"
     },
@@ -67,7 +67,7 @@
         "--hold-seconds",
         "6"
       ],
-      "peak_rss_mb": 10.8,
+      "peak_rss_mb": 11.6,
       "budget_mb": 250,
       "status": "PASS"
     },
@@ -80,7 +80,7 @@
         "--hold-seconds",
         "6"
       ],
-      "peak_rss_mb": 10.8,
+      "peak_rss_mb": 10.7,
       "budget_mb": 250,
       "status": "PASS"
     },
@@ -94,7 +94,7 @@
         "--hold-seconds",
         "6"
       ],
-      "peak_rss_mb": 10.8,
+      "peak_rss_mb": 10.9,
       "budget_mb": 250,
       "status": "PASS"
     },
@@ -108,7 +108,7 @@
         "--hold-seconds",
         "6"
       ],
-      "peak_rss_mb": 10.7,
+      "peak_rss_mb": 10.9,
       "budget_mb": 250,
       "status": "PASS"
     }

@@ -18,3 +18,7 @@ path = "src/main.rs"
 serde.workspace = true
 serde_json.workspace = true
 anyhow.workspace = true
+# Decoding the agent's own captures so a frame can be judged in the guest,
+# where the reason can be reported. The host re-checks after transfer, so this
+# is not the only opinion on a capture.
+image = { version = "0.25", default-features = false, features = ["png"] }

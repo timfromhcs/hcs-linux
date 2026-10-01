@@ -258,6 +258,33 @@ grep -q "VERSION=\"${VERSION}\"" "${ROOTFS_DIR}/etc/os-release" 2>/dev/null || {
 }
 CHECKED=$((CHECKED + 1))
 
+# ---------------------------------------------------------------- QA suite
+
+# The guest drives the VM run itself, so the manifest and every scenario it
+# names have to be in the image. Checked by name: a renamed scenario used to
+# leave a stage that silently "skipped" while the run still reported passes.
+check_file /usr/share/hcs/qa/suite.json "QA suite manifest" 100
+check_dir /usr/share/hcs/qa/scenarios "QA scenarios"
+
+if [ -f "${ROOTFS_DIR}/usr/share/hcs/qa/suite.json" ]; then
+    while IFS= read -r scenario; do
+        [ -n "${scenario}" ] || continue
+        if [ ! -f "${ROOTFS_DIR}/usr/share/hcs/qa/scenarios/${scenario}" ]; then
+            echo "  [MISSING] usr/share/hcs/qa/scenarios/${scenario} (named by the manifest)" >&2
+            FAILURES=$((FAILURES + 1))
+        else
+            CHECKED=$((CHECKED + 1))
+        fi
+    done < <(python3 -c "
+import json
+with open('${ROOTFS_DIR}/usr/share/hcs/qa/suite.json', encoding='utf-8') as f:
+    d = json.load(f)
+for name in sorted({s['scenario'] for s in d['stages']}):
+    print(name)
+")
+    CHECKED=$((CHECKED + 1))
+fi
+
 # ---------------------------------------------------------------- report
 echo ""
 echo "  checks run: ${CHECKED}"

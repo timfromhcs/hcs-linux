@@ -92,6 +92,17 @@ slurp
 wl-clipboard
 ffmpeg
 
+# --- QA agent support -------------------------------------------------------
+# The in-guest QA runner judges its own captures and reads text out of them.
+# Without tesseract every `assert_text` step in the VM suite would have to be
+# reported as "cannot be evaluated", which is not the same as passing.
+tesseract-ocr
+tesseract-ocr-eng
+tesseract-ocr-deu
+# The evidence disk handed back to the VirtualBox host is formatted by the
+# guest, because the host attaches it as a raw blank volume.
+dosfstools
+
 # --- Fonts for terminal rendering -------------------------------------------
 fonts-jetbrains-mono
 

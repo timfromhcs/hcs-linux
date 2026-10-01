@@ -46,6 +46,26 @@ for a in "$@"; do
     [ "${a}" = "--stage-only" ] && STAGE_ONLY=1
 done
 
+# --qa builds the *QA* image: same bits, different default boot entry.
+#
+# The QA agent refuses to start unless hcs.qa=1 is on the kernel command line,
+# which is the property that makes it safe to ship in a production image at all.
+# Putting the flag in the default GRUB entry of a separate ISO means the
+# VirtualBox driver never has to send keystrokes to pick a menu entry — the
+# v2 driver did, and a missed keystroke produced a run that booted normally and
+# reported "the agent never came up" with no way to tell why.
+#
+# The production ISO is unaffected: its default entry has no QA flag, so the
+# agent cannot start.
+QA=0
+for a in "$@"; do
+    [ "${a}" = "--qa" ] && QA=1
+done
+if [ "${QA}" -eq 1 ]; then
+    ISO_NAME="HCS-Linux-${VERSION}-qa-${ARCH}.iso"
+    FINAL_ISO="${DIST_DIR}/${ISO_NAME}"
+fi
+
 mkdir -p "${DIST_DIR}"
 
 # ------------------------------------------------------------------ 1. build
@@ -84,6 +104,8 @@ mkdir -p \
     "${ROOTFS_DIR}/usr/share/hcs/docs" \
     "${ROOTFS_DIR}/usr/share/hcs/docs/manuals" \
     "${ROOTFS_DIR}/usr/share/hcs/docs/assets" \
+    "${ROOTFS_DIR}/usr/share/hcs/qa" \
+    "${ROOTFS_DIR}/usr/share/hcs/qa/scenarios" \
     "${ROOTFS_DIR}/usr/share/hcs/icons" \
     "${ROOTFS_DIR}/usr/share/hcs/wallpapers" \
     "${ROOTFS_DIR}/usr/share/hcs/scripts" \
@@ -203,6 +225,11 @@ copy_dir "${REPO_ROOT}/config/includes.chroot/usr/share/hcs/session" \
          "${ROOTFS_DIR}/usr/share/hcs/session" "session bootstrap"
 copy_dir "${REPO_ROOT}/config/includes.chroot/usr/share/hcs/config" \
          "${ROOTFS_DIR}/usr/share/hcs/config" "keyboard registry"
+# The QA suite ships in the image so the guest can drive itself. The agent
+# refuses to start without the kernel flag, so shipping this in the production
+# ISO adds files but no capability.
+copy_dir "${REPO_ROOT}/config/includes.chroot/usr/share/hcs/qa" \
+         "${ROOTFS_DIR}/usr/share/hcs/qa" "QA suite"
 copy_dir "${REPO_ROOT}/config/includes.chroot/usr/share/plymouth" \
          "${ROOTFS_DIR}/usr/share/plymouth" "Plymouth theme"
 copy_dir "${REPO_ROOT}/config/installer/calamares" \
@@ -426,9 +453,20 @@ fi
 
 # ------------------------------------------------------------------ 10. grub
 
-# Unquoted heredoc so ${VERSION} expands host-side (body contains no other $).
+# The QA image boots straight into the automated session; the production image
+# cannot, because the agent refuses to start without the flag. See --qa above.
+if [ "${QA}" -eq 1 ]; then
+    GRUB_TIMEOUT=0
+    GRUB_QA_ENTRY=1
+else
+    GRUB_TIMEOUT=10
+    GRUB_QA_ENTRY=0
+fi
+
+# Unquoted heredoc so ${VERSION} and ${GRUB_*} expand host-side (body contains
+# no other $).
 cat > "${ISO_STAGING}/boot/grub/grub.cfg" << EOF
-set timeout=10
+set timeout=${GRUB_TIMEOUT}
 set default=0
 
 insmod all_video
@@ -468,7 +506,34 @@ menuentry "Boot previous installation (rollback)" {
     linux /live/vmlinuz boot=live single console=tty1 console=tty0 video=1024x768 hcs_rollback=1 init=/sbin/init
     initrd /live/initrd.img
 }
+
+menuentry "HCS Linux ${VERSION} QA (automated — no interaction)" {
+    linux /live/vmlinuz boot=live console=tty1 console=tty0 video=1024x768 hcs_session=graphical hcs.qa=1 hcs.qa.profile=virtualbox init=/sbin/init
+    initrd /live/initrd.img
+}
 EOF
+
+# The QA entry is what the QA image must land on. `set default` above is 0, so
+# in a QA build the automated entry is moved to the top rather than relying on
+# the driver to count menu rows — a missed keystroke used to be indistinguishable
+# from a broken image.
+if [ "${GRUB_QA_ENTRY}" -eq 1 ]; then
+    python3 - "${ISO_STAGING}/boot/grub/grub.cfg" << 'PY'
+import re, sys
+path = sys.argv[1]
+text = open(path, encoding="utf-8").read()
+m = re.search(r'menuentry "HCS Linux [^\n]*QA \(automated[^\n]*\{.*?\n\}\n', text, re.S)
+if not m:
+    sys.exit("could not find the QA menuentry to promote")
+qa = m.group(0)
+text = text.replace(qa, "")
+# Insert ahead of the first menuentry.
+first = re.search(r'menuentry ', text)
+text = text[:first.start()] + qa + "\n" + text[first.start():]
+open(path, "w", encoding="utf-8").write(text)
+print("[grub] QA entry promoted to default (this is the QA image)")
+PY
+fi
 
 mkdir -p "${ISO_STAGING}/boot/branding"
 cp -rf "${REPO_ROOT}/assets/logo/." "${ISO_STAGING}/boot/branding/"

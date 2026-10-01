@@ -297,6 +297,10 @@ jobs:
           for f in config/includes.chroot/usr/share/hcs/docs/manuals/*.md; do
             [ -f "$f" ] || { echo "[MISSING] $f"; missing=1; }
           done
+          for f in config/includes.chroot/usr/share/hcs/qa/suite.json \
+                   config/includes.chroot/usr/share/hcs/qa/scenarios/*.json; do
+            [ -f "$f" ] || { echo "[MISSING] $f"; missing=1; }
+          done
           [ "$missing" -eq 0 ] || { echo "[FAIL] payload contract violated"; exit 1; }
           echo "[OK] every declared payload file is present"
 
@@ -312,6 +316,39 @@ jobs:
           set -euo pipefail
           python scripts/verify_bindings.py
           bash scripts/sync_shell.sh --check
+
+      - name: The QA suite is coherent before it ever reaches an ISO
+        # The guest refuses to start a suite whose manifest names a scenario
+        # that is not in the image. Catching it here means a broken VM gate is a
+        # red build, not a 45-minute timeout in a VM.
+        run: |
+          set -euo pipefail
+          python scripts/generate_qa_scenarios.py --check
+          python3 - <<'PY'
+          import json, pathlib, sys
+          root = pathlib.Path("config/includes.chroot/usr/share/hcs/qa")
+          suite = json.loads((root / "suite.json").read_text(encoding="utf-8"))
+          names = [s["scenario"] for s in suite["stages"]]
+          missing = [n for n in names if not (root / "scenarios" / n).is_file()]
+          numbered = [s["n"] for s in suite["stages"]]
+          problems = []
+          if missing:
+              problems.append(f"scenarios named but not staged: {sorted(set(missing))}")
+          if numbered != list(range(1, len(numbered) + 1)):
+              problems.append(f"stage numbering is not 1..N: {numbered}")
+          if not any(s["evidence"] == "gui" for s in suite["stages"]):
+              problems.append("no GUI evidence stages: this is not a desktop gate")
+          on_disk = {p.name for p in (root / "scenarios").glob("*.json")}
+          if on_disk - set(names):
+              problems.append(f"scenarios nobody runs: {sorted(on_disk - set(names))}")
+          if problems:
+              for p in problems:
+                  print(f"[FAIL] {p}")
+              sys.exit(1)
+          print(f"[OK] {len(suite['stages'])} stages, "
+                f"{sum(1 for s in suite['stages'] if s['evidence'] == 'gui')} GUI, "
+                f"all scenarios staged")
+          PY
 
       - name: ISO build script is valid shell
         run: bash -n scripts/build_iso.sh && bash -n scripts/verify_payload.sh
