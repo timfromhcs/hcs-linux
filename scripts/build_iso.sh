@@ -364,10 +364,33 @@ copy_file "${REPO_ROOT}/config/includes.chroot/usr/share/hcs/session/start-deskt
 # Enabled by symlink rather than `systemctl enable`, which cannot run in a chroot
 # with no systemd running. The wants directory is the same mechanism, and it is
 # visible in the staged tree, so a reviewer can see the desktop is on by default.
-ln -sf ../hcs-desktop.service \
+#
+# THE TARGET MUST BE AN ABSOLUTE PATH. These links pointed at ../hcs-desktop.service
+# -- i.e. /etc/systemd/system/hcs-desktop.service -- while the unit lives in
+# /usr/lib/systemd/system/. Both are legitimate unit directories, but the link
+# resolved to nothing. systemd treats a dangling wants link as "nothing to do"
+# and continues to boot, so the desktop never started and nothing anywhere said
+# why: no failed unit, no red status, just a console.
+#
+# This is why the resolution is checked below rather than assumed. Two correct
+# systemd mechanisms, wired to each other wrong, and the result is a silent
+# no-op rather than an error.
+ln -sf /usr/lib/systemd/system/hcs-desktop.service \
       "${ROOTFS_DIR}/etc/systemd/system/multi-user.target.wants/hcs-desktop.service"
-ln -sf ../hcs-banner.service \
+ln -sf /usr/lib/systemd/system/hcs-banner.service \
       "${ROOTFS_DIR}/etc/systemd/system/multi-user.target.wants/hcs-banner.service"
+
+# Prove each link resolves to a unit that exists. A dangling enablement is the
+# quietest possible failure in this whole system.
+for _unit in hcs-desktop.service hcs-banner.service; do
+    _link="${ROOTFS_DIR}/etc/systemd/system/multi-user.target.wants/${_unit}"
+    if [ ! -e "${_link}" ]; then
+        echo "  [ERROR] ${_unit} is enabled but the link does not resolve." >&2
+        echo "          The desktop would never start and systemd would not say so." >&2
+        exit 1
+    fi
+done
+echo "       desktop session enabled and resolving"
 
 # The console banner the boot stages photograph.
 mkdir -p "${ROOTFS_DIR}/usr/share/hcs/branding"

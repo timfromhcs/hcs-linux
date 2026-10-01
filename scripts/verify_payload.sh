@@ -442,12 +442,33 @@ check_file /usr/lib/systemd/system/hcs-banner.service  "boot banner unit" 100
 check_file /usr/share/hcs/session/start-desktop.sh     "desktop starter"  500
 check_file /usr/share/hcs/branding/issue-banner.txt    "console banner"   50
 if [ -L "${ROOTFS_DIR}/etc/systemd/system/multi-user.target.wants/hcs-desktop.service" ]; then
-    echo "  [OK] the desktop session is enabled by default"
-    CHECKED=$((CHECKED + 1))
+    # Enabled is not the same as reachable. A link that resolves to a path with no
+    # unit in it is treated by systemd as "nothing to do", so the session is
+    # silently never started and there is no failed unit to look at afterwards.
+    if [ -e "${ROOTFS_DIR}/etc/systemd/system/multi-user.target.wants/hcs-desktop.service" ]; then
+        echo "  [OK] the desktop session is enabled and the link resolves"
+        CHECKED=$((CHECKED + 1))
+    else
+        echo "  [FAIL] hcs-desktop.service is enabled but DANGLING — the desktop" >&2
+        echo "         would never start, and systemd would not report it." >&2
+        FAILURES=$((FAILURES + 1))
+    fi
 else
     echo "  [FAIL] hcs-desktop.service is not enabled — the desktop would never start" >&2
     FAILURES=$((FAILURES + 1))
 fi
+
+# The same trap for the banner, and for the units themselves.
+for _u in hcs-desktop.service hcs-banner.service; do
+    if [ -e "${ROOTFS_DIR}/usr/lib/systemd/system/${_u}" ] \
+       && [ -e "${ROOTFS_DIR}/etc/systemd/system/multi-user.target.wants/${_u}" ]; then
+        echo "  [OK] ${_u} exists and is reachable"
+        CHECKED=$((CHECKED + 1))
+    else
+        echo "  [FAIL] ${_u} missing or dangling" >&2
+        FAILURES=$((FAILURES + 1))
+    fi
+done
 
 # ---------------------------------------------------------------- QA suite
 
