@@ -50,11 +50,28 @@ HCS_RAM_BUDGET_PEAK_MB=8192
 HCS_GUI_APP_BUDGET_MB=250
 EOF
     # Autologin for the live session: a live USB should reach a desktop.
-    mkdir -p /etc/systemd/system/getty@tty6.service.d
-    cat > /etc/systemd/system/getty@tty6.service.d/override.conf << 'EOF'
+    #
+    # ON tty1, NOT tty6. The GRUB entries pass console=tty1 console=tty0 and the
+    # desktop unit claims tty1, so a tty6 getty is on a VT the compositor never
+    # presents to. With the autologin on the wrong VT the console shows
+    # "tty1 hcs-live login: user" followed by "Authentication failure": live-config
+    # puts its own getty on tty1, our autologin never ran, and the mismatch is
+    # reported as a login failure rather than as a boot problem.
+    mkdir -p /etc/systemd/system/getty@tty1.service.d
+    cat > /etc/systemd/system/getty@tty1.service.d/override.conf << 'EOF'
 [Service]
 ExecStart=
-ExecStart=-/sbin/agetty --autologin hcs --noclear %I 115200,38400,9600 vt6
+ExecStart=-/sbin/agetty --autologin hcs --noclear %I 115200,38400,9600 vt1
+EOF
+
+    # ...and stop live-config's getty from also claiming tty1, so exactly one
+    # thing owns the VT. Two getties on one VT produce a prompt that neither
+    # answers, which is what the screenshot above shows.
+    mkdir -p /etc/systemd/system/getty@tty2.service.d
+    cat > /etc/systemd/system/getty@tty2.service.d/override.conf << 'EOF'
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --autologin hcs --noclear %I 115200,38400,9600 vt2
 EOF
 fi
 

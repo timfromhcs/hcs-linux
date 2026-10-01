@@ -58,7 +58,10 @@ fi
 
 # ---------------------------------------------------------------- environment
 
-export XDG_RUNTIME_DIR="/run/user/0"
+# systemd sets User=hcs and XDG_RUNTIME_DIR for this unit. Falling back to /run/0
+# would put the compositor's socket in root's runtime directory, where the QA
+# agent — running as the session user — cannot see it.
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/hcs}"
 export WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-1}"
 export XDG_SESSION_TYPE=wayland
 export XDG_CURRENT_DESKTOP=HCS

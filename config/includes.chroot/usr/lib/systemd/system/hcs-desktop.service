@@ -15,7 +15,15 @@ ConditionPathExists=/usr/share/hcs/shell/shell.qml
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-# The console banner goes to tty1 as well, so the two do not fight over it.
+User=hcs
+Group=hcs
+# The compositor must own a seat, and a seat belongs to a logged-in user, not to
+# root. Running niri as root "works" until it tries to open the VT and either
+# fails or takes a VT that getty then fights it for.
+RuntimeDirectory=hcs
+Environment=XDG_RUNTIME_DIR=/run/hcs
+Environment=HOME=/home/hcs
+# The banner goes to tty1 too, so the two must not fight over it.
 StandardOutput=journal
 StandardError=journal
 ExecStart=/usr/share/hcs/session/start-desktop.sh
