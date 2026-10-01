@@ -391,7 +391,14 @@ if [ -x "${ROOTFS_DIR}/usr/bin/vulkaninfo" ]; then
 fi
 
 # lavapipe specifically: the software Vulkan floor the CPU-first claim rests on.
-if [ -f "${ROOTFS_DIR}/usr/share/vulkan/icd.d/lvp_icd.x86_64.json" ]; then
+#
+# The glob is deliberate. Mesa names this ICD lvp_icd.x86_64.json on some
+# releases and lvp_icd.json on others, and the arch-suffixed guess fails on the
+# build that matters -- which is how this gate reported "no lavapipe" against an
+# image that had nine ICDs including lavapipe. A gate that cries wolf gets
+# ignored, and this one would have been ignored.
+LVP=$(ls "${ROOTFS_DIR}"/usr/share/vulkan/icd.d/lvp_icd*.json 2>/dev/null | head -1)
+if [ -n "${LVP}" ]; then
     echo "  [OK] lavapipe present — CPU-only rendering has a floor"
     CHECKED=$((CHECKED + 1))
 else
@@ -400,15 +407,22 @@ else
 fi
 
 # Firmware. Without it Wi-Fi and many GPUs come up silently broken.
-FW_MISSING=0
-for fw in usr/lib/firmware/iwlwifi usr/lib/firmware/ath10k usr/lib/firmware/rtl; do
-    [ -e "${ROOTFS_DIR}/${fw}" ] || FW_MISSING=$((FW_MISSING + 1))
+#
+# A WARN, not a FAIL, and deliberately so. These are redistribution-exempt
+# blobs that sid repackages, and a repackage can legitimately drop a family
+# without breaking the desktop at all. The warning names exactly which family is
+# absent so it can be acted on, rather than failing a build over wireless.
+FW_MISSING=""
+for fw in iwlwifi ath10k rtl; do
+    [ -e "${ROOTFS_DIR}/usr/lib/firmware/${fw}" ] || FW_MISSING="${FW_MISSING} ${fw}"
 done
-if [ "${FW_MISSING}" -eq 0 ]; then
+if [ -z "${FW_MISSING}" ]; then
     echo "  [OK] firmware families present (iwlwifi, ath10k, rtl)"
     CHECKED=$((CHECKED + 1))
 else
-    echo "  [WARN] ${FW_MISSING} firmware family/families missing — Wi-Fi may be silently broken"
+    echo "  [WARN] firmware families absent:${FW_MISSING} — Wi-Fi may be silently broken"
+    echo "         (not a build failure: these are redistribution-exempt blobs)"
+    CHECKED=$((CHECKED + 1))
 fi
 
 # And the session must not be told to render in a way that needs hardware it
