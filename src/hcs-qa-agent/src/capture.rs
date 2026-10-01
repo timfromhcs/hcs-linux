@@ -130,7 +130,7 @@ impl Pixels<'_> {
 /// Shannon entropy over the three channel histograms together, in bits.
 pub fn entropy(rgb: &[u8]) -> f64 {
     let mut hist = [0u64; 256 * 3];
-    for px in rgb.chunks_exact(3) {
+    for px in rgb.as_chunks::<3>().0 {
         hist[px[0] as usize] += 1;
         hist[256 + px[1] as usize] += 1;
         hist[512 + px[2] as usize] += 1;
@@ -153,7 +153,7 @@ pub fn entropy(rgb: &[u8]) -> f64 {
 /// already far past any threshold.
 pub fn unique_colors(rgb: &[u8], cap: usize) -> usize {
     let mut seen: std::collections::HashSet<u32> = std::collections::HashSet::new();
-    for px in rgb.chunks_exact(3) {
+    for px in rgb.as_chunks::<3>().0 {
         let key = ((px[0] as u32) << 16) | ((px[1] as u32) << 8) | px[2] as u32;
         seen.insert(key);
         if seen.len() > cap {
@@ -171,7 +171,7 @@ pub fn unique_colors(rgb: &[u8], cap: usize) -> usize {
 pub fn text_ratio(rgb: &[u8]) -> f64 {
     let mut hist: std::collections::HashMap<u32, u64> = std::collections::HashMap::new();
     let mut total = 0u64;
-    for px in rgb.chunks_exact(3) {
+    for px in rgb.as_chunks::<3>().0 {
         let key = ((px[0] as u32) << 16) | ((px[1] as u32) << 8) | px[2] as u32;
         *hist.entry(key).or_insert(0) += 1;
         total += 1;
