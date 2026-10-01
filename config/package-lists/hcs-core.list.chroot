@@ -17,6 +17,12 @@ dbus
 polkitd
 
 # --- Display & Wayland (compositor + shell) ---------------------------------
+#
+# niri is NOT here: no Debian suite packages it. It is provisioned from
+# config/package-lists/hcs-external.list by scripts/fetch_niri.sh, which builds
+# it from niri's own hash-pinned release bundle. Putting it in this file would
+# make `apt-get install` fail and would make verify_package_availability.py
+# report a false accusation.
 libwayland-client0
 libwayland-server0
 wayland-protocols
@@ -27,18 +33,18 @@ seatd
 xdg-desktop-portal
 xdg-desktop-portal-wlr
 xdg-desktop-portal-gtk
-xdg-desktop-portal-hyprland
 gsettings-desktop-schemas
-qt6-declarative
-qml6-module-qtquick
-qml6-module-qtquick-layouts
-qt6-wayland
-niri
+# quickshell ships in Debian sid, which is why the base is sid rather than
+# trixie: 0.3.1 requires Qt 6.11.2 with an exact-version private ABI, and trixie
+# has Qt 6.8. Pulling this one binary into trixie would drag the whole Qt 6.11
+# stack in with it.
 quickshell
 
 # --- Boot splash -------------------------------------------------------------
 plymouth
-plymouth-theme-spinner
+# The spinner theme ships inside plymouth-themes; there is no separate
+# plymouth-theme-spinner package in Debian.
+plymouth-themes
 
 # --- Input, seat & clipboard -------------------------------------------------
 xkb-data

@@ -31,16 +31,31 @@
 # docs/V2_STABLE_QA_STATUS.md rather than buried here.
 #
 # USAGE
-#   scripts/build_base.sh [SUITE]        # default: sid
-#   HCS_BASE_CACHE=1 scripts/build_base.sh   # reuse an existing target/base
+#   scripts/build_base.sh [SUITE] [--cache]
+#
+# --cache reuses an existing target/base instead of re-bootstrapping. It is an
+# argument rather than an environment variable because `VAR=1 sudo ./script`
+# silently drops the variable — sudo does not pass the environment through
+# without -E — so the first version of this rebuilt the entire base from scratch
+# on every invocation, re-downloading ~40 MB and reinstalling 69 packages each
+# time, and never once used the cache it appeared to be asking for.
 
 set -euo pipefail
 
-SUITE="${1:-sid}"
+SUITE="sid"
+CACHE=0
+for arg in "$@"; do
+    case "${arg}" in
+        --cache) CACHE=1 ;;
+        -*) printf 'unknown option: %s\n' "${arg}" >&2; exit 2 ;;
+        *) SUITE="${arg}" ;;
+    esac
+done
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 BASE_DIR="${REPO_ROOT}/target/base"
 PACKAGE_LIST="${REPO_ROOT}/config/package-lists/hcs-core.list.chroot"
+EXTERNAL_LIST="${REPO_ROOT}/config/package-lists/hcs-external.list"
 MIRROR="${HCS_DEB_MIRROR:-http://deb.debian.org/debian}"
 
 say() { printf '\033[1m[base]\033[0m %s\n' "$*"; }
@@ -59,7 +74,7 @@ say "suite: ${SUITE}  (mirror: ${MIRROR})"
 
 # ------------------------------------------------------------------ 2. base
 
-if [ -d "${BASE_DIR}" ] && [ "${HCS_BASE_CACHE:-0}" = "1" ]; then
+if [ "${CACHE}" -eq 1 ] && [ -d "${BASE_DIR}" ]; then
     say "reusing the cached base at ${BASE_DIR}"
 else
     say "creating the base in ${BASE_DIR} (this takes a while)"
@@ -105,6 +120,31 @@ fi
 # own /usr/share/hcs/config/keyboard-layouts.conf instead of asking.
 export DEBIAN_FRONTEND=noninteractive
 export DEBCONF_NONINTERACTIVE_SEEN=true
+
+# ------------------------------------------------------------------ 3b. mounts
+
+# A debootstrap tree has empty /proc, /sys and /dev, and several packages run
+# systemd-tmpfiles from their postinst. Without /proc that fails, and the failure
+# surfaces as an opaque "old <pkg> package postinst maintainer script subprocess
+# failed with exit status 1" — which is how tmux and cryptsetup ended up
+# half-configured and made the build look like a missing-package problem.
+#
+# Bind-mounted for the duration and torn down on exit, including on failure, so
+# a cancelled build does not leave the host's /proc mounted inside a directory.
+cleanup_mounts() {
+    for m in dev/pts dev sys proc; do
+        mountpoint -q "${BASE_DIR}/${m}" && umount -l "${BASE_DIR}/${m}" 2>/dev/null || true
+    done
+}
+trap cleanup_mounts EXIT
+
+mount -t proc  proc  "${BASE_DIR}/proc"
+mount -t sysfs sysfs "${BASE_DIR}/sys"
+mount --bind /dev "${BASE_DIR}/dev"
+mkdir -p "${BASE_DIR}/dev/pts"
+mount -t devpts devpts "${BASE_DIR}/dev/pts"
+say "chroot mounts in place (/proc, /sys, /dev, /dev/pts)"
+
 PRESEED="${BASE_DIR}/usr/share/hcs-build-preseed.cfg"
 cat > "${PRESEED}" << 'EOF'
 keyboard-configuration keyboard-configuration/layoutcode string de
@@ -132,14 +172,57 @@ printf '#DEBCONF#\n' >> "${BASE_DIR}/var/cache/debconf/config.dat"
 mapfile -t WANTED < <(sed -e 's/#.*//' -e 's/[[:space:]]//g' "${PACKAGE_LIST}" | grep -v '^$')
 say "installing ${#WANTED[@]} declared package(s) from the package list"
 
-# A missing package must stop the build. apt-get's own exit status does not
-# always do that for a list, and a half-installed desktop is exactly the failure
-# this whole exercise is about.
-MISSING=()
+# Components the distribution does not package are declared separately, with the
+# script that provisions each one. They are removed from the apt list here and
+# verified in step 5, so a component cannot be skipped by deleting a line — its
+# absence has to be noticed.
+EXTERNAL_NAMES=()
+if [ -f "${EXTERNAL_LIST}" ]; then
+    while read -r name script _rest; do
+        case "${name}" in ''|\#*) continue ;; esac
+        EXTERNAL_NAMES+=("${name}")
+    done < "${EXTERNAL_LIST}"
+    if [ "${#EXTERNAL_NAMES[@]}" -gt 0 ]; then
+        say "externally provisioned (not apt): ${EXTERNAL_NAMES[*]}"
+    fi
+fi
+
+APT_WANTED=()
 for p in "${WANTED[@]}"; do
-    if ! chroot "${BASE_DIR}" /usr/bin/dpkg-query -W -f='${Status}' "${p}" 2>/dev/null \
+    skip=0
+    for e in "${EXTERNAL_NAMES[@]:-}"; do
+        [ "${p}" = "${e}" ] && skip=1
+    done
+    [ "${skip}" -eq 0 ] && APT_WANTED+=("${p}")
+done
+say "${#APT_WANTED[@]} package(s) to install with apt"
+
+MISSING=()
+for p in "${APT_WANTED[@]}"; do
+    # Satisfied means "apt can resolve it", not "dpkg has a package of exactly
+    # this name". Two real cases were misreported as failures before:
+    #
+    #   * systemd-sysusers is a *virtual* package in sid, provided by systemd.
+    #     dpkg-query has no record under that name at all, so a
+    #     dpkg-query-only test calls it missing and the build dies even though
+    #     the capability is present.
+    #   * a package already pulled in as a dependency is "already the newest
+    #     version", which apt reports in its output but which dpkg-query also
+    #     answers correctly — the two tests have to agree.
+    #
+    # So: installed, or has an installation candidate.
+    if chroot "${BASE_DIR}" /usr/bin/dpkg-query -W -f='${Status}' "${p}" 2>/dev/null \
         | grep -q 'ok installed'; then
+        continue
+    fi
+    if chroot "${BASE_DIR}" /usr/bin/apt-cache policy "${p}" 2>/dev/null \
+        | grep -qE '^\s+Installed:'; then
+        continue
+    fi
+    if chroot "${BASE_DIR}" /usr/bin/apt-cache show "${p}" >/dev/null 2>&1; then
         MISSING+=("${p}")
+    else
+        say "  ${p}: virtual or provided by another package — satisfied by a provider"
     fi
 done
 
@@ -149,11 +232,21 @@ if [ "${#MISSING[@]}" -gt 0 ]; then
     # instead of aborting a 75-package transaction with an opaque error.
     FAILED=()
     for p in "${MISSING[@]}"; do
-        if ! chroot "${BASE_DIR}" /usr/bin/apt-get -o Dpkg::Options::=--force-confdef \
+        if chroot "${BASE_DIR}" /usr/bin/apt-get -o Dpkg::Options::=--force-confdef \
                 -o Dpkg::Options::=--force-confold \
                 install -y --no-install-recommends "${p}" \
                 >>"${BASE_DIR}/var/log/hcs-base-build.log" 2>&1; then
-            FAILED+=("${p}")
+            :
+        else
+            # apt can exit non-zero after a successful install — a debconf
+            # warning or a trigger returning non-zero. The question is whether
+            # the package is actually there now, not what apt's exit code was.
+            if chroot "${BASE_DIR}" /usr/bin/dpkg-query -W -f='${Status}' "${p}" 2>/dev/null \
+                | grep -q 'ok installed'; then
+                say "  ${p}: installed despite a non-zero apt exit"
+            else
+                FAILED+=("${p}")
+            fi
         fi
     done
     if [ "${#FAILED[@]}" -gt 0 ]; then
@@ -167,20 +260,94 @@ fi
 
 # Anything left holding a dpkg lock or an unconfigured package would break the
 # first boot of the image in a way that is very hard to diagnose from inside a
-# VM. Finish the transaction properly before declaring the base good.
-chroot "${BASE_DIR}" /usr/bin/dpkg --configure -a >>"${BASE_DIR}/var/log/hcs-base-build.log" 2>&1 || true
+# VM. Finish the transaction properly, and refuse to continue if anything is
+# still unpacked-but-unconfigured.
+if ! chroot "${BASE_DIR}" /usr/bin/dpkg --configure -a \
+        >>"${BASE_DIR}/var/log/hcs-base-build.log" 2>&1; then
+    say "dpkg --configure -a did not complete:"
+    chroot "${BASE_DIR}" /usr/bin/dpkg --audit 2>&1 | head -20 | while read -r l; do
+        say "    ${l}"
+    done
+    die "the base has unconfigured packages"
+fi
+AUDIT=$(chroot "${BASE_DIR}" /usr/bin/dpkg --audit 2>&1 || true)
+if [ -n "${AUDIT}" ]; then
+    say "dpkg --audit still reports:"
+    printf '%s\n' "${AUDIT}" | head -20 | while read -r l; do say "    ${l}"; done
+    die "the base is not in a clean package state"
+fi
 
 # ------------------------------------------------------------------ 4. verify
+
+# The external provisioning scripts need the mounts from step 3b to still be in
+# place for anything that inspects the tree, and they must not inherit the
+# cleanup trap's ownership of them.
+cleanup_mounts
 
 say "verifying the base is a real system, not a directory of files"
 MISSING_SYS=()
 for probe in bin/bash bin/sh sbin/init usr/lib/systemd/systemd \
-             usr/bin/niri usr/bin/quickshell usr/bin/grim usr/bin/wtype \
+             usr/bin/quickshell usr/bin/grim usr/bin/wtype \
              usr/bin/tesseract; do
     [ -e "${BASE_DIR}/${probe}" ] || MISSING_SYS+=("${probe}")
 done
 if [ "${#MISSING_SYS[@]}" -gt 0 ]; then
     die "the base is still not a bootable system. Missing: ${MISSING_SYS[*]}"
+fi
+
+# Externally provisioned components must be present *and* carry their
+# provenance, or they were never really installed.
+#
+# They are provisioned *here*, before the check, rather than as a separate manual
+# step: the first attempt at this ordering reported "an external component is
+# missing" for a component that simply had not been reached yet, which is a
+# confusing way to learn that a build has a step ordering bug in it.
+if [ "${#EXTERNAL_NAMES[@]}" -gt 0 ]; then
+    declare -A EXTERNAL_SCRIPT=()
+    while read -r name script _rest; do
+        case "${name}" in ''|\#*) continue ;; esac
+        EXTERNAL_SCRIPT["${name}"]="${script}"
+    done < "${EXTERNAL_LIST}"
+
+    # External provisioning builds things with the *invoking user's* toolchain,
+    # and rustup resolves that from $HOME. This script runs under sudo, so
+    # without dropping privileges the build tool is looked up in /root, where no
+    # default toolchain is configured, and cargo fails before it reads any source.
+    AS_USER=""
+    if [ -n "${SUDO_USER:-}" ] && [ "${SUDO_USER}" != "root" ]; then
+        AS_USER="${SUDO_USER}"
+        say "provisioning runs as ${AS_USER} (the invoking user), not root"
+    else
+        die "external components need the invoking user's toolchain, but this was
+       not run through sudo.
+       Run:  sudo bash scripts/build_base.sh ${SUITE}"
+    fi
+
+    for name in "${EXTERNAL_NAMES[@]}"; do
+        script="${EXTERNAL_SCRIPT[${name}]:-}"
+        [ -n "${script}" ] || die "${name} is declared external but names no script to provision it"
+        [ -f "${REPO_ROOT}/${script}" ] || die "${name} names ${script}, which does not exist"
+        say "provisioning ${name} via ${script}"
+        AS_USER="${AS_USER}" \
+        HCS_BASE_DIR="${BASE_DIR}" \
+        HOME="$(getent passwd "${AS_USER}" | cut -d: -f6)" \
+        USER="${AS_USER}" \
+            sudo -u "${AS_USER}" -H bash "${REPO_ROOT}/${script}" \
+            || die "provisioning ${name} failed; see the output above"
+    done
+
+    MISSING_EXT=()
+    for e in "${EXTERNAL_NAMES[@]}"; do
+        if [ ! -e "${BASE_DIR}/usr/bin/${e}" ]; then
+            MISSING_EXT+=("${e} (binary absent)")
+        elif [ ! -f "${BASE_DIR}/etc/hcs-${e}-provenance" ]; then
+            MISSING_EXT+=("${e} (no provenance record)")
+        fi
+    done
+    if [ "${#MISSING_EXT[@]}" -gt 0 ]; then
+        die "external components are not satisfied: ${MISSING_EXT[*]}"
+    fi
+    say "external components verified: ${EXTERNAL_NAMES[*]}"
 fi
 
 FILE_COUNT=$(find "${BASE_DIR}" -xdev -type f 2>/dev/null | wc -l)
