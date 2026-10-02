@@ -425,14 +425,36 @@ else
     CHECKED=$((CHECKED + 1))
 fi
 
-# And the session must not be told to render in a way that needs hardware it
-# cannot prove it has.
-if grep -q 'HCS_RENDERER:-software' \
-    "${ROOTFS_DIR}/usr/share/hcs/session/start-desktop.sh" 2>/dev/null; then
-    echo "  [OK] software rendering is the default; hardware is opt-in"
+# The renderer must be chosen, not assumed, and never forced on the hardware path.
+#
+# This gate used to require "the session defaults to software rendering", which I
+# wrote when I believed lavapipe was a floor. Reading niri's source showed the
+# opposite: niri asserts its EGL device is not software, so forcing a software
+# renderer does not produce a slow desktop, it produces a compositor that starts
+# and never draws. The gate was enforcing the bug.
+#
+# What must hold now is the opposite: the niri path must NOT force software, and
+# a software-capable fallback must exist for machines that have no GPU.
+if grep -qE '^\s*export (LIBGL_ALWAYS_SOFTWARE|GALLIUM_DRIVER=llvmpipe)' \
+        "${ROOTFS_DIR}/usr/share/hcs/session/run-niri.sh" 2>/dev/null; then
+    echo "  [FAIL] run-niri.sh forces software rendering. niri rejects software EGL" >&2
+    echo "         by design, so this guarantees a compositor that never draws." >&2
+    FAILURES=$((FAILURES + 1))
+else
+    echo "  [OK] the niri path does not force a software renderer"
+    CHECKED=$((CHECKED + 1))
+fi
+
+# And the fallback must be real: software rendering is expected and correct on
+# the X11 path, so check the fallback sets it rather than checking the default.
+if grep -qE '^\s*export (LIBGL_ALWAYS_SOFTWARE|GALLIUM_DRIVER=llvmpipe)' \
+        "${ROOTFS_DIR}/usr/share/hcs/session/run-labwc.sh" 2>/dev/null; then
+    echo "  [OK] the software fallback asks for software rendering explicitly"
     CHECKED=$((CHECKED + 1))
 else
-    echo "  [FAIL] the session does not default to software rendering" >&2
+    echo "  [FAIL] the fallback compositor does not force software rendering." >&2
+    echo "         Without it, a machine with no GPU reaches the fallback and" >&2
+    echo "         gets nothing drawn." >&2
     FAILURES=$((FAILURES + 1))
 fi
 
@@ -441,6 +463,85 @@ check_file /usr/lib/systemd/system/hcs-desktop.service "session unit"    100
 check_file /usr/lib/systemd/system/hcs-banner.service  "boot banner unit" 100
 check_file /usr/share/hcs/session/start-desktop.sh     "desktop starter"  500
 check_file /usr/share/hcs/branding/issue-banner.txt    "console banner"   50
+
+# ---------------------------------------------------------------- compositor
+#
+# Two compositors, and the image must actually contain both.
+#
+# niri is the product compositor and requires hardware acceleration: it asserts
+# that its EGL device is not software, so it produces a compositor that starts and
+# never draws when there is no supported GPU. labwc on Xvfb is the software
+# fallback that reaches a drawable desktop anyway.
+#
+# Shipping only niri means the image cannot start a desktop on any machine
+# without a supported GPU -- which is every VM without 3D acceleration. Shipping
+# only labwc means the product compositor is untested. So: both, and the chooser.
+# --- live-boot contract ---------------------------------------------------
+#
+# Bare `toram` and a default overlay size are mutually exclusive, and the failure
+# mode is silent enough to cost a whole session.
+#
+# From live-boot(7): "toram ... live-boot will try to copy the whole read-only
+# media to the computer's RAM". And: "overlay-size ... The size of the tmpfs
+# mount (used for the upperdir union root mount) ... By default, 50% of available
+# RAM will be used." Plus: "Note that this option has currently no effect when
+# booting with toram."
+#
+# So toram fills RAM with the medium, overlay then asks for a second tmpfs for
+# upperdir/workdir, there is not enough left, the overlay mount fails, and the
+# guest prints "overlay not supported" and stops. No panic, no prompt, no failed
+# unit.
+#
+# This image had exactly that, and it was added deliberately to "remove the slow
+# boot variable". Every successful boot in the project predates it; every stall
+# followed it. A gate that had checked this would have turned a session of
+# misattributed debugging into one build cycle.
+ISO_BUILD="${REPO_ROOT}/scripts/build_iso.sh"
+if grep -qE '(^|[[:space:]])toram([[:space:]]|$)' "${ISO_BUILD}" 2>/dev/null; then
+    echo "  [FAIL] a kernel cmdline passes bare 'toram'." >&2
+    echo "         live-boot copies the WHOLE medium to RAM, then overlay asks" >&2
+    echo "         for a separate tmpfs (50% of RAM by default, and ramdisk-size" >&2
+    echo "         has no effect under toram). The overlay mount then fails and the" >&2
+    echo "         guest stops at 'overlay not supported'." >&2
+    FAILURES=$((FAILURES + 1))
+else
+    echo "  [OK] no kernel cmdline passes bare toram"
+    CHECKED=$((CHECKED + 1))
+fi
+
+# And the overlay's own allocation should be stated, not left to default to half
+# the machine.
+if grep -q 'overlay-size=' "${ISO_BUILD}" 2>/dev/null; then
+    echo "  [OK] overlay-size is set explicitly rather than defaulting to 50% of RAM"
+    CHECKED=$((CHECKED + 1))
+else
+    echo "  [WARN] overlay-size is not set; live-boot will claim 50% of RAM for the"
+    echo "         overlay by default. Not a failure, but an explicit value makes"
+    echo "         the allocation visible instead of emergent."
+fi
+
+# The software fallback compositor must exist even though it is not the product.
+# This is the other half of the graphics contract, kept here so the two live-boot
+# and compositor requirements are asserted in the same place a reader will look.
+for _s in pick-compositor.sh run-niri.sh run-labwc.sh labwcrc; do
+    check_file "/usr/share/hcs/session/${_s}" "${_s}" 100
+done
+check_file /usr/bin/labwc "labwc (software fallback compositor)" 100
+check_file /usr/bin/Xvfb  "Xvfb (software X server)" 100
+
+# And the fallback must force it, because on a machine with no GPU reaching the
+# fallback and getting nothing drawn is the failure this whole change exists to
+# prevent.
+if grep -qE '^\s*export (LIBGL_ALWAYS_SOFTWARE|GALLIUM_DRIVER=llvmpipe)' \
+        "${ROOTFS_DIR}/usr/share/hcs/session/run-labwc.sh" 2>/dev/null; then
+    echo "  [OK] the software fallback asks for software rendering explicitly"
+    CHECKED=$((CHECKED + 1))
+else
+    echo "  [FAIL] the fallback compositor does not force software rendering." >&2
+    echo "         Without it, a machine with no GPU reaches the fallback and" >&2
+    echo "         gets nothing drawn." >&2
+    FAILURES=$((FAILURES + 1))
+fi
 # Resolve against the staged tree, not against /. See build_iso.sh for why: an
 # absolute unit path is correct in the guest's namespace and absent from the
 # build host's, so [ -e ] on the raw link gets both cases exactly backwards.

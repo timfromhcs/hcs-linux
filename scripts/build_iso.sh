@@ -364,6 +364,14 @@ copy_file "${REPO_ROOT}/config/includes.chroot/usr/share/hcs/session/start-deskt
           "${ROOTFS_DIR}/usr/share/hcs/session/start-desktop.sh" 755 "start-desktop.sh"
 copy_file "${REPO_ROOT}/config/includes.chroot/usr/share/hcs/session/boot-diagnostics.sh" \
           "${ROOTFS_DIR}/usr/share/hcs/session/boot-diagnostics.sh" 755 "boot-diagnostics.sh"
+copy_file "${REPO_ROOT}/config/includes.chroot/usr/share/hcs/session/pick-compositor.sh" \
+          "${ROOTFS_DIR}/usr/share/hcs/session/pick-compositor.sh" 755 "pick-compositor.sh"
+copy_file "${REPO_ROOT}/config/includes.chroot/usr/share/hcs/session/run-niri.sh" \
+          "${ROOTFS_DIR}/usr/share/hcs/session/run-niri.sh" 755 "run-niri.sh"
+copy_file "${REPO_ROOT}/config/includes.chroot/usr/share/hcs/session/run-labwc.sh" \
+          "${ROOTFS_DIR}/usr/share/hcs/session/run-labwc.sh" 755 "run-labwc.sh"
+copy_file "${REPO_ROOT}/config/includes.chroot/usr/share/hcs/session/labwcrc" \
+          "${ROOTFS_DIR}/usr/share/hcs/session/labwcrc" 644 "labwcrc"
 
 # Enabled by symlink rather than `systemctl enable`, which cannot run in a chroot
 # with no systemd running. The wants directory is the same mechanism, and it is
@@ -560,32 +568,32 @@ set menu_color_normal=light-gray/black
 set menu_color_highlight=cyan/black
 
 menuentry "HCS Linux ${VERSION} Live Desktop" {
-    linux /live/vmlinuz boot=live console=tty1 console=tty0 console=ttyS0,115200n8 toram video=1024x768 hcs_session=graphical
+    linux /live/vmlinuz boot=live console=tty1 console=tty0 console=ttyS0,115200n8 overlay-size=2g video=1024x768 hcs_session=graphical
     initrd /live/initrd.img
 }
 
 menuentry "HCS Linux ${VERSION} Live Desktop (Amnesic / Tor)" {
-    linux /live/vmlinuz boot=live console=tty1 console=tty0 console=ttyS0,115200n8 toram video=1024x768 hcs_session=graphical hcs_amnesic=1 hcs_private=1
+    linux /live/vmlinuz boot=live console=tty1 console=tty0 console=ttyS0,115200n8 overlay-size=2g video=1024x768 hcs_session=graphical hcs_amnesic=1 hcs_private=1
     initrd /live/initrd.img
 }
 
 menuentry "Install HCS Linux (Calamares)" {
-    linux /live/vmlinuz boot=live console=tty1 console=tty0 console=ttyS0,115200n8 toram video=1024x768 hcs_install=1
+    linux /live/vmlinuz boot=live console=tty1 console=tty0 console=ttyS0,115200n8 overlay-size=2g video=1024x768 hcs_install=1
     initrd /live/initrd.img
 }
 
 menuentry "HCS Linux ${VERSION} Recovery Console" {
-    linux /live/vmlinuz boot=live single console=tty1 console=tty0 console=ttyS0,115200n8 toram video=1024x768 hcs_console=1
+    linux /live/vmlinuz boot=live single console=tty1 console=tty0 console=ttyS0,115200n8 overlay-size=2g video=1024x768 hcs_console=1
     initrd /live/initrd.img
 }
 
 menuentry "Boot previous installation (rollback)" {
-    linux /live/vmlinuz boot=live single console=tty1 console=tty0 console=ttyS0,115200n8 toram video=1024x768 hcs_rollback=1
+    linux /live/vmlinuz boot=live single console=tty1 console=tty0 console=ttyS0,115200n8 overlay-size=2g video=1024x768 hcs_rollback=1
     initrd /live/initrd.img
 }
 
 menuentry "HCS Linux ${VERSION} QA (automated — no interaction)" {
-    linux /live/vmlinuz boot=live console=tty1 console=tty0 console=ttyS0,115200n8 toram video=1024x768 hcs_session=graphical hcs.qa=1 hcs.qa.profile=virtualbox
+    linux /live/vmlinuz boot=live console=tty1 console=tty0 console=ttyS0,115200n8 overlay-size=2g video=1024x768 hcs_session=graphical hcs.qa=1 hcs.qa.profile=virtualbox
     initrd /live/initrd.img
 }
 EOF

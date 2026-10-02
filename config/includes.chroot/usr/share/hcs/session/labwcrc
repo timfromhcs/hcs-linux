@@ -1,0 +1,35 @@
+# HCS Linux — labwc configuration (software fallback compositor)
+#
+# Deliberately small. This is the fallback that has to work on a machine with no
+# GPU, so nothing here may depend on acceleration, a seat, or a VT.
+#
+# The taskbar, launcher and windows are drawn by the Neural Glass shell itself,
+# so the window manager stays out of the way and does not decorate anything.
+
+# --- keyboard -------------------------------------------------------------
+# The HCS key is the Windows-key position. In X11 that is Mod4/Super.
+set_mod hcs Mod4
+
+bind $hcs Return exec hcs-chat --gui
+bind $hcs T exec hcs-term
+bind $hcs D exec hcs-docs
+bind $hcs comma exec hcs-settings
+bind $hcs s exec hcs-shot
+bind $hcs n exec hcs-notes
+bind $hcs f exec hcs-fm
+bind $hcs m exec hcs-monitor --gui
+
+# The launcher must also work without the HCS key, because the QA agent drives
+# the session with synthetic input and may not be able to set a modifier.
+bind $mod1 space exec hcs-menu
+bind Escape exec hcs-menu
+
+# --- behaviour ------------------------------------------------------------
+# Nothing here animates. pixman has no blur and no compositor effects, so asking
+# for them yields a black window rather than a degraded one.
+x11_prefer_size default
+x11_bypass_surface_manager_below_hint true
+
+# One X11 screen, so there is no surface manager to bypass and no reason to pay
+# for the attempt.
+x11_disable_shared_pidfd true
