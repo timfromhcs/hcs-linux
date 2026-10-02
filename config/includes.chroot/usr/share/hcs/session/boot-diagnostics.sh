@@ -72,6 +72,32 @@ log "mounted at ${OUT}"
 D="${OUT}/diag-$(date -u +%Y%m%dT%H%M%SZ)"
 mkdir -p "${D}"
 
+# --- heartbeat ------------------------------------------------------------
+#
+# The whole reason this exists. Every "stall" in this project was a screenshot at
+# an arbitrary instant, and two identical screenshots only ever mean "no progress
+# in that interval" -- never "stopped". With this file the host can watch mtime
+# and tell a slow boot from a hung one, which is the difference between a
+# diagnosis and a guess.
+#
+# Written before the diagnostics so that even a run that dies partway through
+# leaves evidence that it was alive.
+HB="${OUT}/heartbeat"
+printf 'boot=%s\nuptime=%s\n' "$(date -u +%H:%M:%S)" "$(cut -d' ' -f1 /proc/uptime)" > "${HB}"
+
+# Keep updating it for as long as the session lasts, so the gap between two
+# updates is itself a signal.
+(
+    while :; do
+        printf 'boot=%s\nuptime=%s\n' "$(date -u +%H:%M:%S)" \
+            "$(cut -d' ' -f1 /proc/uptime)" > "${HB}.tmp"
+        mv "${HB}.tmp" "${HB}"
+        sleep 30
+    done
+) &
+HEARTBEAT_PID=$!
+trap 'kill ${HEARTBEAT_PID} 2>/dev/null || true' EXIT
+
 # --- the boot's own account of itself ------------------------------------
 
 # Kernel first, and in full. The interesting lines are the ones nobody expects.

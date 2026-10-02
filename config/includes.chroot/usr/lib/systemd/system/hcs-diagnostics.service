@@ -16,14 +16,19 @@ After=basic.target
 Before=multi-user.target
 
 [Service]
-Type=oneshot
-RemainAfterExit=yes
+Type=simple
+RemainAfterExit=no
 # Runs as root because it formats a block device and reads the journal. It reads
 # logs and writes them out; it starts nothing.
 ExecStart=/usr/share/hcs/session/boot-diagnostics.sh
-# Short: if the disk is missing, the script exits immediately, and a diagnostic
-# that hangs is worse than none.
-TimeoutStartSec=180
+# NO TimeoutStartSec limit. This unit is now long-lived by design: it keeps a
+# heartbeat on the evidence disk for as long as the session lasts, so the host can
+# distinguish a slow boot from a hung one.
+#
+# That is a change of purpose. It used to be a oneshot that ran, wrote a report and
+# exited -- ordered after the thing it was meant to diagnose, so it never ran on
+# the boots that mattered. It is now long-lived, ordered early, and its liveness is
+# itself the signal.
 StandardOutput=journal
 StandardError=journal
 
