@@ -1,19 +1,19 @@
 [Unit]
 Description=HCS boot diagnostics onto the evidence disk
 Documentation=docs/V2_STABLE_QA_STATUS.md
-# Runs EARLY and runs REGARDLESS of whether the desktop works.
+# Runs EARLY, and specifically EARLIER THAN THE THING IT DIAGNOSES.
 #
-# This is not a debugging convenience that gets enabled when something is broken.
-# A boot that produces a frozen framebuffer produces no other evidence at all, so
-# the diagnostic has to be part of every boot that the QA driver cares about --
-# especially the ones where the desktop does not come up, which are precisely the
-# ones nobody can otherwise investigate.
+# First version of this unit was ordered After=multi-user.target, on the reasoning
+# that the desktop should get its chance first. That is wrong, and it was found
+# by running it: the boot stops between local-fs.target and multi-user.target, so
+# a diagnostic gated on multi-user.target never executes on precisely the boots it
+# exists to explain. The evidence disk came back unformatted, which was the only
+# way to notice.
 #
-# After multi-user.target so the desktop has had its chance, but Before poweroff
-# and with no dependency on anything graphical: if the graphics stack is the thing
-# that is broken, this must not be waiting on it.
-After=multi-user.target
-Before=shutdown.target poweroff.target
+# basic.target is the right place: real filesystems are mounted, systemd itself is
+# up, and anything that can still be waited on has not started yet.
+After=basic.target
+Before=multi-user.target
 
 [Service]
 Type=oneshot

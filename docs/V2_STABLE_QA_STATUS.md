@@ -69,18 +69,57 @@ gated.
 
 ## The remaining blocker
 
-The boot does not reach a usable VT. Two candidate causes remain, and neither has
-been eliminated:
+The boot reaches systemd's `local-fs` stage and stops. It does not reach
+`multi-user.target`, which is why the boot diagnostics never run and the evidence
+disk comes back unformatted.
 
-* **VirtualBox's `umugfx` offers no usable mode.** The guest log records
-  `Console: switching to colour frame buffer device 128x48`. A compositor cannot
-  present into 128×48.
-* **The image is large and the medium is slow.** The newest run stalls at 2.6 s
-  of kernel time on a 1.5 GB ISO over an emulated optical device. This may be
-  slowness rather than a hang; the observation window was too short to tell.
+Two changes moved it measurably further, and both were about the observation
+rather than the guest:
 
-These are distinguishable and the next step is to tell them apart, not to pick
-one and act on it.
+| Change | Result |
+|---|---|
+| Baseline | froze at `2.6 s` of kernel time, mid initramfs |
+| `toram` on every kernel cmdline | reaches `paths.target`, plymouth, `local-fs-pre.target` |
+
+`toram` was the right call for the wrong reason: the medium is read over an
+emulated optical device, which is far slower than the hardware the image is
+built for, so a slow boot and a hung boot were indistinguishable. Removing the
+variable did not fix the boot — it revealed where the boot actually stops.
+
+**What has been ruled out, with evidence:**
+
+* overlayfs in the initramfs — present (`overlay.ko.xz`), along with squashfs,
+  isofs, loop, ext4, fat
+* the bootstrap hook — runs, `hcs` exists, `getty@tty1` autologins
+* the session units — absolute symlinks, resolve in the guest namespace
+* the graphics stack — 9 Vulkan ICDs incl. lavapipe, GBM, EGL, llvmpipe
+* GRUB waiting at a menu — the menu is now suppressed on the QA image
+
+**What has not been ruled out:**
+
+* `umugfx` offering no usable mode (`128x48` in the earlier guest log). Nothing
+  has yet read a DRM mode list from a running guest, because the diagnostics that
+  would do so never get to run.
+* Anything between `local-fs.target` and `multi-user.target` — that window is
+  where the boot now stops and it has not been observed from the inside.
+
+The next diagnostic must answer one question: what is `local-fs.target` waiting
+on. `systemctl list-jobs` and the failed-units list, read from a guest that
+reaches far enough to write them, will answer it in one boot.
+
+## The instrument, and why it is not enough yet
+
+`hcs-diagnostics.service` writes `dmesg`, the failed-units list, the journal,
+the DRM device list, the modes each card offers, the active VT and seat state to
+the evidence VHD as FAT32, which Windows mounts natively. It depends on no Guest
+Additions, no network and no graphics — if the desktop never draws, it still
+answers why.
+
+It has not run yet, because it is ordered after `multi-user.target` and the boot
+does not reach it. **Its ordering is the next thing to change**: it should be
+ordered against `sysinit.target` or `basic.target` so it reports on the stall
+that is stopping it. An instrument that cannot observe the failure it was built
+for is not yet an instrument.
 
 ## What was claimed wrongly and corrected
 
