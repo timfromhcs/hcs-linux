@@ -524,8 +524,27 @@ fi
 # Unquoted heredoc so ${VERSION} and ${GRUB_*} expand host-side (body contains
 # no other $).
 cat > "${ISO_STAGING}/boot/grub/grub.cfg" << EOF
+# A zero timeout alone is NOT enough.
+#
+# GRUB's menu still appears and still counts down when timeout=0; the countdown is
+# what keeps the framebuffer alive before the kernel runs. On the production image
+# (timeout=10) the QA VM therefore sat on the GRUB screen for ten seconds of every
+# run, and the first screenshot taken at 60-70s landed after it -- which is fine --
+# but any capture before that photographs a menu, and the menu looks like a
+# stalled boot to anything that cannot read text.
+#
+# More importantly: `set timeout=0` in the body is honoured, but GRUB still waits
+# indefinitely if it cannot read the config, and it still renders the menu unless
+# the menu is explicitly suppressed. So both are stated, in the order GRUB wants
+# them, rather than relying on the countdown to do the work.
 set timeout=${GRUB_TIMEOUT}
 set default=0
+# Do not draw a menu at all on the QA image. A menu that is drawn and then
+# auto-selected is indistinguishable, to a screenshot, from a boot that hung.
+if [ "${GRUB_TIMEOUT}" -eq 0 ]; then
+    set menu_timeout=0
+    terminal_output console
+fi
 
 insmod all_video
 insmod font
