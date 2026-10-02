@@ -1,5 +1,17 @@
 # HCS Linux
 
+> ## ⚠️ Read this first
+>
+> **The stable release is v1.1.0. It is not v2.**
+>
+> The `main` branch now contains **v2.0.0 development work that is not
+> released**. v2 boots to a real Linux system and **cannot yet draw a graphical
+> desktop** — see the verified state below. Do not download, install or
+> distribute anything from this branch as if it were a product.
+>
+> Anything claiming otherwise in this repository is a bug, and is listed in
+> [`docs/V2_STABLE_QA_STATUS.md`](docs/V2_STABLE_QA_STATUS.md).
+
 **AI-Native • Local-First • Privacy-Oriented • CPU-First Linux Distribution**
 
 ```text
@@ -25,9 +37,11 @@ HCS Linux is a modern operating system built from the ground up to integrate loc
 
 ## Current Stable Release: v1.1.0
 
+**This is the only released version. v1.1.0 is what you should download.**
+
 **Download:** [HCS-Linux-1.1.0-amd64.iso](https://github.com/timfromhcs/hcs-linux/releases) · verify with `SHA256SUMS` (`sha256sum -c SHA256SUMS`) · [Release notes](https://github.com/timfromhcs/hcs-linux/releases/tag/v1.1.0)
 
-### v2.0.0 is in development
+### v2.0.0 is in development — not released
 
 The next stable release is **v2.0.0**, built to
 [`docs/V2_STABLE_RELEASE_MASTER_PLAN.md`](docs/V2_STABLE_RELEASE_MASTER_PLAN.md).
@@ -79,6 +93,16 @@ Build, boot and grade the whole thing with one command:
 scripts/autonomous_loop.sh          # base + ISO + VM boot + capture grading
 scripts/autonomous_loop.sh --no-vm  # build and verify only
 ```
+
+It prints `PASS` only for things it observed, and it will exit non-zero with a
+desktop that was not drawn.
+
+### Work plan
+
+[`docs/V2_EXECUTION_PLAN.md`](docs/V2_EXECUTION_PLAN.md) — ordered by what can be
+falsified fastest, not by what looks best. Phase 1 is entirely local (`cargo`,
+`pytest`, `shellcheck`); eight of the bugs fixed so far were structural and none
+had a regression test.
 
 It prints `PASS` only for things it observed, and it will exit non-zero with a
 desktop that was not drawn.
