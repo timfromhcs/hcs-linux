@@ -70,28 +70,43 @@ export QT_WAYLAND_DISABLE_WINDOWDECORATION=1
 export GDK_BACKEND=wayland
 export XDG_DATA_DIRS="/usr/local/share:/usr/share:${XDG_DATA_DIRS:-}"
 export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
-# CPU-only is the default path: no GPU may be required to reach a desktop.
+# --- renderer selection --------------------------------------------------
 #
-# pixman is smithay's pure-software GL renderer. It is not a fallback here, it is
-# the floor: llvmpipe needs no GPU, so a machine with no supported graphics can
-# still reach a desktop. HCS_RENDERER=hardware is the opt-in for real
-# acceleration and is set by the bare-metal profile.
-export HCS_RENDERER="${HCS_RENDERER:-software}"
-if [ "${HCS_RENDERER}" = "software" ]; then
-    export LIBGL_ALWAYS_SOFTWARE=1
-    export WLR_RENDERER="${WLR_RENDERER:-pixman}"
-    export GALLIUM_DRIVER=llvmpipe
-fi
-export MESA_LOADER_DRIVER_OVERRIDE="${MESA_LOADER_DRIVER_OVERRIDE:-llvmpipe}"
+# PREVIOUSLY THIS FORCED SOFTWARE RENDERING. That was wrong, and reading niri's
+# source is what proved it.
+#
+# src/backend/tty.rs, in the function that initialises the GPU:
+#
+#     let egl_device = EGLDevice::device_for_display(&display)?;
+#     // Software EGL devices (e.g., llvmpipe/softpipe) are rejected for now.
+#     ensure!(
+#         !egl_device.is_software(),
+#         "software EGL renderers are skipped"
+#     );
+#
+# niri does not support a software renderer. Not slowly, not degraded -- the
+# ensure! fails, the render node is skipped, and there is no second fallback.
+# Upstream issue #218: "There's no software rendering support at the moment."
+#
+# Setting LIBGL_ALWAYS_SOFTWARE and GALLIUM_DRIVER=llvmpipe here was therefore
+# not a conservative default: it was selecting the one configuration that is
+# guaranteed to fail. On a machine with no supported GPU it does not degrade to
+# slow, it produces no desktop at all.
+#
+# So nothing forces a renderer here. The desktop requires hardware acceleration,
+# and niri's own wiki states it for VMs in one line: "To run niri in a VM, make
+# sure to enable 3D acceleration."
+export HCS_RENDERER="${HCS_RENDERER:-hardware}"
+
+# Mesa installs its drivers under versioned paths; an unset loader path finds no
+# ICD at all, which is indistinguishable from a missing driver.
 export LIBGL_DRIVERS_PATH="${LIBGL_DRIVERS_PATH:-/usr/lib/x86_64-linux-gnu/dri}"
 export __EGL_VENDOR_LIBRARY_FILENAMES="${__EGL_VENDOR_LIBRARY_FILENAMES:-/usr/share/glvnd/egl_vendor.d/50_mesa.json}"
-# Mesa installs its Vulkan ICDs under a versioned path. An unset loader path finds
-# no ICD at all, which is indistinguishable from a missing driver — so the glob is
-# resolved explicitly here.
-for _icd in /usr/share/vulkan/icd.d/lvp_icd.x86_64.json \
-           /usr/share/vulkan/icd.d/intel_icd.x86_64.json \
+for _icd in /usr/share/vulkan/icd.d/intel_icd.x86_64.json \
            /usr/share/vulkan/icd.d/amd_icd.x86_64.json \
-           /usr/share/vulkan/icd.d/virtio_icd.json; do
+           /usr/share/vulkan/icd.d/virtio_icd.json \
+           /usr/share/vulkan/icd.d/lvp_icd.x86_64.json \
+           /usr/share/vulkan/icd.d/lvp_icd.json; do
     if [ -f "${_icd}" ]; then
         export VK_ICD_FILENAMES="${_icd}"
         break
