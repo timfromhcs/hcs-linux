@@ -364,6 +364,14 @@ copy_file "${REPO_ROOT}/config/includes.chroot/usr/share/hcs/session/start-deskt
           "${ROOTFS_DIR}/usr/share/hcs/session/start-desktop.sh" 755 "start-desktop.sh"
 copy_file "${REPO_ROOT}/config/includes.chroot/usr/share/hcs/session/boot-diagnostics.sh" \
           "${ROOTFS_DIR}/usr/share/hcs/session/boot-diagnostics.sh" 755 "boot-diagnostics.sh"
+copy_file "${REPO_ROOT}/config/includes.chroot/usr/share/hcs/session/pick-compositor.sh" \
+          "${ROOTFS_DIR}/usr/share/hcs/session/pick-compositor.sh" 755 "pick-compositor.sh"
+copy_file "${REPO_ROOT}/config/includes.chroot/usr/share/hcs/session/run-niri.sh" \
+          "${ROOTFS_DIR}/usr/share/hcs/session/run-niri.sh" 755 "run-niri.sh"
+copy_file "${REPO_ROOT}/config/includes.chroot/usr/share/hcs/session/run-labwc.sh" \
+          "${ROOTFS_DIR}/usr/share/hcs/session/run-labwc.sh" 755 "run-labwc.sh"
+copy_file "${REPO_ROOT}/config/includes.chroot/usr/share/hcs/session/labwcrc" \
+          "${ROOTFS_DIR}/usr/share/hcs/session/labwcrc" 644 "labwcrc"
 
 # Enabled by symlink rather than `systemctl enable`, which cannot run in a chroot
 # with no systemd running. The wants directory is the same mechanism, and it is

@@ -174,7 +174,18 @@ mkdir -p /run/hcs
 
 log "starting the Neural Glass desktop"
 
-# ---------------------------------------------------------------- seat
+# ------------------------------------------------------ compositor choice
+#
+# Hand off to pick-compositor.sh rather than starting niri directly.
+#
+# niri asserts that its EGL device is not software, so on a machine with no
+# supported GPU it produces a compositor that starts and never draws. Rather
+# than letting it fail that way, ask first: hardware GL present -> niri (the
+# product compositor), absent -> labwc on Xvfb (software, reaches a desktop
+# anyway). Which one ran is recorded in /run/hcs/compositor.info so no screenshot
+# can imply the wrong thing.
+log "choosing a compositor"
+exec /usr/share/hcs/session/pick-compositor.sh
 
 # seatd ships as seatd-launch with a systemd unit that ExecStarts the real
 # binary. /usr/bin/seatd does not exist in the Debian package, so a test for it

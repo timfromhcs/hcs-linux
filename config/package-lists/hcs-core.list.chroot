@@ -76,15 +76,32 @@ firmware-atheros
 firmware-realtek
 firmware-brcm80211
 
-# --- X11 fallback: QA only ---------------------------------------------------
+# --- Software fallback compositor -------------------------------------------
 #
-# NOT the product. HCS ships niri. This exists because VirtualBox's umugfx driver
-# offers no usable mode (128x48) in some host configurations, and a legacy X
-# stack may be the only thing that can present a frame there. Its purpose is to
-# let the QA gate prove the image boots and draws; the compositor choice is
-# secondary to that proof.
-xserver-xorg-video-fbdev
+# NOT the product compositor. HCS ships niri, and niri is what a user with a
+# supported GPU sees.
+#
+# niri asserts in its own source that its EGL device is not software, so on a
+# machine with no supported GPU it produces a compositor that starts and never
+# draws. labwc on Xvfb is the fallback that reaches a drawable desktop anyway,
+# entirely in software. It exists because an image that cannot draw is not a
+# desktop, and because every VM without 3D acceleration needs it.
+#
+# pick-compositor.sh chooses between them by asking eglinfo whether hardware GL
+# exists, and records the answer in /run/hcs/compositor.info so no screenshot can
+# imply the wrong one ran.
+labwc
+swaybg
 x11-xserver-utils
+x11-utils
+# Qt's xcb platform plugin, required by Quickshell on the X11 path. Without it the
+# shell exits with "could not load the Qt platform plugin xcb" and no window.
+libqt6gui6
+libqt6dbus6
+# xdotool lets the QA agent drive the X11 session. grim cannot: it screenshots
+# Wayland, and this path is not Wayland.
+xdotool
+imagemagick
 
 # --- Display & Wayland (compositor + shell) ---------------------------------
 #

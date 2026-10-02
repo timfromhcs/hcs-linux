@@ -441,6 +441,37 @@ check_file /usr/lib/systemd/system/hcs-desktop.service "session unit"    100
 check_file /usr/lib/systemd/system/hcs-banner.service  "boot banner unit" 100
 check_file /usr/share/hcs/session/start-desktop.sh     "desktop starter"  500
 check_file /usr/share/hcs/branding/issue-banner.txt    "console banner"   50
+
+# ---------------------------------------------------------------- compositor
+#
+# Two compositors, and the image must actually contain both.
+#
+# niri is the product compositor and requires hardware acceleration: it asserts
+# that its EGL device is not software, so it produces a compositor that starts and
+# never draws when there is no supported GPU. labwc on Xvfb is the software
+# fallback that reaches a drawable desktop anyway.
+#
+# Shipping only niri means the image cannot start a desktop on any machine
+# without a supported GPU -- which is every VM without 3D acceleration. Shipping
+# only labwc means the product compositor is untested. So: both, and the chooser.
+for _s in pick-compositor.sh run-niri.sh run-labwc.sh labwcrc; do
+    check_file "/usr/share/hcs/session/${_s}" "${_s}" 100
+done
+check_file /usr/bin/labwc "labwc (software fallback compositor)" 100
+check_file /usr/bin/Xvfb  "Xvfb (software X server)" 100
+
+# The chooser must not be able to select niri without hardware GL, because that
+# combination produces a black screen and no error. A grep is weak but it fails
+# closed if the software-forcing lines ever come back.
+if grep -qE '^\s*export (LIBGL_ALWAYS_SOFTWARE|GALLIUM_DRIVER=llvmpipe)' \
+        "${ROOTFS_DIR}/usr/share/hcs/session/run-niri.sh" 2>/dev/null; then
+    echo "  [FAIL] run-niri.sh forces software rendering. niri rejects software EGL" >&2
+    echo "         by design, so this would guarantee a compositor that never draws." >&2
+    FAILURES=$((FAILURES + 1))
+else
+    echo "  [OK] the niri path does not force a software renderer"
+    CHECKED=$((CHECKED + 1))
+fi
 # Resolve against the staged tree, not against /. See build_iso.sh for why: an
 # absolute unit path is correct in the guest's namespace and absent from the
 # build host's, so [ -e ] on the raw link gets both cases exactly backwards.
