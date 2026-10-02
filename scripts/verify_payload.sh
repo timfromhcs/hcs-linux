@@ -425,14 +425,36 @@ else
     CHECKED=$((CHECKED + 1))
 fi
 
-# And the session must not be told to render in a way that needs hardware it
-# cannot prove it has.
-if grep -q 'HCS_RENDERER:-software' \
-    "${ROOTFS_DIR}/usr/share/hcs/session/start-desktop.sh" 2>/dev/null; then
-    echo "  [OK] software rendering is the default; hardware is opt-in"
+# The renderer must be chosen, not assumed, and never forced on the hardware path.
+#
+# This gate used to require "the session defaults to software rendering", which I
+# wrote when I believed lavapipe was a floor. Reading niri's source showed the
+# opposite: niri asserts its EGL device is not software, so forcing a software
+# renderer does not produce a slow desktop, it produces a compositor that starts
+# and never draws. The gate was enforcing the bug.
+#
+# What must hold now is the opposite: the niri path must NOT force software, and
+# a software-capable fallback must exist for machines that have no GPU.
+if grep -qE '^\s*export (LIBGL_ALWAYS_SOFTWARE|GALLIUM_DRIVER=llvmpipe)' \
+        "${ROOTFS_DIR}/usr/share/hcs/session/run-niri.sh" 2>/dev/null; then
+    echo "  [FAIL] run-niri.sh forces software rendering. niri rejects software EGL" >&2
+    echo "         by design, so this guarantees a compositor that never draws." >&2
+    FAILURES=$((FAILURES + 1))
+else
+    echo "  [OK] the niri path does not force a software renderer"
+    CHECKED=$((CHECKED + 1))
+fi
+
+# And the fallback must be real: software rendering is expected and correct on
+# the X11 path, so check the fallback sets it rather than checking the default.
+if grep -qE '^\s*export (LIBGL_ALWAYS_SOFTWARE|GALLIUM_DRIVER=llvmpipe)' \
+        "${ROOTFS_DIR}/usr/share/hcs/session/run-labwc.sh" 2>/dev/null; then
+    echo "  [OK] the software fallback asks for software rendering explicitly"
     CHECKED=$((CHECKED + 1))
 else
-    echo "  [FAIL] the session does not default to software rendering" >&2
+    echo "  [FAIL] the fallback compositor does not force software rendering." >&2
+    echo "         Without it, a machine with no GPU reaches the fallback and" >&2
+    echo "         gets nothing drawn." >&2
     FAILURES=$((FAILURES + 1))
 fi
 
