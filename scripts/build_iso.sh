@@ -358,8 +358,12 @@ copy_file "${REPO_ROOT}/config/includes.chroot/usr/lib/systemd/system/hcs-deskto
           "${ROOTFS_DIR}/usr/lib/systemd/system/hcs-desktop.service" 644 "hcs-desktop.service"
 copy_file "${REPO_ROOT}/config/includes.chroot/usr/lib/systemd/system/hcs-banner.service" \
           "${ROOTFS_DIR}/usr/lib/systemd/system/hcs-banner.service" 644 "hcs-banner.service"
+copy_file "${REPO_ROOT}/config/includes.chroot/usr/lib/systemd/system/hcs-diagnostics.service" \
+          "${ROOTFS_DIR}/usr/lib/systemd/system/hcs-diagnostics.service" 644 "hcs-diagnostics.service"
 copy_file "${REPO_ROOT}/config/includes.chroot/usr/share/hcs/session/start-desktop.sh" \
           "${ROOTFS_DIR}/usr/share/hcs/session/start-desktop.sh" 755 "start-desktop.sh"
+copy_file "${REPO_ROOT}/config/includes.chroot/usr/share/hcs/session/boot-diagnostics.sh" \
+          "${ROOTFS_DIR}/usr/share/hcs/session/boot-diagnostics.sh" 755 "boot-diagnostics.sh"
 
 # Enabled by symlink rather than `systemctl enable`, which cannot run in a chroot
 # with no systemd running. The wants directory is the same mechanism, and it is
@@ -379,6 +383,11 @@ ln -sf /usr/lib/systemd/system/hcs-desktop.service \
       "${ROOTFS_DIR}/etc/systemd/system/multi-user.target.wants/hcs-desktop.service"
 ln -sf /usr/lib/systemd/system/hcs-banner.service \
       "${ROOTFS_DIR}/etc/systemd/system/multi-user.target.wants/hcs-banner.service"
+# Diagnostics are enabled unconditionally. The boots worth diagnosing are the ones
+# where the desktop failed, so making this conditional on the desktop working would
+# exclude exactly the runs that need it.
+ln -sf /usr/lib/systemd/system/hcs-diagnostics.service \
+      "${ROOTFS_DIR}/etc/systemd/system/multi-user.target.wants/hcs-diagnostics.service"
 
 # Prove each link resolves to a unit that exists -- INSIDE THE GUEST.
 #
@@ -404,7 +413,7 @@ check_unit_link() {
     [ -e "${resolved}" ]
 }
 
-for _unit in hcs-desktop.service hcs-banner.service; do
+for _unit in hcs-desktop.service hcs-banner.service hcs-diagnostics.service; do
     _link="${ROOTFS_DIR}/etc/systemd/system/multi-user.target.wants/${_unit}"
     if check_unit_link "${_link}"; then
         echo "       ${_unit} -> $(readlink "${_link}") resolves"

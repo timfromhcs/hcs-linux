@@ -1,0 +1,31 @@
+[Unit]
+Description=HCS boot diagnostics onto the evidence disk
+Documentation=docs/V2_STABLE_QA_STATUS.md
+# Runs EARLY and runs REGARDLESS of whether the desktop works.
+#
+# This is not a debugging convenience that gets enabled when something is broken.
+# A boot that produces a frozen framebuffer produces no other evidence at all, so
+# the diagnostic has to be part of every boot that the QA driver cares about --
+# especially the ones where the desktop does not come up, which are precisely the
+# ones nobody can otherwise investigate.
+#
+# After multi-user.target so the desktop has had its chance, but Before poweroff
+# and with no dependency on anything graphical: if the graphics stack is the thing
+# that is broken, this must not be waiting on it.
+After=multi-user.target
+Before=shutdown.target poweroff.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+# Runs as root because it formats a block device and reads the journal. It reads
+# logs and writes them out; it starts nothing.
+ExecStart=/usr/share/hcs/session/boot-diagnostics.sh
+# Short: if the disk is missing, the script exits immediately, and a diagnostic
+# that hangs is worse than none.
+TimeoutStartSec=180
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
