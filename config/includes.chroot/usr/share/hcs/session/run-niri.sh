@@ -28,15 +28,41 @@ export QT_WAYLAND_DISABLE_WINDOWDECORATION=1
 export GDK_BACKEND=wayland
 export XDG_DATA_DIRS="/usr/local/share:/usr/share:${XDG_DATA_DIRS:-}"
 export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
-export HCS_RENDERER=hardware
 export LIBGL_DRIVERS_PATH="${LIBGL_DRIVERS_PATH:-/usr/lib/x86_64-linux-gnu/dri}"
 mkdir -p "${XDG_RUNTIME_DIR}" "${HOME:-/root}"
 
+# Decide what renderer this actually is, BEFORE anything is recorded.
+#
+# The distinction is not cosmetic: a frame captured under llvmpipe is valid proof
+# that a desktop drew, and is never proof of performance. Writing "hardware"
+# unconditionally -- which is what this used to do -- is how a software-rendered
+# run gets quoted as a hardware result.
+#
+# So: if this niri build can accept a software renderer, ask Mesa which one is in
+# fact in use rather than assuming either way.
+HCS_RENDERER_KIND="hardware"
+if [ -f /usr/share/hcs/session/niri-renderer ] \
+   && grep -q '^capability=software' /usr/share/hcs/session/niri-renderer; then
+    if [ -n "$(lspci 2>/dev/null | grep -iE 'vga|3d|display')" ] \
+       && [ -e /dev/dri ]; then
+        HCS_RENDERER_KIND="hardware"
+    else
+        HCS_RENDERER_KIND="software"
+        export LIBGL_ALWAYS_SOFTWARE=1
+        export GALLIUM_DRIVER="${GALLIUM_DRIVER:-llvmpipe}"
+    fi
+fi
+HCS_FALLBACK_REASON="none"
+[ "${HCS_RENDERER_KIND}" = "hardware" ] || HCS_FALLBACK_REASON="no-hardware-gpu"
+export HCS_RENDERER="${HCS_RENDERER_KIND}"
+
 {
     printf 'compositor=niri\n'
-    printf 'renderer=hardware\n'
-    printf 'fallback_reason=none\n'
+    printf 'renderer=%s\n' "${HCS_RENDERER_KIND}"
+    printf 'fallback_reason=%s\n' "${HCS_FALLBACK_REASON}"
+    printf 'niri_build=%s\n' "$(grep -m1 '^patch=' /usr/share/hcs/session/niri-renderer 2>/dev/null | cut -d= -f2)"
 } > /run/hcs/compositor.info
+log "renderer: ${HCS_RENDERER_KIND} (${HCS_FALLBACK_REASON})"
 
 # ---------------------------------------------------------------- compositor
 
@@ -66,9 +92,16 @@ log "niri is up (pid ${NIRI_PID})"
 # here, and it logs at DEBUG. Surface it explicitly, because otherwise the symptom
 # is a black screen with no explanation anywhere.
 if grep -q 'software EGL renderers are skipped' /var/log/hcs/niri.log 2>/dev/null; then
-    log "FAIL niri rejected the only available renderer as software."
-    log "     This is niri's documented behaviour (upstream issue #218): it does"
-    log "     not support software rendering. A hardware GPU is required."
+    log "FAIL niri skipped the software renderer."
+    if [ -f /usr/share/hcs/session/niri-renderer ] \
+       && grep -q '^capability=software' /usr/share/hcs/session/niri-renderer; then
+        log "     This build was supposed to allow it (niri#3959), so the patch did"
+        log "     not take effect. Rebuild without NIRI_SOFTWARE_RENDERING=1, or"
+        log "     investigate why the relaxation did not reach this binary."
+    else
+        log "     This is niri's documented behaviour (upstream issue #218): this is"
+        log "     an unmodified build and rejects software EGL by design."
+    fi
     exit 1
 fi
 

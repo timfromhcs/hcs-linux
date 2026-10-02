@@ -529,6 +529,55 @@ done
 check_file /usr/bin/labwc "labwc (software fallback compositor)" 100
 check_file /usr/bin/Xvfb  "Xvfb (software X server)" 100
 
+# --- niri's rendering capability must be stated, not assumed ---------------
+#
+# Whether niri can render without a GPU is a property of how it was COMPILED, not
+# of the machine. An unmodified v26.04 rejects software EGL (upstream #218); a
+# build with #3959 applied accepts it on the primary node. The session chooses a
+# compositor from that fact, so the fact has to be in the image and has to say
+# which it is.
+#
+# Absent marker means the session falls back to labwc on machines without a GPU,
+# which is a working but wrong outcome -- and a silent one.
+NIRI_MARKER="${ROOTFS_DIR}/usr/share/hcs/session/niri-renderer"
+if [ -f "${NIRI_MARKER}" ]; then
+    CAP=$(sed -n 's/^capability=//p' "${NIRI_MARKER}" | head -1)
+    case "${CAP}" in
+        software|hardware-only)
+            echo "  [OK] niri rendering capability recorded: ${CAP}"
+            CHECKED=$((CHECKED + 1))
+            ;;
+        *)
+            echo "  [FAIL] niri-renderer has an unrecognised capability '${CAP}'" >&2
+            echo "         The session cannot tell whether niri needs a GPU." >&2
+            FAILURES=$((FAILURES + 1))
+            ;;
+    esac
+    # If the build claims software support, the marker must name its provenance.
+    # An untraceable capability claim is exactly the kind of thing this project
+    # has shipped before.
+    if [ "${CAP}" = "software" ] && ! grep -q '^source=niri-wm/niri#3959' "${NIRI_MARKER}"; then
+        echo "  [FAIL] niri claims software rendering without naming niri#3959" >&2
+        FAILURES=$((FAILURES + 1))
+    fi
+else
+    echo "  [FAIL] /usr/share/hcs/session/niri-renderer is missing." >&2
+    echo "         fetch_niri.sh records whether niri can render without a GPU." >&2
+    echo "         Without it the session cannot choose correctly." >&2
+    FAILURES=$((FAILURES + 1))
+fi
+
+# The session must not claim a hardware renderer unconditionally any more.
+if grep -qE '^\s*export HCS_RENDERER=hardware\s*$' \
+        "${ROOTFS_DIR}/usr/share/hcs/session/run-niri.sh" 2>/dev/null; then
+    echo "  [FAIL] run-niri.sh hardcodes HCS_RENDERER=hardware. A software-rendered" >&2
+    echo "         run would then be reported as a hardware result." >&2
+    FAILURES=$((FAILURES + 1))
+else
+    echo "  [OK] the renderer kind is measured rather than asserted"
+    CHECKED=$((CHECKED + 1))
+fi
+
 # And the fallback must force it, because on a machine with no GPU reaching the
 # fallback and getting nothing drawn is the failure this whole change exists to
 # prevent.

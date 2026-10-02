@@ -80,13 +80,37 @@ have_hardware_gl() {
     return 1
 }
 
+# Can THIS BUILD of niri render without a GPU?
+#
+# This is a property of how niri was compiled, not of the machine, so it is
+# recorded at build time rather than probed at boot. Probing would mean starting
+# niri to find out, which is the failure being avoided.
+#
+# An unmodified niri release rejects software EGL by design (upstream issue #218).
+# A build with niri-wm/niri#3959 applied accepts a software renderer on the
+# primary DRM node, so on that build niri is the right answer even with no GPU.
+niri_supports_software() {
+    local marker=/usr/share/hcs/session/niri-renderer
+    [ -f "${marker}" ] || return 1
+    grep -q '^capability=software' "${marker}"
+}
+
 mode="${HCS_COMPOSITOR:-auto}"
-[ -x /usr/bin/niri ] || { log "niri is not installed"; mode="${mode}"; }
 
 if [ "${mode}" = "auto" ]; then
-    if have_hardware_gl; then
+    if [ ! -x /usr/bin/niri ]; then
+        log "niri is not installed"
+        mode="labwc"
+    elif niri_supports_software; then
+        # Patched build: niri can render in software, so it is the product
+        # compositor on this machine too. Preferring labwc here would ship a
+        # fallback when the real thing works.
+        log "this niri build supports software rendering; using niri regardless of the GPU"
+        mode="niri"
+    elif have_hardware_gl; then
         mode="niri"
     else
+        log "niri requires hardware acceleration and none was found"
         mode="labwc"
     fi
 fi

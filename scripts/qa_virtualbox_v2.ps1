@@ -194,15 +194,28 @@ function New-QAVM {
     Invoke-VBox @("storagectl", $VmName, "--name", "SATA",
                   "--add", "sata", "--portcount", "2") | Out-Null
 
-    # `--device` takes a *number* (the unit on the port), not a type name.
-    # Passing "dvddrive"/"harddisk" produces a bare usage dump, which is what
-    # two earlier attempts did.
+    # The ISO goes on a HARD DISK slot, not a DVD slot.
+    #
+    # An emulated optical device is orders of magnitude slower than a block
+    # device, and this image is 1.5 GB. Attaching it as a DVD produced boots that
+    # took 700 seconds and sometimes did not finish at all -- which was then read
+    # as a hang, repeatedly. Two identical screenshots only ever mean "no progress
+    # in that interval"; they cannot distinguish a slow boot from a stopped one.
+    #
+    # It is also more representative. A plain read-only block device is closer to
+    # what a real USB stick presents than an ISO9660 DVD image is, so the QA result
+    # describes the shipped artefact more faithfully, not just more quickly.
     Invoke-VBox @("storageattach", $VmName, "--storagectl", "SATA",
-                  "--port", "0", "--device", "0", "--type", "dvddrive",
+                  "--port", "0", "--device", "0", "--type", "hdd",
                   "--medium", $isoFull) | Out-Null
     Invoke-VBox @("storageattach", $VmName, "--storagectl", "SATA",
                   "--port", "1", "--device", "0", "--type", "hdd",
                   "--medium", $evidenceVhd) | Out-Null
+
+    # Both media are disks now, so the DVD slot must not stay in the boot order --
+    # an empty optical device in the order stalls the firmware.
+    Invoke-VBox @("modifyvm", $VmName, "--bootorder", "hdd") | Out-Null
+
     # No NAT forwarding and no guest additions: nothing needs to reach the guest,
     # and the agent does not listen on anything.
 }

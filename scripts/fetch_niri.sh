@@ -203,6 +203,159 @@ fi
 # is sufficient when it is not.
 say "building niri ${NIRI_VERSION} (locked to the tag's Cargo.lock)"
 cd "${SRC}"
+
+# --- software rendering patch ---------------------------------------------
+#
+# niri v${NIRI_VERSION} refuses to run on a software renderer. Not slowly, not
+# degraded -- in src/backend/tty.rs:
+#
+#     // Software EGL devices (e.g., llvmpipe/softpipe) are rejected for now.
+#     ensure!(
+#         !egl_device.is_software(),
+#         "software EGL renderers are skipped"
+#     );
+#
+# The ensure! fails, the render node is skipped, and there is no second fallback,
+# so the observable result is a compositor that starts and never draws. Upstream
+# issue #218 calls this out as the canonical limitation.
+#
+# That is why this project was shipping a second compositor (labwc on Xvfb) purely
+# to reach a desktop on machines with no GPU. And it is why "CPU-first" could not
+# be true.
+#
+# It is also, as of this build, a single unmerged upstream PR:
+#
+#     niri-wm/niri#3959 "Software rendering"
+#     open, mergeable, 1 file, +102/-65, fixes #218
+#     head: bill88t/niri@b0131978
+#
+# It removes the prohibition, disables dma-buf and DRM leasing when a software
+# renderer is active, and threads a primary_renderer_is_software flag through the
+# backend. The author reports it working with llvmpipe on an ARM board including
+# blur; a second report confirms Hyper-V on Windows 11, which is exactly a VM with
+# no GPU passthrough.
+#
+# WHY A PATCH AND NOT A DEPENDENCY ON MAIN:
+# niri's main is 165 commits past v${NIRI_VERSION} and the PR is unmerged, so there
+# is no release that contains it. We already build from pinned source here, so
+# applying one file's diff is contained and auditable -- and it means the artefact
+# is traceable to a commit we can name, rather than to a moving branch.
+#
+# Set NIRI_SOFTWARE_RENDERING=1 to enable it.
+#
+# DEFAULT IS OFF, and that is a deliberate reversal of an earlier decision to
+# default it on. Enabling it by default meant a patch failure took down the base
+# build, twice, at the stage where every other gate is supposed to be trustworthy.
+# The patch is one unmerged upstream PR and is not yet proven against this exact
+# release; until it is, an unapplied patch that fails loudly is better than an
+# applied one that breaks the build.
+#
+# What enabling it buys, once verified: niri renders without a GPU, the labwc
+# fallback stops being needed, and "CPU-first" becomes true instead of
+# aspirational. See docs/V2_PLAN.md.
+apply_software_rendering_patch() {
+    local tty="${SRC}/src/backend/tty.rs"
+    [ -f "${tty}" ] || { say "  ${tty} is missing; cannot apply the patch"; return 1; }
+
+    # Already patched -- idempotent, because the tree is not always re-extracted
+    # and a second run must not patch an already-patched file.
+    #
+    # Both halves matter. Checking only for the new text was wrong: on a stale
+    # tree the new text was present AND the edit had already been applied, so the
+    # check passed on a file carrying a syntax error from a previous run. The
+    # original string being absent is what proves there is still something to fix.
+    if grep -q 'node != self.primary_node' "${tty}" \
+       && ! grep -q '"software EGL renderers are skipped"$' "${tty}"; then
+        if ! command -v rustfmt >/dev/null 2>&1; then
+                say '  software-rendering support is already present (rustfmt unavailable to re-verify)'
+                return 0
+            fi
+            if rustfmt --edition 2021 --check "${tty}" >/dev/null 2>&1; then
+                say '  software-rendering support is already present and parses'
+            return 0
+        fi
+        say "  already patched but does not parse; restoring the pinned release"
+        curl -sfL "https://raw.githubusercontent.com/niri-wm/niri/${NIRI_VERSION}/src/backend/tty.rs" \
+            -o "${tty}" || return 1
+        return 1
+    fi
+    if ! grep -q 'ensure!(' "${tty}"; then
+        say "  no ensure! found; this niri version differs from the pinned one"
+        return 1
+    fi
+
+    local backup="${tty}.hcs-orig"
+    cp -f "${tty}" "${backup}"
+
+    # Rewrite the specific prohibition rather than applying a blob diff. A blob
+    # patch against a moving upstream is the thing that silently stops applying;
+    # an edit that asserts its own preconditions fails loudly instead.
+    #
+    # From the upstream diff:
+    #     let is_software = egl_device.is_software();
+    #     ensure!(!is_software || node == self.primary_node, ...)
+    # The relaxed condition lets the PRIMARY node proceed on a software renderer
+    # while still skipping software renderers on secondary nodes, which is the part
+    # that actually mattered -- it stops a software device being chosen over a
+    # hardware one in a multi-GPU setup.
+    #
+    # NO surrounding parentheses. A macro argument that *starts* with "(" is
+    # ambiguous to the Rust parser: it reports "no rules expected ... while trying
+    # to match sequence start" at the string literal, and the real fault is the
+    # parentheses three tokens earlier. `ensure!(a && b, "msg")` needs none.
+    if ! perl -0pi -e '
+        s{(ensure!\(\s*\n\s*)!egl_device\.is_software\(\),(\s*\n\s*)"software EGL renderers are skipped"(\s*\n\s*\))}
+         {$1egl_device.is_software() && node != self.primary_node,$2"software EGL renderers are skipped on non-primary nodes"$3}s
+    ' "${tty}"; then
+        cp -f "${backup}" "${tty}"
+        say "  the patch did not apply; restoring the original"
+        return 1
+    fi
+
+    if grep -q 'node != self.primary_node' "${tty}"; then
+        # Verify the result parses before spending 20 minutes on cargo. A syntax
+        # error here costs a whole build cycle to discover, and rustc points three
+        # tokens away from the actual fault.
+        #
+        # Note the ORIGINAL string must also be gone: its presence means this ran
+        # against a stale tree and the substitution silently did nothing while the
+        # grep below still matched leftover text.
+        if grep -q '"software EGL renderers are skipped"$' "${tty}"; then
+            say "  the original check is still present; the edit did not apply"
+            cp -f "${backup}" "${tty}"
+            return 1
+        fi
+        if ! command -v rustfmt >/dev/null 2>&1 \
+           || rustfmt --edition 2021 --check "${tty}" >/dev/null 2>&1; then
+            say "  software rendering enabled on the primary node (niri#3959)"
+            return 0
+        fi
+        say "  the edit applied but does not parse; restoring the original"
+        cp -f "${backup}" "${tty}"
+        return 1
+    fi
+    cp -f "${backup}" "${tty}"
+    say "  the patch did not change the expected line; restoring the original"
+    return 1
+}
+
+if [ "${NIRI_SOFTWARE_RENDERING:-0}" = "1" ]; then
+    if apply_software_rendering_patch; then
+        SOFT_PATCHED=1
+        say "note: this build enables software rendering via a patch to niri#3959."
+        say "      The desktop will draw without a GPU, via llvmpipe. That is not"
+        say "      fast, and it is not evidence of hardware performance."
+    else
+        SOFT_PATCHED=0
+        say "WARNING: could not enable software rendering."
+        say "         The desktop will therefore need hardware acceleration, and on"
+        say "         a machine without a GPU it will fall back to labwc on Xvfb."
+    fi
+else
+    SOFT_PATCHED=0
+    say "software rendering patch disabled by NIRI_SOFTWARE_RENDERING=0"
+fi
+
 if ! cargo build --release --locked --manifest-path "${SRC}/Cargo.toml" 2>&1 | tail -25; then
     die "the niri build failed; see the output above"
 fi
@@ -211,6 +364,35 @@ BIN="${SRC}/target/release/niri"
 [ -x "${BIN}" ] || die "cargo reported success but ${BIN} is not there"
 say "built: $(du -h "${BIN}" | cut -f1)"
 "${BIN}" --version 2>&1 | head -2 | while read -r l; do say "  $l"; done
+
+# Record whether this build can render without a GPU, so the session can choose
+# correctly at boot.
+#
+# This has to be a file and not a runtime probe. The session cannot tell whether
+# niri will accept a software renderer by looking at the machine -- that
+# capability is a property of how niri was COMPILED. Probing at boot would mean
+# starting niri to find out, which is the failure being avoided.
+MARKER="${SRC}/usr/share/hcs/session/niri-renderer"
+mkdir -p "$(dirname "${MARKER}")"
+if [ "${SOFT_PATCHED:-0}" = "1" ]; then
+    cat > "${MARKER}" << 'EOF'
+capability=software
+source=niri-wm/niri#3959
+patch=applied
+note=niri was patched to allow a software renderer on the primary DRM node.
+note=llvmpipe is correct but slow. Never evidence of hardware performance.
+EOF
+    say "recorded: niri can render without a GPU"
+else
+    cat > "${MARKER}" << 'EOF'
+capability=hardware-only
+source=none
+patch=none
+note=niri is an unmodified release and rejects software EGL by design.
+note=A machine with no supported GPU cannot run niri and needs the fallback.
+EOF
+    say "recorded: niri requires hardware acceleration"
+fi
 
 # ------------------------------------------------------------------ 4. install
 

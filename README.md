@@ -2,7 +2,7 @@
 
 > ## ⚠️ Read this first
 >
-> **The stable release is v1.1.0. It is not v2.**
+> **The stable release is v1.0.1. It is not v2.**
 >
 > The `main` branch now contains **v2.0.0 development work that is not
 > released**. v2 boots to a real Linux system and **cannot yet draw a graphical
@@ -35,11 +35,18 @@ HCS Linux is a modern operating system built from the ground up to integrate loc
 
 ---
 
-## Current Stable Release: v1.1.0
+## Current Stable Release: v1.0.1
 
-**This is the only released version. v1.1.0 is what you should download.**
+**This is the only released version. v1.0.1 is what you should download.**
 
-**Download:** [HCS-Linux-1.1.0-amd64.iso](https://github.com/timfromhcs/hcs-linux/releases) · verify with `SHA256SUMS` (`sha256sum -c SHA256SUMS`) · [Release notes](https://github.com/timfromhcs/hcs-linux/releases/tag/v1.1.0)
+**Download:** [HCS-Linux-1.0.1-amd64.iso](https://github.com/timfromhcs/hcs-linux/releases) · verify with `SHA256SUMS` (`sha256sum -c SHA256SUMS`) · [Release notes](https://github.com/timfromhcs/hcs-linux/releases/tag/v1.0.1)
+
+> **This line was previously wrong and said v1.1.0.** There is no v1.1.0
+> release; `gh release view v1.1.0` returns *release not found*. It sat there
+> through several releases because nothing checked that a link in the README
+> pointed at something that exists — the same class of failure as an ISO whose
+> contents were never verified. Corrected to v1.0.1, which is the newest
+> published release and the one carrying a signed `SHA256SUMS`.
 
 ### v2.0.0 is in development — not released
 
@@ -131,7 +138,7 @@ Already merged on `dev`:
 
 ---
 
-## What v1.1.0 shipped
+## What the v1.0.x line shipped
 
 - **Neural Glass desktop:** Windows-like bottom taskbar (Start monogram, tasklist, tray), Start Menu with omnibar, `HCS+/` cheatsheet HUD.
 - **Offline CPU Image Studio:** `hcs image "prompt" --steps 6 -o render.png` (SD 1.5 LCM Q4, 512×512 in 4–8 steps, ≤2.2 GB peak, strict on-demand lifecycle).
@@ -146,12 +153,12 @@ Already merged on `dev`:
   with a software rasteriser so it runs without a GPU.
   Built with [Slint](https://slint.dev) under the Royalty-free License 2.0.
 
-**What v1.1.0 was verified against** (7 gates): `cargo fmt` clean ·
+**What the v1.0.x line was verified against** (7 gates): `cargo fmt` clean ·
 `clippy -D warnings` 0 warnings · `cargo test` 100 % · security audit 0 secrets ·
 stress 0 crashes/OOM · production ISO built + ISO9660-verified ·
 **VirtualBox 16/16 stages PASS** · GitHub Actions CI green.
 
-> **Known gap in v1.1.0, corrected in v2.0.0:** the live ISO booted to a *text
+> **Known gap in the v1.0.x line, addressed in v2.0.0:** the live ISO booted to a *text
 > console*, not a graphical session, so the VirtualBox GUI stages could not
 > produce real GUI pixels — the compositor was not even in the image. This is
 > stated in `docs/V1_STABLE_QA_STATUS.md` and is the first thing v2 fixes.
@@ -237,9 +244,9 @@ HCS Linux utilizes a specialized multi-role candidate pool:
 
 ## Hardware Requirements
 
-### v1.1.0 (current stable release)
+### v1.0.1 (current stable release)
 
-These requirements are for **v1.1.0**, which is the only released image.
+These requirements are for **v1.0.1**, which is the only released image.
 
 - **CPU:** 64-bit x86_64 with SSE4.2 / AVX support (4+ cores recommended)
 - **RAM:** 8 GB DDR4/DDR5
@@ -391,7 +398,7 @@ generations of this project overstated their own status:
 - **Untested on real hardware.** Nothing in this repository is evidence of
   physical-hardware support.
 
-The v1.1.0 live ISO booted to a text console because the compositor was not in
+The v1.0.x live ISO booted to a text console because the compositor was not in
 the image at all. v2.0.0 fixes that specific problem — the compositor is now in
 the image and it starts — and then runs into the next one, which is that it has
 nothing to talk to.
