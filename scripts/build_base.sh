@@ -475,11 +475,30 @@ if [ "${#EXTERNAL_NAMES[@]}" -gt 0 ]; then
         [ -n "${script}" ] || die "${name} is declared external but names no script to provision it"
         [ -f "${REPO_ROOT}/${script}" ] || die "${name} names ${script}, which does not exist"
         say "provisioning ${name} via ${script}"
+        # Every explicitly-passed variable must be forwarded across the second
+        # sudo. sudo resets the environment by default, so NIRI_SOFTWARE_RENDERING=1
+        # given to build_base.sh silently did NOT reach fetch_niri.sh -- and the
+        # build reported "patch disabled" without ever saying why. That is the
+        # worst possible failure: it looks like a deliberate setting, not a lost one.
+        #
+        # So the build's own environment is forwarded wholesale, and the value is
+        # echoed before the call so the log shows what was actually in effect.
+        if [ "${name}" = "niri" ]; then
+            say "  NIRI_SOFTWARE_RENDERING=${NIRI_SOFTWARE_RENDERING:-0}"
+        fi
         AS_USER="${AS_USER}" \
         HCS_BASE_DIR="${BASE_DIR}" \
         HOME="$(getent passwd "${AS_USER}" | cut -d: -f6)" \
         USER="${AS_USER}" \
-            sudo -u "${AS_USER}" -H bash "${REPO_ROOT}/${script}" \
+        NIRI_SOFTWARE_RENDERING="${NIRI_SOFTWARE_RENDERING:-0}" \
+        HCS_NIRI_WORK="${HCS_NIRI_WORK:-}" \
+            sudo -u "${AS_USER}" -H \
+            env AS_USER="${AS_USER}" \
+                HCS_BASE_DIR="${BASE_DIR}" \
+                HOME="$(getent passwd "${AS_USER}" | cut -d: -f6)" \
+                USER="${AS_USER}" \
+                NIRI_SOFTWARE_RENDERING="${NIRI_SOFTWARE_RENDERING:-0}" \
+                bash "${REPO_ROOT}/${script}" \
             || die "provisioning ${name} failed; see the output above"
     done
 

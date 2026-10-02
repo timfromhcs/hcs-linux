@@ -437,9 +437,22 @@ fi
 # a software-capable fallback must exist for machines that have no GPU.
 if grep -qE '^\s*export (LIBGL_ALWAYS_SOFTWARE|GALLIUM_DRIVER=llvmpipe)' \
         "${ROOTFS_DIR}/usr/share/hcs/session/run-niri.sh" 2>/dev/null; then
-    echo "  [FAIL] run-niri.sh forces software rendering. niri rejects software EGL" >&2
-    echo "         by design, so this guarantees a compositor that never draws." >&2
-    FAILURES=$((FAILURES + 1))
+    # Present -- which is CORRECT on a patched build, when no hardware exists.
+    # This gate originally forbade it outright, written when I believed forcing
+    # llvmpipe was the fix for niri's software-rendering ban. It is the opposite:
+    # refusing it is what keeps the desktop from ever drawing on a machine with no
+    # GPU. What must hold is that the force is CONDITIONAL.
+    if awk '/HCS_RENDERER_KIND="software"/{seen=1}
+            seen && /export LIBGL_ALWAYS_SOFTWARE=1/{found=1}
+            END{exit !(seen && found)}' \
+        "${ROOTFS_DIR}/usr/share/hcs/session/run-niri.sh" 2>/dev/null; then
+        echo "  [OK] software rendering is forced only on the software path"
+        CHECKED=$((CHECKED + 1))
+    else
+        echo "  [FAIL] run-niri.sh forces software rendering UNCONDITIONALLY." >&2
+        echo "         It must be forced only when no hardware renderer exists." >&2
+        FAILURES=$((FAILURES + 1))
+    fi
 else
     echo "  [OK] the niri path does not force a software renderer"
     CHECKED=$((CHECKED + 1))
