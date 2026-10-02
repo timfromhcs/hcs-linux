@@ -373,7 +373,13 @@ say "built: $(du -h "${BIN}" | cut -f1)"
 # capability is a property of how niri was COMPILED. Probing at boot would mean
 # starting niri to find out, which is the failure being avoided.
 MARKER="${SRC}/usr/share/hcs/session/niri-renderer"
-mkdir -p "$(dirname "${MARKER}")"
+# Into the BASE, not only into the source tree.
+#
+# The source tree is discarded after the build; the base is what becomes the ISO.
+# Writing the marker only into ${SRC} means the payload gate finds no marker, the
+# build fails, and the file that matters -- the one the session reads at boot --
+# was never installed. Write both.
+mkdir -p "$(dirname "${MARKER}")" "${BASE_DIR}/usr/share/hcs/session"
 if [ "${SOFT_PATCHED:-0}" = "1" ]; then
     cat > "${MARKER}" << 'EOF'
 capability=software
@@ -382,6 +388,7 @@ patch=applied
 note=niri was patched to allow a software renderer on the primary DRM node.
 note=llvmpipe is correct but slow. Never evidence of hardware performance.
 EOF
+    cp -f "${MARKER}" "${BASE_DIR}/usr/share/hcs/session/niri-renderer"
     say "recorded: niri can render without a GPU"
 else
     cat > "${MARKER}" << 'EOF'
@@ -391,6 +398,7 @@ patch=none
 note=niri is an unmodified release and rejects software EGL by design.
 note=A machine with no supported GPU cannot run niri and needs the fallback.
 EOF
+    cp -f "${MARKER}" "${BASE_DIR}/usr/share/hcs/session/niri-renderer"
     say "recorded: niri requires hardware acceleration"
 fi
 

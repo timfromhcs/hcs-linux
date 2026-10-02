@@ -628,6 +628,51 @@ cp -rf "${REPO_ROOT}/assets/logo/." "${ISO_STAGING}/boot/branding/"
 echo "[9/9] Generating bootable hybrid ISO with grub-mkrescue..."
 grub-mkrescue -o "${FINAL_ISO}" "${ISO_STAGING}"
 
+# Make it bootable FROM A DISK as well as from optical media.
+#
+# grub-mkrescue already writes an MBR signature (55 aa at 0x1FE) and an El Torito
+# boot record, so the image boots as a DVD. But its partition entry at 0x1BE has
+# the boot flag CLEAR (0x00) and type 0xEE, so BIOS firmware that is handed this
+# image on a HARD DISK slot reports "No bootable medium found" and stops. That is
+# exactly what happened: the ISO is hybrid in every respect except the one bit the
+# firmware checks first.
+#
+# isohybrid sets that bit; grub-mkrescue does not. Set it here.
+#
+# Why it matters: an emulated optical device is orders of magnitude slower than a
+# block device on a 1.5 GB image, which is what produced the 700-second boots and
+# the months of "hung or slow?" -- a screenshot cannot tell those apart, and
+# neither can a timeout. One byte makes the fast QA path available while leaving
+# the shipped artefact an ordinary ISO.
+set_boot_flag() {
+    local iso="$1" off=446 flag
+    flag=$(dd if="${iso}" bs=1 skip="${off}" count=1 2>/dev/null | od -An -tx1 | tr -d ' \n')
+    if [ "${flag}" = "80" ]; then
+        echo "       boot flag already set"
+        return 0
+    fi
+    if [ -z "${flag}" ]; then
+        echo "  [ERROR] cannot read the MBR of ${iso}" >&2
+        return 1
+    fi
+    printf '\x80' | dd of="${iso}" bs=1 seek="${off}" count=1 conv=notrunc 2>/dev/null
+    local now
+    now=$(dd if="${iso}" bs=1 skip="${off}" count=1 2>/dev/null | od -An -tx1 | tr -d ' \n')
+    if [ "${now}" = "80" ]; then
+        echo "       boot flag set: the ISO now boots as optical media or as a disk"
+        return 0
+    fi
+    echo "  [ERROR] failed to set the MBR boot flag (still ${now})" >&2
+    return 1
+}
+
+if [ "${HYBRID_ISO:-1}" = "1" ]; then
+    set_boot_flag "${FINAL_ISO}" \
+        || die "the ISO would not boot from a disk; refusing to ship it"
+else
+    echo "       HYBRID_ISO=0: the ISO will boot as a DVD only, and slowly"
+fi
+
 echo "[10/10] Auditing generated ISO checksum and headers..."
 ( cd "${DIST_DIR}" && sha256sum "$(basename "${ISO_NAME}")" > SHA256SUMS )
 python3 "${SCRIPT_DIR}/verify_iso.py" "${FINAL_ISO}"
