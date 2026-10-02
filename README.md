@@ -38,24 +38,50 @@ Follow progress on the `dev` branch. Current verified state:
 | Capability | State | Evidence |
 |---|---|---|
 | Bootable ISO | **PASS** | 1.5 GB image boots in VirtualBox |
-| systemd is PID 1 | **PASS** | `/sbin/init -> ../lib/systemd/systemd`, gated against regression |
-| Session unit starts | **PASS** | `niri` initialises; visible in the guest log |
-| GPU / Vulkan support | **FAIL** | the image ships **no** Mesa, Vulkan or firmware packages |
-| VirtualBox + Wayland | **FAIL** | VirtualBox's `umugfx` is unsupported by Smithay; boot hangs at graphics init |
-| Graphical desktop in a VM | **NOT RUN** | blocked by the two rows above |
-| 32-stage VirtualBox suite | **NOT RUN** | blocked by the desktop |
+| systemd is PID 1 | **PASS** | `/sbin/init -> ../lib/systemd/systemd`, gated |
+| Graphics stack present | **PASS** | 9 Vulkan ICDs incl. lavapipe, GBM, EGL, llvmpipe |
+| Live user exists | **PASS** | `hcs` in `/etc/passwd`, asserted at build time |
+| Session unit reachable | **PASS** | absolute symlink, resolved in-guest, gated |
+| **Graphical desktop in a VM** | **FAIL** | boot does not reach a usable VT |
+| **32-stage VirtualBox suite** | **NOT RUN** | blocked by the desktop |
 | Local AI inference | **FAIL** | the baked `placeholder.gguf` is not a model |
+| GPU acceleration | **NOT TESTED** | no physical machine in this loop |
 
-**The honest summary: v2 boots, and has no graphics stack.** A real base system
-now exists — 37,000+ files, Debian sid, systemd, `niri` 26.04, its own kernel
-7.2.8 with 4,216 modules — and `niri` starts and then refuses the hardware. The
-image contains no `mesa-vulkan-drivers`, no `libdrm`, no firmware and no GPU
-drivers whatsoever, because the package list never contained any.
+**The honest summary: v2 boots to a real system and still cannot draw a desktop.**
+
+A real base exists now — 36,769 files, Debian sid, its own kernel 7.2.8 with
+4,216 modules, `niri` 26.04, the full Mesa/Vulkan stack. Getting there surfaced
+six bugs that no gate and no code review could see, because each one was
+individually plausible:
+
+1. The ISO was a 152-file directory wearing an ISO's clothes, built with the
+   **build host's** kernel.
+2. `/sbin/init` was overridden, so systemd was never PID 1.
+3. The image had **no graphics drivers at all** — the compositor had nothing to
+   talk to.
+4. **The bootstrap hook never ran.** Three fixes were applied to that hook
+   before anyone checked whether it was being executed.
+5. `seatd` was looked for at a path Debian does not use.
+6. The session unit was enabled by a **dangling symlink**, which systemd treats
+   as "nothing to do" — so the desktop never started and nothing said so.
+
+Every one of those is now a gate. Full detail, with the measured evidence and the
+two blockers still open, is in
+[`docs/V2_STABLE_QA_STATUS.md`](docs/V2_STABLE_QA_STATUS.md).
 
 There is no "universal GPU driver" and this project will not claim one. The plan
 is a guaranteed software-Vulkan floor (`lavapipe`) with named accelerations on
-top, detailed in
-**[`docs/V2_NEXT_STEPS_PLAN.md`](docs/V2_NEXT_STEPS_PLAN.md)**.
+top — see [`docs/V2_NEXT_STEPS_PLAN.md`](docs/V2_NEXT_STEPS_PLAN.md).
+
+Build, boot and grade the whole thing with one command:
+
+```bash
+scripts/autonomous_loop.sh          # base + ISO + VM boot + capture grading
+scripts/autonomous_loop.sh --no-vm  # build and verify only
+```
+
+It prints `PASS` only for things it observed, and it will exit non-zero with a
+desktop that was not drawn.
 
 Already merged on `dev`:
 
