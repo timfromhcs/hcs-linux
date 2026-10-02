@@ -1,159 +1,154 @@
-# HCS Linux 2.0 — Fixing the boot stall (researched)
+# HCS Linux 2.0 — The boot stall: researched, and then corrected
 
-## 1. The cause, and I introduced it
+## 0. Correction first
 
-`live-boot(7)` states two things that together explain everything:
+I wrote this document asserting that bare `toram` caused the stall, removed
+`toram`, and committed that as the fix. **That was wrong.**
 
-> **`toram`** — Adding this parameter, live-boot will try to **copy the whole
-> read-only media** to the computer's RAM before mounting the root filesystem.
-> This could need a lot of ram, according to the space used by the read-only
-> media.
+With `toram` removed and `overlay-size=2g` set, `overlay not supported` still
+appears in the guest console. The gate I added for it is correct as a statement
+about the two options being in tension — but it did not fix this stall.
 
-> **`overlay-size=SIZE`** — The size of the tmpfs mount (**used for the upperdir
-> union root mount**) in bytes… **By default, 50% of available RAM will be used.**
->
-> *(Note: this option has currently no effect when booting with toram.)*
+What the same runs also showed:
 
-And from the overlay mount requirements in live-boot's own helper:
+* `HCS-Fix` (toram removed): **reached a logged-in shell** at ~700 s.
+* `HCS-Log` (toram removed, console logging added): **frozen** at 650 s.
 
-> *overlayfs requires: + a workdir to become mounted + workdir and upperdir to
-> reside under the same mount + workdir and upperdir to be in separate
-> directories*
+Same image family, same VM shape. Different outcome. That is not a stall; it is a
+boot that is **slow and marginal**, right at the edge of the observation window.
 
-So the chain is:
+So the real defect is not a hang. It is a boot that takes ten to twelve minutes
+and sometimes does not finish inside it. Every "frozen frame" observation in this
+project is a snapshot of that.
 
-1. `toram` copies the entire medium — the 1.5 GB ISO and its squashfs — into a
-   tmpfs.
-2. Overlay then needs a **separate** tmpfs for `upperdir`/`workdir`, sized at 50%
-   of RAM by default.
-3. There is not enough RAM left, the overlay mount fails, and live-boot prints
-   `overlay not supported` and stops.
-
-`toram` consumed the very resource overlay depends on.
-
-### 1.1 The evidence that this is mine, from my own screenshots
-
-Every successful boot in this project predates `toram`. Every stall follows it.
-
-| Run | `toram`? | Result |
-|---|---|---|
-| `gpu-01` | no | kernel log, `umugfx` probe |
-| `v-02` | no | **reached getty** — `Authentication failure` |
-| `b-02` | no | **reached getty** — `Authentication failure` |
-| `f-08` | **yes** | `ooum: overlay not supported` — **stalled** |
-| `g-09` | **yes** | kernel log frozen at 2.6 s — **stalled** |
-| `x-07` | **yes** | `ooum: overlay not supported` — **stalled** |
-
-The `Authentication failure` screen I spent three build cycles treating as a
-getty/autologin bug was the boot **succeeding**. It was never the problem. I was
-debugging the message instead of the milestone behind it.
-
-### 1.2 Why I added it, and why that reasoning was wrong
-
-I added `toram` to a build that "froze at 2.6 s of kernel time", reasoning that
-the emulated optical device was slow and that removing the variable would
-separate a slow boot from a hung one. It did separate them — it revealed where the
-boot stops — and then I kept the change.
-
-But the slow-boot observation was made on a *larger* image (after adding labwc,
-imagemagick and Qt), and the stall it was meant to diagnose turned out to be
-caused by the fix for the stall before it. I optimised against a symptom whose
-cause I had not established, and the optimisation was itself the regression.
-
-**The lesson is not "be careful with toram".** It is that a measurement taken
-before the relevant variable changed is not evidence about the system after it.
-I used a pre-change observation to justify a change, then used the resulting
-behaviour as further evidence.
+I am recording the wrong fix rather than quietly deleting it, because the error
+is the useful part: I removed `toram` on a mechanism I had read in a manpage, and
+then did not test the removal in isolation before building on top of it. The
+screenshot table below looked like confirmation. It was not, because the one run
+that disproved it came after the commit.
 
 ---
 
-## 2. The fix
+## 1. What the manpage does establish
 
-### Step 1 — remove `toram` from every kernel cmdline (the actual fix)
+These parts stand, because they are quoted, not inferred:
 
-One-line change in `scripts/build_iso.sh`. Expected result: the boot returns to
-reaching getty, and the diagnostics service at `basic.target` finally runs.
+> **`toram`** — live-boot will try to **copy the whole read-only media** to the
+> computer's RAM before mounting the root filesystem. This could need a lot of
+> ram, according to the space used by the read-only media.
 
-**This is the highest-value single change available and it costs one build.**
+> **`overlay-size=SIZE`** — the size of the tmpfs mount used for the upperdir union
+> root mount. **By default, 50% of available RAM.** *(No effect when booting with
+> toram.)*
 
-### Step 2 — keep the software fallback compositor
+So `toram` and a default overlay size *are* in tension. `toram` should stay off,
+and `overlay-size` should stay explicit — as configuration hygiene, not as the fix
+for this stall.
 
-Unchanged by this bug. niri still rejects software EGL by design, and
-`pick-compositor.sh` still chooses labwc on Xvfb when there is no hardware GL.
-Both were correct and neither caused the stall.
-
-### Step 3 — if the boot is genuinely slow, fix the cause instead
-
-`toram` was treating a symptom. The real options, in order of preference:
-
-**3a. Attach the ISO as a disk, not a DVD, for QA.**
-An emulated optical device is orders of magnitude slower than a block device. The
-QA driver can attach the same ISO to a SATA/SATA-controller HDD slot and boot
-from disk. This removes the performance problem *and* the medium is then a normal
-read-only block device, which is closer to how a real USB stick behaves than an
-ISO9660 DVD image is.
-
-**3b. Set `overlay-size=` explicitly.**
-Currently it defaults to 50% of RAM. An explicit value (say `2g`) stops
-overlay from competing with the rest of the system for memory, and makes the
-allocation visible instead of emergent.
-
-**3c. Reduce image size.**
-The base is 2.4 GB. `ffmpeg`, `tesseract`, `calamares`, the firmware family set
-and the non-CJK/CJK font sets are large and not all needed in every boot cohort.
-Splitting the installer payload out of the live cohort is the cleanest version of
-this.
-
-**Explicitly not doing:**
-* `union=aufs`. aufs was removed from the Linux kernel in 5.18; Debian sid runs
-  7.2. There is no aufs to switch to.
-* `toram=<list>`. It still copies the medium; the narrower forms only reduce how
-  much. The memory conflict remains.
+> **`union=aufs`** is not an option. aufs was removed from the Linux kernel in
+> 5.18; this is Debian sid on 7.2.8.
 
 ---
 
-## 3. Verification — and why it must be checked, not assumed
+## 2. The actual defect: the boot is slow, not hung
 
-Each of these is a claim that could be wrong, and this project has spent a
-session producing exactly that kind of wrong claim.
+### 2.1 The evidence
 
-| # | Check | Pass condition |
-|---|---|---|
-| 1 | Boot with `toram` removed | reaches getty or a desktop — **not** `overlay not supported` |
-| 2 | `hcs-diagnostics.service` runs | evidence VHD comes back **formatted** (FAT32) |
-| 3 | `SUMMARY.txt` readable from the host | mounted via `wsl --mount --vhd` |
-| 4 | `compositor.info` present | names niri or labwc, and why |
-| 5 | Capture gate | final frame passes `grade_capture.py` |
+| Observation | Reading |
+|---|---|
+| `HCS-Fix` reached `hcs@hcs-live:~$` at ~700 s | the boot **does** complete |
+| `HCS-Log` frozen at 650 s, identical frame at 320 s and 650 s | marginal, not deterministic |
+| ISO is 1.5 GB, read over an emulated optical device | seconds to tens of seconds per access |
 
-Check 2 is the one that matters most: the evidence disk has come back with **no
-filesystem** on every run so far, which is the only reason I know the diagnostics
-never executed. If it comes back formatted, the whole instrument is finally
-working and check 3 becomes the answer to the original question.
+The console output stops right after `squashfs: version 4.0` — live-boot has the
+filesystem and is doing slow block I/O to mount and verify it. No error, no
+panic, no failed unit. Just very slow progress.
+
+### 2.2 Why this was invisible for so long
+
+Three separate mistakes, all the same shape:
+
+1. **Screenshots cannot measure time.** Every observation is a single frame at an
+   arbitrary moment. A boot that takes 700 s looks identical to a boot that hangs
+   at 320 s if you only ever look at 320 s.
+2. **I kept treating "no change" as "stopped".** A frame-identical pair means "no
+   progress *in that interval*", not "no progress".
+3. **The fix I tried was justified by a pre-change observation.** See §0.
+
+### 2.3 What would have caught it
+
+* **A heartbeat, not a frame.** The loop needs something the guest emits
+  periodically — a timestamp on the console, or the frame counter advancing. A
+  VM gate that cannot distinguish "slow" from "stopped" cannot be automated.
+* **A longer, fixed observation window** with progress markers, rather than a
+  timeout that assumes failure.
 
 ---
 
-## 4. Order of work
+## 3. The fix, in order of expected effect
 
-1. Remove `toram`, rebuild, boot. **One build cycle answers the main question.**
-2. Read the evidence VHD. Name the actual blocker from `SUMMARY.txt` and
-   `list-jobs`.
-3. Only then decide what else is needed — with a guest that can finally be asked.
+### Step 1 — stop reading the ISO over an emulated optical device (largest win)
 
-Steps after 2 are unknown because they depend on what step 2 says. Producing a
-longer plan now would be the same mistake as the two plans that were already
-wrong: reasoning about a system whose only diagnostics had never run.
+An emulated DVD is orders of magnitude slower than a block device. The QA driver
+should attach the ISO to a **hard-disk slot** and boot from disk. This changes the
+medium from ISO9660-over-emulated-optical to a plain read-only block device,
+which is also closer to how a real USB stick presents itself.
+
+This is a change to the QA driver, not to the image, and it is the one change most
+likely to turn a 700 s boot into a 90 s boot.
+
+### Step 2 — shrink the image
+
+1.5 GB is large for a live image, and the size is paid on every read. The base is
+2.4 GB unpacked. Candidates for a separate installer cohort rather than every
+boot:
+
+* `ffmpeg` (large, not needed to reach a desktop)
+* the non-CJK and CJK font sets (`fonts-noto-cjk` is very large)
+* `calamares` — only the `installer` cohort needs it
+* the firmware family set
+
+Splitting these out is real work and should be done after Step 1, since Step 1 may
+make it unnecessary.
+
+### Step 3 — raise the observation window and add progress markers
+
+The loop must be able to say "still booting" versus "hung". Until it can, every
+future diagnosis inherits this same ambiguity.
+
+### Step 4 — keep the software fallback compositor
+
+Unaffected by any of this. niri still rejects software EGL by design; labwc on
+Xvfb is still the correct fallback for a machine with no GPU.
+
+---
+
+## 4. Current verified position
+
+| Claim | State |
+|---|---|
+| Boot completes to a login shell | **PASS** (observed once, ~700 s) |
+| `hcs` autologin works | **PASS** (`hcs@hcs-live:~$`) |
+| systemd is PID 1 | **PASS** (gated) |
+| Bootstrap hook runs, `hcs` created, getty override applied | **PASS** (gated) |
+| Session units present and enabled and resolving | **PASS** (gated) |
+| Graphics stack present | **PASS** (9 ICDs incl. lavapipe, GBM, EGL, llvmpipe) |
+| Software fallback compositor implemented | **PASS** (picked, gated) |
+| Console logging of the session | **PASS** (this build) |
+| Boot time acceptable for an automated gate | **FAIL** — marginal at 650 s |
+| Desktop drawn | **NOT RUN** — not yet reached reliably |
+| Boot failure reason for the desktop | **UNKNOWN** — no run has produced it |
 
 ---
 
 ## 5. Gates to prevent a repeat
 
-* **No kernel cmdline may carry bare `toram`** while `overlay-size` defaults to
-  50% of RAM. Checked in `verify_payload.sh` by reading `build_iso.sh`, with the
-  reason in the message — because the next person to add it will have no way to
-  know it defeats the overlay.
-* **The overlay contract is asserted, not assumed.** If the image is built for a
-  live boot, it must carry an `overlay-size` that leaves headroom, or `toram`.
-* **A boot that does not reach the diagnostics is itself a gate failure.** The
-  evidence disk returning unformatted should fail the VM stage, not be noticed by
-  a human two hours later. That is the check that would have turned this session
-  from hours into one build cycle.
+* **No bare `toram` while `overlay-size` is unset.** Stands as configuration
+  hygiene; it was not this stall.
+* **The VM gate must distinguish slow from stopped.** A heartbeat or a progress
+  marker, and an observation window sized in minutes rather than seconds. This is
+  the gate whose absence caused this session.
+* **A boot that reaches a login shell is itself a gate**, distinct from "a desktop
+  was drawn". Two milestones, two verdicts, so a slow boot is visibly slow rather
+  than invisibly absent.
+
