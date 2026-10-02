@@ -321,146 +321,126 @@ python3 "${SCRIPT_DIR}/stage_starter_models.py" \
         exit 1
     }
 
-# ------------------------------------------------------------------ 7. init
+# ------------------------------------------------------------------ 7. session
 
-echo "[6/7] Writing system init (graphical session + console fallback)..."
+echo "[6/7] Wiring the session into systemd (no init override)..."
 
-# The init script starts a graphical session when the payload and the runtime
-# allow it, and otherwise prints the console banner. Both paths are legitimate:
-# the console path keeps headless/VM captures working, the graphical path is the
-# actual desktop.
-cat > "${ROOTFS_DIR}/sbin/init" << 'EOF'
-#!/bin/sh
-# HCS Linux system init — graphical session with console fallback.
-
-PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
-export PATH
-
-mount -t proc proc /proc 2>/dev/null || true
-mount -t sysfs sysfs /sys 2>/dev/null || true
-mount -t devtmpfs dev /dev 2>/dev/null || true
-mount -t tmpfs tmpfs /tmp 2>/dev/null || true
-mount -t tmpfs tmpfs /run 2>/dev/null || true
-mount -o remount,rw / 2>/dev/null || true
-
-# Amnesic mode (Tails pattern): nothing may reach the host's disks.
-if grep -q 'hcs_amnesic=1' /proc/cmdline 2>/dev/null; then
-    mount -t tmpfs -o size=75% tmpfs / 2>/dev/null || true
-    swapon -a 2>/dev/null || true
+# THIS USED TO WRITE /sbin/init.
+#
+# For two releases this stage wrote a 120-line shell script over the base's
+# /sbin/init and told GRUB to run it instead of systemd. That script predates the
+# base system: it existed because there was no systemd to run, and it mounted
+# /proc itself and launched niri by hand.
+#
+# Once the image had a real Debian base, that override was the reason the
+# desktop never appeared. systemd never became PID 1, so nothing it owns was set
+# up; the image booted, printed the banner from the script, and sat there. The VM
+# run captured exactly that — a console with a banner, three times over.
+#
+# So: keep the base's /sbin/init (a symlink to systemd), let live-boot mount the
+# squashfs, and start the session from a unit. If the desktop cannot start, the
+# unit fails and getty@tty1 still gives a login on the same VT.
+if [ -L "${ROOTFS_DIR}/sbin/init" ]; then
+    echo "       /sbin/init -> $(readlink "${ROOTFS_DIR}/sbin/init")"
+elif [ -f "${ROOTFS_DIR}/sbin/init" ]; then
+    echo "  [ERROR] /sbin/init is a regular file, so something is still overriding systemd." >&2
+    echo "          Refusing to ship an image whose PID 1 is a shell script." >&2
+    exit 1
 fi
-
-if [ -c /dev/tty1 ]; then
-    exec </dev/tty1 >/dev/tty1 2>&1
-elif [ -c /dev/console ]; then
-    exec </dev/console >/dev/console 2>&1
-fi
-
-banner() {
-cat <<'BANNER'
-================================================================================
-                        HCS LINUX __VERSION__
-           AI-Native, Privacy-Oriented, CPU-First Operating System
-================================================================================
-
-  [  OK  ] Mounted /proc, /sys, /dev and runtime filesystems
-  [  OK  ] Staged HCS native binaries (hcsd, hcs-modeld, hcs-chat, hcs-fm, ...)
-  [  OK  ] Staged Neural Glass shell (niri + Quickshell)
-  [  OK  ] Staged offline documentation and launcher set
-  [  OK  ] Staged theme system (colors.toml, 4 presets)
-  [  OK  ] Staged keyboard registry (QWERTZ default, EN-US/FR/ES available)
-  [  OK  ] HCS System Daemon (hcsd) ready
-  [  OK  ] Cognitive Model Manager (hcs-modeld)
-  [  OK  ] Contextual Memory Engine (hcs-memory: SQLite FTS5)
-  [  OK  ] Native MCP Server Suite (/usr/bin/hcs-mcp)
-  [  OK  ] Security stack (Tor killswitch, LUKS vault, HITL gate)
-  [  OK  ] Desktop Workspace Ready. Welcome to HCS Linux!
-
-================================================================================
-  hcs-live: automatic graphical glass desktop starting
-================================================================================
-BANNER
-}
-
-# Print the banner with the real version. Kept as a separate step so the
-# heredoc above stays literal and the version is substituted exactly once.
-banner | sed "s/__VERSION__/${HCS_VERSION}/g"
-
-if [ -x /usr/bin/hcs-installer ] && grep -q 'hcs_install=1' /proc/cmdline 2>/dev/null; then
-    mkdir -p /var/log/hcs
-    /usr/bin/hcs-installer --ai-profile EDGE-8GB > /var/log/hcs/installer.log 2>&1 || true
-fi
-
-# --- graphical session ------------------------------------------------------
-# Start only when the whole stack is present. A half-started compositor is worse
-# than a readable console, so every precondition is checked before we commit.
-can_start_desktop() {
-    [ -x /usr/bin/niri ]          || return 1
-    [ -x /usr/bin/quickshell ]    || return 1
-    [ -f /usr/share/hcs/shell/shell.qml ] || return 1
-    [ -f /etc/hcs/session.conf ]  || return 1
-    grep -q 'hcs_console=1' /proc/cmdline 2>/dev/null && return 1
-    return 0
-}
-
-if can_start_desktop; then
-    echo "  [  ..  ] Starting Neural Glass desktop (niri + Quickshell)..."
-    mkdir -p /run/hcs /var/log/hcs
-
-    # The compositor owns VT6; the session bootstrap runs as its child.
-    if [ -x /lib/systemd/systemd ] || [ -x /usr/lib/systemd/systemd ]; then
-        exec /lib/systemd/systemd 2>/dev/null || exec /usr/lib/systemd/systemd
-    fi
-
-    # Busybox-only images (this ISO builder) cannot run systemd, so the session
-    # is started directly. The QA gates distinguish the two paths by inspecting
-    # /var/log/hcs/session.log.
-    export XDG_RUNTIME_DIR=/run/user/0
-    mkdir -p "${XDG_RUNTIME_DIR}"
-    chmod 700 "${XDG_RUNTIME_DIR}"
-    export WAYLAND_DISPLAY=wayland-1
-    export XDG_SESSION_TYPE=wayland
-    export XDG_CURRENT_DESKTOP=HCS
-    export LIBGL_ALWAYS_SOFTWARE=1
-    export HCS_RENDERER=software
-
-    /usr/bin/niri --session \
-        --config /usr/share/hcs/shell/config.kdl \
-        > /var/log/hcs/niri.log 2>&1 &
-    NIRI_PID=$!
-    sleep 2
-
-    if [ -x /usr/bin/seatd ]; then
-        /usr/bin/seatd > /var/log/hcs/seatd.log 2>&1 &
-    fi
-
-    /usr/share/hcs/session/start-session.sh > /var/log/hcs/session-bootstrap.log 2>&1 &
-
-    if kill -0 "${NIRI_PID}" 2>/dev/null; then
-        echo "  [  OK  ] Neural Glass desktop running (niri pid ${NIRI_PID})"
-    else
-        echo "  [ WARN ] niri exited early — see /var/log/hcs/niri.log"
-    fi
-else
-    echo "  [ INFO ] Desktop prerequisites missing or hcs_console=1 — console mode."
-    echo "          Run this ISO on a machine with the full HCS payload for the desktop,"
-    echo "          or boot the 'System Recovery Console' entry deliberately."
-fi
-
-while true; do
-    /bin/busybox sleep 3600 2>/dev/null || sleep 3600
-done
-EOF
-
-chmod 755 "${ROOTFS_DIR}/sbin/init"
 ln -sf /sbin/init "${ROOTFS_DIR}/init"
 
-# The init heredoc is single-quoted so ${HCS_VERSION} is expanded by init at
-# runtime from the environment seeded below.
-if ! grep -q 'HCS_VERSION=' "${ROOTFS_DIR}/sbin/init"; then
-    sed -i "s|^PATH=/usr/local/bin|HCS_VERSION=\"${VERSION}\"\nPATH=/usr/local/bin|" \
-        "${ROOTFS_DIR}/sbin/init"
-fi
+# The session units and the session scripts.
+mkdir -p "${ROOTFS_DIR}/usr/lib/systemd/system" \
+         "${ROOTFS_DIR}/etc/systemd/system/multi-user.target.wants" \
+         "${ROOTFS_DIR}/usr/share/hcs/session"
 
+copy_file "${REPO_ROOT}/config/includes.chroot/usr/lib/systemd/system/hcs-desktop.service" \
+          "${ROOTFS_DIR}/usr/lib/systemd/system/hcs-desktop.service" 644 "hcs-desktop.service"
+copy_file "${REPO_ROOT}/config/includes.chroot/usr/lib/systemd/system/hcs-banner.service" \
+          "${ROOTFS_DIR}/usr/lib/systemd/system/hcs-banner.service" 644 "hcs-banner.service"
+copy_file "${REPO_ROOT}/config/includes.chroot/usr/lib/systemd/system/hcs-diagnostics.service" \
+          "${ROOTFS_DIR}/usr/lib/systemd/system/hcs-diagnostics.service" 644 "hcs-diagnostics.service"
+copy_file "${REPO_ROOT}/config/includes.chroot/usr/share/hcs/session/start-desktop.sh" \
+          "${ROOTFS_DIR}/usr/share/hcs/session/start-desktop.sh" 755 "start-desktop.sh"
+copy_file "${REPO_ROOT}/config/includes.chroot/usr/share/hcs/session/boot-diagnostics.sh" \
+          "${ROOTFS_DIR}/usr/share/hcs/session/boot-diagnostics.sh" 755 "boot-diagnostics.sh"
+
+# Enabled by symlink rather than `systemctl enable`, which cannot run in a chroot
+# with no systemd running. The wants directory is the same mechanism, and it is
+# visible in the staged tree, so a reviewer can see the desktop is on by default.
+#
+# THE TARGET MUST BE AN ABSOLUTE PATH. These links pointed at ../hcs-desktop.service
+# -- i.e. /etc/systemd/system/hcs-desktop.service -- while the unit lives in
+# /usr/lib/systemd/system/. Both are legitimate unit directories, but the link
+# resolved to nothing. systemd treats a dangling wants link as "nothing to do"
+# and continues to boot, so the desktop never started and nothing anywhere said
+# why: no failed unit, no red status, just a console.
+#
+# This is why the resolution is checked below rather than assumed. Two correct
+# systemd mechanisms, wired to each other wrong, and the result is a silent
+# no-op rather than an error.
+ln -sf /usr/lib/systemd/system/hcs-desktop.service \
+      "${ROOTFS_DIR}/etc/systemd/system/multi-user.target.wants/hcs-desktop.service"
+ln -sf /usr/lib/systemd/system/hcs-banner.service \
+      "${ROOTFS_DIR}/etc/systemd/system/multi-user.target.wants/hcs-banner.service"
+# Diagnostics are enabled unconditionally. The boots worth diagnosing are the ones
+# where the desktop failed, so making this conditional on the desktop working would
+# exclude exactly the runs that need it.
+ln -sf /usr/lib/systemd/system/hcs-diagnostics.service \
+      "${ROOTFS_DIR}/etc/systemd/system/multi-user.target.wants/hcs-diagnostics.service"
+
+# Prove each link resolves to a unit that exists -- INSIDE THE GUEST.
+#
+# This needs care, and getting it wrong is exactly how the dangling link survived
+# so long. `test -e` follows a symlink against the *host's* root, so an absolute
+# target of /usr/lib/systemd/system/foo.service is looked up in the build host's
+# /usr and found missing -- even though it is present in the staged image, which
+# is the only place it will ever be looked up. A plain [ -e ] on an absolute link
+# therefore reports every correct link as broken.
+#
+# And the original relative link was genuinely broken for the mirror-image
+# reason: ../hcs-desktop.service from multi-user.target.wants resolves to
+# /etc/systemd/system/hcs-desktop.service, and no such file exists.
+#
+# So: read the link, and resolve it against ROOTFS_DIR rather than against /.
+check_unit_link() {
+    local link="$1" target resolved
+    target=$(readlink "${link}") || return 1
+    case "${target}" in
+        /*) resolved="${ROOTFS_DIR}${target}" ;;          # absolute, guest namespace
+        *)  resolved="$(dirname "${link}")/${target}" ;;  # relative, resolve in place
+    esac
+    [ -e "${resolved}" ]
+}
+
+for _unit in hcs-desktop.service hcs-banner.service hcs-diagnostics.service; do
+    _link="${ROOTFS_DIR}/etc/systemd/system/multi-user.target.wants/${_unit}"
+    if check_unit_link "${_link}"; then
+        echo "       ${_unit} -> $(readlink "${_link}") resolves"
+    else
+        echo "  [ERROR] ${_unit} is enabled but does not resolve to a unit." >&2
+        echo "          It points at $(readlink "${_link}" 2>/dev/null || 'nothing')." >&2
+        echo "          The desktop would never start and systemd would not say so." >&2
+        exit 1
+    fi
+done
+echo "       desktop session enabled and resolving"
+
+# The console banner the boot stages photograph.
+mkdir -p "${ROOTFS_DIR}/usr/share/hcs/branding"
+cat > "${ROOTFS_DIR}/usr/share/hcs/branding/issue-banner.txt" << EOF
+================================================================================
+                        HCS LINUX ${VERSION}
+              AI-Native, Privacy-Oriented, CPU-First Operating System
+================================================================================
+EOF
+
+# Nothing here may replace systemd. A regular file at /sbin/init means a previous
+# stage wrote one, and that is a hard stop rather than something to work around.
+if [ ! -L "${ROOTFS_DIR}/sbin/init" ]; then
+    echo "  [ERROR] systemd is not PID 1 in the staged image; refusing to continue." >&2
+    exit 1
+fi
 # ------------------------------------------------------------------ 8. verify
 
 echo "[7/7] Verifying payload contract (Gate 4)..."
@@ -544,8 +524,27 @@ fi
 # Unquoted heredoc so ${VERSION} and ${GRUB_*} expand host-side (body contains
 # no other $).
 cat > "${ISO_STAGING}/boot/grub/grub.cfg" << EOF
+# A zero timeout alone is NOT enough.
+#
+# GRUB's menu still appears and still counts down when timeout=0; the countdown is
+# what keeps the framebuffer alive before the kernel runs. On the production image
+# (timeout=10) the QA VM therefore sat on the GRUB screen for ten seconds of every
+# run, and the first screenshot taken at 60-70s landed after it -- which is fine --
+# but any capture before that photographs a menu, and the menu looks like a
+# stalled boot to anything that cannot read text.
+#
+# More importantly: `set timeout=0` in the body is honoured, but GRUB still waits
+# indefinitely if it cannot read the config, and it still renders the menu unless
+# the menu is explicitly suppressed. So both are stated, in the order GRUB wants
+# them, rather than relying on the countdown to do the work.
 set timeout=${GRUB_TIMEOUT}
 set default=0
+# Do not draw a menu at all on the QA image. A menu that is drawn and then
+# auto-selected is indistinguishable, to a screenshot, from a boot that hung.
+if [ "${GRUB_TIMEOUT}" -eq 0 ]; then
+    set menu_timeout=0
+    terminal_output console
+fi
 
 insmod all_video
 insmod font
@@ -561,32 +560,32 @@ set menu_color_normal=light-gray/black
 set menu_color_highlight=cyan/black
 
 menuentry "HCS Linux ${VERSION} Live Desktop" {
-    linux /live/vmlinuz boot=live console=tty1 console=tty0 video=1024x768 hcs_session=graphical init=/sbin/init
+    linux /live/vmlinuz boot=live console=tty1 console=tty0 console=ttyS0,115200n8 toram video=1024x768 hcs_session=graphical
     initrd /live/initrd.img
 }
 
 menuentry "HCS Linux ${VERSION} Live Desktop (Amnesic / Tor)" {
-    linux /live/vmlinuz boot=live console=tty1 console=tty0 video=1024x768 hcs_session=graphical hcs_amnesic=1 hcs_private=1 init=/sbin/init
+    linux /live/vmlinuz boot=live console=tty1 console=tty0 console=ttyS0,115200n8 toram video=1024x768 hcs_session=graphical hcs_amnesic=1 hcs_private=1
     initrd /live/initrd.img
 }
 
 menuentry "Install HCS Linux (Calamares)" {
-    linux /live/vmlinuz boot=live console=tty1 console=tty0 video=1024x768 hcs_install=1 init=/sbin/init
+    linux /live/vmlinuz boot=live console=tty1 console=tty0 console=ttyS0,115200n8 toram video=1024x768 hcs_install=1
     initrd /live/initrd.img
 }
 
 menuentry "HCS Linux ${VERSION} Recovery Console" {
-    linux /live/vmlinuz boot=live single console=tty1 console=tty0 video=1024x768 hcs_console=1 init=/sbin/init
+    linux /live/vmlinuz boot=live single console=tty1 console=tty0 console=ttyS0,115200n8 toram video=1024x768 hcs_console=1
     initrd /live/initrd.img
 }
 
 menuentry "Boot previous installation (rollback)" {
-    linux /live/vmlinuz boot=live single console=tty1 console=tty0 video=1024x768 hcs_rollback=1 init=/sbin/init
+    linux /live/vmlinuz boot=live single console=tty1 console=tty0 console=ttyS0,115200n8 toram video=1024x768 hcs_rollback=1
     initrd /live/initrd.img
 }
 
 menuentry "HCS Linux ${VERSION} QA (automated — no interaction)" {
-    linux /live/vmlinuz boot=live console=tty1 console=tty0 video=1024x768 hcs_session=graphical hcs.qa=1 hcs.qa.profile=virtualbox init=/sbin/init
+    linux /live/vmlinuz boot=live console=tty1 console=tty0 console=ttyS0,115200n8 toram video=1024x768 hcs_session=graphical hcs.qa=1 hcs.qa.profile=virtualbox
     initrd /live/initrd.img
 }
 EOF

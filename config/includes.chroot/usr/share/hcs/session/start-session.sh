@@ -161,8 +161,9 @@ maybe_qa_agent() {
         return 1
     fi
     local evidence="${HCS_QA_EVIDENCE_DIR:-/mnt/hcs-qa}"
-    local device="${HCS_QA_EVIDENCE_DEVICE:-/dev/vdb}"
-    log "QA agent enabled (hcs.qa=1), evidence -> ${evidence}"
+    local device
+    device=$(find_evidence_disk) || device="${HCS_QA_EVIDENCE_DEVICE:-}"
+    log "QA agent enabled (hcs.qa=1), evidence -> ${evidence} on ${device:-<none>}"
 
     # The manifest is validated before anything is mounted or photographed, so a
     # broken suite fails in one second with a named error instead of producing
@@ -182,6 +183,51 @@ maybe_qa_agent() {
     return 0
 }
 
+# Locate the evidence disk.
+#
+# The guest used to look for /dev/vdb, which assumes virtio. The QA driver
+# attaches a plain SATA disk, so the same volume shows up as /dev/sdb — and the
+# agent silently ran without evidence, which looks exactly like a QA run that
+# passed and produced nothing.
+#
+# So the disk is found by its shape rather than its name: the second block device
+# that is not the boot medium. HCS_QA_EVIDENCE_DEVICE still wins when it is set
+# and present, so a specific setup can still pin it.
+find_evidence_disk() {
+    local pinned="${HCS_QA_EVIDENCE_DEVICE:-}"
+    if [ -n "${pinned}" ] && [ -b "${pinned}" ]; then
+        echo "${pinned}"
+        return 0
+    fi
+
+    # A label left by a previous run is the most reliable identifier there is:
+    # it survives a reboot, unlike the kernel's enumeration order.
+    local labelled
+    labelled=$(blkid -l HCSQA -o device 2>/dev/null | head -1)
+    if [ -n "${labelled}" ] && [ -b "${labelled}" ]; then
+        echo "${labelled}"
+        return 0
+    fi
+
+    # Otherwise: any block device that is large enough to be an evidence disk and
+    # is not the medium we booted from. 64 MB is far above any real initrd and far
+    # below the 512 MB disk the driver creates.
+    local candidate
+    for candidate in /dev/disk/by-path/* /dev/disk/by-id/* /dev/sd? /dev/vd? /dev/nvme?n?; do
+        [ -b "${candidate}" ] || continue
+        # Skip the medium and its partition — this session must not write there.
+        case "$(readlink -f "${candidate}")" in
+            /dev/sr0*|/dev/sr1*|/dev/vda*|/dev/sda*|/dev/nvme0n1*) continue ;;
+        esac
+        local sectors
+        sectors=$(blockdev --getsz "${candidate}" 2>/dev/null) || continue
+        [ "${sectors}" -gt 131072 ] || continue   # >64 MiB
+        echo "${candidate}"
+        return 0
+    done
+    return 1
+}
+
 # Format and mount the evidence disk.
 #
 # The host hands over a blank volume, so the guest owns the filesystem. FAT32
@@ -190,13 +236,20 @@ maybe_qa_agent() {
 # third-party tooling to trust with release evidence.
 prepare_evidence() {
     local device="$1" mountpoint="$2"
-    [ -b "${device}" ] || return 1
+    [ -n "${device}" ] && [ -b "${device}" ] || return 1
     command -v mkfs.vfat >/dev/null 2>&1 || return 1
     if ! blkid "${device}" >/dev/null 2>&1; then
-        mkfs.vfat -F 32 -n HCSQA "${device}" >>"${LOG}" 2>&1 || return 1
+        mkfs.vfat -F 32 -n HCSQA "${device}" >>"${LOG}" 2>&1 || {
+            log "could not format ${device} as FAT32"
+            return 1
+        }
+        log "formatted ${device} as FAT32 (label HCSQA)"
     fi
     mkdir -p "${mountpoint}" || return 1
-    mount -o rw,noatime "${device}" "${mountpoint}" 2>/dev/null || return 1
+    mount -o rw,noatime "${device}" "${mountpoint}" 2>/dev/null || {
+        log "could not mount ${device} at ${mountpoint}"
+        return 1
+    }
     log "evidence disk mounted at ${mountpoint}"
     return 0
 }

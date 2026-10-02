@@ -1,0 +1,36 @@
+[Unit]
+Description=HCS Neural Glass desktop (niri + Quickshell)
+Documentation=docs/V2_STABLE_RELEASE_MASTER_PLAN.md
+# live-boot has to have mounted the squashfs before anything reads from it, and
+# systemd-user-sessions must exist before a seat is opened on a VT. Ordering is
+# expressed here rather than as sleeps in the script, because systemd can tell us
+# when a dependency is satisfied and a sleep can only hope.
+After=live-boot.service systemd-user-sessions.service local-fs.target
+Wants=live-boot.service
+Before=getty@tty1.service
+# The installer entry must never bring up a desktop on the live session.
+ConditionPathExists=/usr/bin/niri
+ConditionPathExists=/usr/share/hcs/shell/shell.qml
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+User=hcs
+Group=hcs
+# The compositor must own a seat, and a seat belongs to a logged-in user, not to
+# root. Running niri as root "works" until it tries to open the VT and either
+# fails or takes a VT that getty then fights it for.
+RuntimeDirectory=hcs
+Environment=XDG_RUNTIME_DIR=/run/hcs
+Environment=HOME=/home/hcs
+# The banner goes to tty1 too, so the two must not fight over it.
+StandardOutput=journal
+StandardError=journal
+ExecStart=/usr/share/hcs/session/start-desktop.sh
+# If the desktop cannot start, the machine must still be usable: fail the unit
+# and let getty@tty1 give a login on the same VT rather than hanging on a black
+# screen with nothing to type into.
+TimeoutStartSec=180
+
+[Install]
+WantedBy=multi-user.target

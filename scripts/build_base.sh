@@ -277,6 +277,147 @@ if [ -n "${AUDIT}" ]; then
     die "the base is not in a clean package state"
 fi
 
+# The payload tree has to exist BEFORE the hook asserts its contents.
+#
+# The hook checks for /usr/share/hcs/shell/shell.qml and friends and exits if
+# they are absent. That assertion is correct and worth keeping -- but the payload
+# was only ever staged into the rootfs by build_iso.sh, which runs AFTER this.
+# So the hook was asserting against a tree that did not exist yet, and the
+# assertion did its job by refusing to let a sessionless image through.
+#
+# Order matters more than either script: base contents -> payload -> hook.
+PAYLOAD_SRC="${REPO_ROOT}/config/includes.chroot"
+if [ ! -d "${PAYLOAD_SRC}" ]; then
+    die "config/includes.chroot is missing; the base would have no shell or session"
+fi
+say "staging the payload tree into the base"
+if command -v rsync >/dev/null 2>&1; then
+    rsync -a "${PAYLOAD_SRC}/" "${BASE_DIR}/"
+else
+    (cd "${PAYLOAD_SRC}" && tar cf - .) | (cd "${BASE_DIR}" && tar xf -)
+fi
+say "    payload staged into the base"
+
+# ------------------------------------------------- 3d. chroot bootstrap hook
+
+# RUN THE HOOK. This was missing, and it is the reason three build cycles of
+# autologin fixes did nothing at all.
+#
+# config/hooks/live/01-hcs-setup.hook.chroot is where the live user is created,
+# where getty@tty1 is given an autologin override, where the QWERTZ default is
+# written and where the payload is asserted present. It had been sitting in the
+# repository, correct, committed, and completely unreached: build_base.sh never
+# invoked it.
+#
+# So the image booted as live-config's own `user`, our getty override did not
+# exist, and the console showed "Authentication failure" -- which reads like a
+# login problem and is actually a hook that never ran. Three fixes were applied
+# to the hook before anyone checked whether the hook ran at all.
+#
+# The lesson is worth stating because it will recur: a file that is never
+# executed is not a component. It looks exactly like one in review, in grep and
+# in the diff, and no gate in this project had ever asserted that it ran.
+HOOK="${REPO_ROOT}/config/hooks/live/01-hcs-setup.hook.chroot"
+if [ ! -x "${HOOK}" ] && [ ! -r "${HOOK}" ]; then
+    say "bootstrap hook is missing or unreadable: ${HOOK}"
+    die "the base would boot without a live user"
+fi
+
+# ------------------------------------------------- 3c. initramfs: overlayfs
+#
+# CORRECTION. The first version of this block asserted that overlayfs was absent
+# from the initramfs, on the strength of a grep that returned zero. Re-running it
+# properly shows three matches, including kernel/fs/overlayfs/overlay.ko.xz. The
+# module was there all along and the original diagnosis was wrong.
+#
+# That matters more than the code. "overlay not supported" was read as "the
+# module is missing" when the message comes from live-boot's 9990-overlay.sh
+# shutdown hook, not from a mount failure -- so the boot reached the end of a
+# session rather than dying before one. Attributing a stop to a missing module
+# because the module name appeared nowhere in a grep is exactly the failure mode
+# this whole project keeps hitting: a plausible story, an unverified cause.
+#
+# The check stays, because "the initramfs can mount an overlay" is a real
+# precondition for shipping a live image and nothing else asserted it. It is
+# simply no longer justified by a story about this particular boot.
+say "verifying the initramfs can mount an overlay"
+INITRD=$(ls "${BASE_DIR}"/boot/initrd.img-* 2>/dev/null | head -1)
+if [ -z "${INITRD}" ]; then
+    die "no initrd.img in the base; the image cannot mount its own medium"
+fi
+KVER=$(basename "${INITRD}" | sed 's/^initrd\.img-//')
+
+if ! lsinitramfs "${INITRD}" 2>/dev/null | grep -q 'fs/overlay'; then
+    if chroot "${BASE_DIR}" /usr/bin/update-initramfs -u "-${KVER}" \
+            >>"${BASE_DIR}/var/log/hcs-base-build.log" 2>&1 \
+       && lsinitramfs "${INITRD}" 2>/dev/null | grep -q 'fs/overlay'; then
+        say "    overlayfs is now in the initramfs"
+    else
+        # update-initramfs consults /etc/initramfs-tools/modules, so fall back to
+        # writing it and asking again rather than shipping an image that cannot
+        # mount itself.
+        say "    update-initramfs did not add it; writing /etc/initramfs-tools/modules"
+        mkdir -p "${BASE_DIR}/etc/initramfs-tools"
+        printf 'overlay\n' > "${BASE_DIR}/etc/initramfs-tools/modules"
+        chroot "${BASE_DIR}" /usr/bin/update-initramfs -u "-${KVER}" \
+            >>"${BASE_DIR}/var/log/hcs-base-build.log" 2>&1 || true
+        if lsinitramfs "${INITRD}" 2>/dev/null | grep -q 'fs/overlay'; then
+            say "    overlayfs is now in the initramfs"
+        else
+            say "    overlayfs is STILL missing after two attempts"
+            die "the image would boot to 'overlay not supported' and stop"
+        fi
+    fi
+else
+    say "    overlayfs was already in the initramfs"
+fi
+
+say "running the chroot bootstrap hook (live user, getty, keyboard, payload)"
+if chroot "${BASE_DIR}" /bin/sh -c "true" 2>/dev/null; then
+    :
+else
+    say "chroot cannot execute -- mounts from step 3b are required here"
+    die "cannot run the bootstrap hook"
+fi
+
+# COPY IT IN. chroot has a different root, so a path on the build host does not
+# exist inside it -- "No such file or directory" for a file that is right there
+# on disk. Binding it into place avoids that entirely.
+HOOK_IN_CHROOT="/tmp/hcs-bootstrap-hook.sh"
+cp -f "${HOOK}" "${BASE_DIR}${HOOK_IN_CHROOT}"
+chmod 755 "${BASE_DIR}${HOOK_IN_CHROOT}"
+
+if ! chroot "${BASE_DIR}" /bin/sh "${HOOK_IN_CHROOT}" \
+        >>"${BASE_DIR}/var/log/hcs-base-build.log" 2>&1; then
+    rm -f "${BASE_DIR}${HOOK_IN_CHROOT}"
+    say "the bootstrap hook failed:"
+    tail -30 "${BASE_DIR}/var/log/hcs-base-build.log" | while read -r l; do say "    ${l}"; done
+    die "the base has no session; refusing to build an image that cannot log in"
+fi
+rm -f "${BASE_DIR}${HOOK_IN_CHROOT}"
+say "    bootstrap hook completed"
+
+# And assert the result rather than trusting that a script ran. This is the
+# check whose absence produced three identical failed cycles.
+if ! chroot "${BASE_DIR}" /usr/bin/id hcs >/dev/null 2>&1 \
+   && ! grep -q '^hcs:' "${BASE_DIR}/etc/passwd"; then
+    say "the hook ran but created no 'hcs' user"
+    die "the base would boot to live-config's default user, not the HCS session"
+fi
+if [ ! -f "${BASE_DIR}/etc/systemd/system/getty@tty1.service.d/override.conf" ]; then
+    say "the hook ran but wrote no getty@tty1 autologin override"
+    die "the base would stop at a login prompt"
+fi
+# grep directly on the tree. `chroot ... grep -q ...` passes -q to chroot, not to
+# grep, and chroot rejects it -- so the assertion below was checking that chroot
+# understood "-q", which it does not, and reporting the getty as unconfigured.
+if ! grep -q 'autologin hcs' \
+        "${BASE_DIR}/etc/systemd/system/getty@tty1.service.d/override.conf"; then
+    say "the getty override does not name the hcs user"
+    die "the base would ask for credentials on a live USB"
+fi
+say "    verified: user hcs exists and getty@tty1 autologins as hcs"
+
 # ------------------------------------------------------------------ 4. verify
 
 # The external provisioning scripts need the mounts from step 3b to still be in
@@ -288,9 +429,15 @@ say "verifying the base is a real system, not a directory of files"
 MISSING_SYS=()
 for probe in bin/bash bin/sh sbin/init usr/lib/systemd/systemd \
              usr/bin/quickshell usr/bin/grim usr/bin/wtype \
-             usr/bin/tesseract; do
+             usr/bin/tesseract usr/bin/vulkaninfo \
+             usr/bin/glxinfo lib/x86_64-linux-gnu/libgbm.so.1; do
     [ -e "${BASE_DIR}/${probe}" ] || MISSING_SYS+=("${probe}")
 done
+
+# niri is provisioned by fetch_niri.sh, which runs LATER in this script than this
+# probe. Adding it to the list above asserted that a step that had not happened
+# yet had happened, which is how a correct niri build gets reported as a missing
+# one. It is checked where it is actually installed, not here.
 if [ "${#MISSING_SYS[@]}" -gt 0 ]; then
     die "the base is still not a bootable system. Missing: ${MISSING_SYS[*]}"
 fi

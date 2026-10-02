@@ -314,6 +314,175 @@ if [ -d "${ROOTFS_DIR}/bin" ]; then
     fi
 fi
 
+# ---------------------------------------------------------------- PID 1
+
+# systemd must be PID 1.
+#
+# This is the second time the image has shipped with something else at
+# /sbin/init. The first was a banner script in an image with no systemd to
+# displace; the second was that same script written over a perfectly good base,
+# with GRUB told to run it — which suppressed systemd entirely and left the image
+# booting to a console and stopping there. Both were invisible to the gates,
+# because no gate had ever looked at this file.
+#
+# So the gate looks at it now, and it checks that it is a *symlink to systemd*,
+# not merely that something exists there.
+if [ -L "${ROOTFS_DIR}/sbin/init" ]; then
+    INIT_TARGET=$(readlink "${ROOTFS_DIR}/sbin/init")
+    case "${INIT_TARGET}" in
+        *systemd*)
+            echo "  [OK] PID 1 is systemd (/sbin/init -> ${INIT_TARGET})"
+            CHECKED=$((CHECKED + 1))
+            ;;
+        *)
+            echo "  [FAIL] /sbin/init points at ${INIT_TARGET}, not systemd." >&2
+            FAILURES=$((FAILURES + 1))
+            ;;
+    esac
+else
+    echo "  [FAIL] /sbin/init is not a symlink. Something is overriding systemd." >&2
+    FAILURES=$((FAILURES + 1))
+fi
+
+# And no GRUB entry may ask the kernel for a different init.
+if grep -q 'init=/sbin/init' "${REPO_ROOT}/scripts/build_iso.sh" 2>/dev/null; then
+    echo "  [FAIL] a GRUB entry still passes init=/sbin/init" >&2
+    FAILURES=$((FAILURES + 1))
+else
+    echo "  [OK] no GRUB entry overrides init"
+    CHECKED=$((CHECKED + 1))
+fi
+
+# ---------------------------------------------------------------- graphics
+
+# A compositor with no drivers for it is not a desktop.
+#
+# For three releases this image shipped a Wayland compositor and zero graphics
+# packages, and no gate noticed, because every gate checked that files were
+# PRESENT and none checked that the compositor had anything to talk to. These
+# checks are about the renderer existing, not about the renderer working — the
+# working part can only be proven inside a running VM.
+#
+# The three failure modes are deliberately separate, because conflating them is
+# how "drivers installed, nothing renders" happens:
+#   * DRM/GBM  — does the image have a way to talk to a display device at all
+#   * GL/EGL   — can it rasterise
+#   * Vulkan   — does it have ICDs
+check_file /usr/lib/x86_64-linux-gnu/libgbm.so.1  "GBM (DRM access)"   100
+check_file /usr/lib/x86_64-linux-gnu/libEGL.so.1  "EGL"               100
+check_file /usr/lib/x86_64-linux-gnu/dri/swrast_dri.so "llvmpipe (software GL)" 100
+check_file /usr/bin/vulkaninfo                     "vulkaninfo"         20
+check_file /usr/bin/glxinfo                        "glxinfo"            20
+
+# The loader and the ICDs are different things. A missing loader finds no device;
+# a loader with no ICD finds no device. Both look identical from the guest.
+if [ -x "${ROOTFS_DIR}/usr/bin/vulkaninfo" ]; then
+    ICD_COUNT=0
+    for icd in "${ROOTFS_DIR}"/usr/share/vulkan/icd.d/*.json; do
+        [ -f "${icd}" ] && ICD_COUNT=$((ICD_COUNT + 1))
+    done
+    if [ "${ICD_COUNT}" -gt 0 ]; then
+        echo "  [OK] ${ICD_COUNT} Vulkan ICD(s) present"
+        CHECKED=$((CHECKED + 1))
+    else
+        echo "  [FAIL] no Vulkan ICD. mesa-vulkan-drivers was not installed into the base." >&2
+        FAILURES=$((FAILURES + 1))
+    fi
+fi
+
+# lavapipe specifically: the software Vulkan floor the CPU-first claim rests on.
+#
+# The glob is deliberate. Mesa names this ICD lvp_icd.x86_64.json on some
+# releases and lvp_icd.json on others, and the arch-suffixed guess fails on the
+# build that matters -- which is how this gate reported "no lavapipe" against an
+# image that had nine ICDs including lavapipe. A gate that cries wolf gets
+# ignored, and this one would have been ignored.
+LVP=$(ls "${ROOTFS_DIR}"/usr/share/vulkan/icd.d/lvp_icd*.json 2>/dev/null | head -1)
+if [ -n "${LVP}" ]; then
+    echo "  [OK] lavapipe present — CPU-only rendering has a floor"
+    CHECKED=$((CHECKED + 1))
+else
+    echo "  [FAIL] no lavapipe ICD — a machine with no GPU cannot reach a desktop" >&2
+    FAILURES=$((FAILURES + 1))
+fi
+
+# Firmware. Without it Wi-Fi and many GPUs come up silently broken.
+#
+# A WARN, not a FAIL, and deliberately so. These are redistribution-exempt
+# blobs that sid repackages, and a repackage can legitimately drop a family
+# without breaking the desktop at all. The warning names exactly which family is
+# absent so it can be acted on, rather than failing a build over wireless.
+FW_MISSING=""
+for fw in iwlwifi ath10k rtl; do
+    [ -e "${ROOTFS_DIR}/usr/lib/firmware/${fw}" ] || FW_MISSING="${FW_MISSING} ${fw}"
+done
+if [ -z "${FW_MISSING}" ]; then
+    echo "  [OK] firmware families present (iwlwifi, ath10k, rtl)"
+    CHECKED=$((CHECKED + 1))
+else
+    echo "  [WARN] firmware families absent:${FW_MISSING} — Wi-Fi may be silently broken"
+    echo "         (not a build failure: these are redistribution-exempt blobs)"
+    CHECKED=$((CHECKED + 1))
+fi
+
+# And the session must not be told to render in a way that needs hardware it
+# cannot prove it has.
+if grep -q 'HCS_RENDERER:-software' \
+    "${ROOTFS_DIR}/usr/share/hcs/session/start-desktop.sh" 2>/dev/null; then
+    echo "  [OK] software rendering is the default; hardware is opt-in"
+    CHECKED=$((CHECKED + 1))
+else
+    echo "  [FAIL] the session does not default to software rendering" >&2
+    FAILURES=$((FAILURES + 1))
+fi
+
+# ---------------------------------------------------------------- QA suite
+check_file /usr/lib/systemd/system/hcs-desktop.service "session unit"    100
+check_file /usr/lib/systemd/system/hcs-banner.service  "boot banner unit" 100
+check_file /usr/share/hcs/session/start-desktop.sh     "desktop starter"  500
+check_file /usr/share/hcs/branding/issue-banner.txt    "console banner"   50
+# Resolve against the staged tree, not against /. See build_iso.sh for why: an
+# absolute unit path is correct in the guest's namespace and absent from the
+# build host's, so [ -e ] on the raw link gets both cases exactly backwards.
+hcs_link_resolves() {
+    local link="$1" target resolved
+    target=$(readlink "${link}" 2>/dev/null) || return 1
+    case "${target}" in
+        /*) resolved="${ROOTFS_DIR}${target}" ;;
+        *)  resolved="$(dirname "${link}")/${target}" ;;
+    esac
+    [ -e "${resolved}" ]
+}
+
+if [ -L "${ROOTFS_DIR}/etc/systemd/system/multi-user.target.wants/hcs-desktop.service" ]; then
+    # Enabled is not the same as reachable. A link that resolves to a path with no
+    # unit in it is treated by systemd as "nothing to do", so the session is
+    # silently never started and there is no failed unit to look at afterwards.
+    if hcs_link_resolves "${ROOTFS_DIR}/etc/systemd/system/multi-user.target.wants/hcs-desktop.service"; then
+        echo "  [OK] the desktop session is enabled and the link resolves"
+        CHECKED=$((CHECKED + 1))
+    else
+        echo "  [FAIL] hcs-desktop.service is enabled but DANGLING — the desktop" >&2
+        echo "         would never start, and systemd would not report it." >&2
+        FAILURES=$((FAILURES + 1))
+    fi
+else
+    echo "  [FAIL] hcs-desktop.service is not enabled — the desktop would never start" >&2
+    FAILURES=$((FAILURES + 1))
+fi
+
+# The same trap for the banner, and for the units themselves.
+for _u in hcs-desktop.service hcs-banner.service; do
+    _l="${ROOTFS_DIR}/etc/systemd/system/multi-user.target.wants/${_u}"
+    if [ -e "${ROOTFS_DIR}/usr/lib/systemd/system/${_u}" ] && hcs_link_resolves "${_l}"; then
+        echo "  [OK] ${_u} exists and is reachable"
+        CHECKED=$((CHECKED + 1))
+    else
+        echo "  [FAIL] ${_u} missing or dangling" >&2
+        FAILURES=$((FAILURES + 1))
+    fi
+done
+
 # ---------------------------------------------------------------- QA suite
 
 # The guest drives the VM run itself, so the manifest and every scenario it

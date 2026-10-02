@@ -31,11 +31,63 @@ HCS Linux is a modern operating system built from the ground up to integrate loc
 
 The next stable release is **v2.0.0**, built to
 [`docs/V2_STABLE_RELEASE_MASTER_PLAN.md`](docs/V2_STABLE_RELEASE_MASTER_PLAN.md).
-It is **not released yet** and nothing on this page claims otherwise. What is
-already merged on `dev`:
+It is **not released yet** and nothing on this page claims otherwise.
 
-- **A real graphical session.** `niri` + Quickshell are in the core package
-  list, so the live ISO reaches a desktop instead of a console banner.
+Follow progress on the `dev` branch. Current verified state:
+
+| Capability | State | Evidence |
+|---|---|---|
+| Bootable ISO | **PASS** | 1.5 GB image boots in VirtualBox |
+| systemd is PID 1 | **PASS** | `/sbin/init -> ../lib/systemd/systemd`, gated |
+| Graphics stack present | **PASS** | 9 Vulkan ICDs incl. lavapipe, GBM, EGL, llvmpipe |
+| Live user exists | **PASS** | `hcs` in `/etc/passwd`, asserted at build time |
+| Session unit reachable | **PASS** | absolute symlink, resolved in-guest, gated |
+| **Graphical desktop in a VM** | **FAIL** | boot does not reach a usable VT |
+| **32-stage VirtualBox suite** | **NOT RUN** | blocked by the desktop |
+| Local AI inference | **FAIL** | the baked `placeholder.gguf` is not a model |
+| GPU acceleration | **NOT TESTED** | no physical machine in this loop |
+
+**The honest summary: v2 boots to a real system and still cannot draw a desktop.**
+
+A real base exists now — 36,769 files, Debian sid, its own kernel 7.2.8 with
+4,216 modules, `niri` 26.04, the full Mesa/Vulkan stack. Getting there surfaced
+six bugs that no gate and no code review could see, because each one was
+individually plausible:
+
+1. The ISO was a 152-file directory wearing an ISO's clothes, built with the
+   **build host's** kernel.
+2. `/sbin/init` was overridden, so systemd was never PID 1.
+3. The image had **no graphics drivers at all** — the compositor had nothing to
+   talk to.
+4. **The bootstrap hook never ran.** Three fixes were applied to that hook
+   before anyone checked whether it was being executed.
+5. `seatd` was looked for at a path Debian does not use.
+6. The session unit was enabled by a **dangling symlink**, which systemd treats
+   as "nothing to do" — so the desktop never started and nothing said so.
+
+Every one of those is now a gate. Full detail, with the measured evidence and the
+two blockers still open, is in
+[`docs/V2_STABLE_QA_STATUS.md`](docs/V2_STABLE_QA_STATUS.md).
+
+There is no "universal GPU driver" and this project will not claim one. The plan
+is a guaranteed software-Vulkan floor (`lavapipe`) with named accelerations on
+top — see [`docs/V2_NEXT_STEPS_PLAN.md`](docs/V2_NEXT_STEPS_PLAN.md).
+
+Build, boot and grade the whole thing with one command:
+
+```bash
+scripts/autonomous_loop.sh          # base + ISO + VM boot + capture grading
+scripts/autonomous_loop.sh --no-vm  # build and verify only
+```
+
+It prints `PASS` only for things it observed, and it will exit non-zero with a
+desktop that was not drawn.
+
+Already merged on `dev`:
+
+- **A real base system and boot path**, replacing a payload directory that had
+  been shipped inside an ISO. `systemd` owns the boot; the session starts from
+  `hcs-desktop.service` rather than from a shell script masquerading as init.
 - **The HCS key.** The Windows-key position is the HCS key, and every shortcut
   is written as `HCS+…`. QWERTZ by default, `HCS+Space` cycles
   QWERTZ / EN-US / FR / ES / IT / GB. The HCS key is a modifier, so no layout
@@ -52,8 +104,6 @@ already merged on `dev`:
 - **Thirteen gates** in `make gate-all`, including an ISO payload contract that
   fails the build when a file is missing, and a 32-stage VirtualBox run driven
   from inside the guest.
-
-Follow progress on the `dev` branch.
 
 ---
 
@@ -163,11 +213,33 @@ HCS Linux utilizes a specialized multi-role candidate pool:
 
 ## Hardware Requirements
 
-### Minimum (Edge Profile)
+### v1.1.0 (current stable release)
+
+These requirements are for **v1.1.0**, which is the only released image.
+
 - **CPU:** 64-bit x86_64 with SSE4.2 / AVX support (4+ cores recommended)
 - **RAM:** 8 GB DDR4/DDR5
 - **Storage:** 32 GB free storage (SSD strongly recommended)
 - **Display:** 1080p resolution (1920x1080)
+
+### v2.0.0 (in development — read this before you try it)
+
+v2.0.0 boots, but it **cannot draw a desktop yet**. The requirements below are
+the intended target, not a verified configuration:
+
+- **No GPU is required** — a CPU-only machine is the design goal, via the
+  `lavapipe` software Vulkan implementation. That floor does not exist in the
+  current build.
+- **No GPU is supported either.** The image ships no Mesa, no Vulkan and no
+  firmware. On real hardware you will get a kernel framebuffer, not a desktop.
+- **VirtualBox will not work**, by design of both projects: VirtualBox's `umugfx`
+  driver is not supported by Smithay and `niri` refuses it. Use `virtio-gpu`
+  (QEMU/KVM) or bare metal when v2 is ready.
+- **Physical hardware has never been tested.** No claim of hardware support is
+  made anywhere in this repository.
+
+See [`docs/V2_NEXT_STEPS_PLAN.md`](docs/V2_NEXT_STEPS_PLAN.md) for the graphics
+work that closes these gaps.
 
 ### Recommended (Standard Profile)
 - **CPU:** 8+ cores x86_64 with AVX2 / AVX-512
@@ -274,9 +346,31 @@ python scripts/stage_starter_models.py --check   # which models may be baked
 - Recall is local only and requires an explicit opt-in; it does not exist at all
   in an amnesic session, because a feature that silently records nothing is
   indistinguishable from one that records nothing useful.
-- The v1.1.0 live ISO booted to a text console rather than a desktop — the
-  compositor was not in the image. v2.0.0 fixes this; see
-  `docs/V2_STABLE_RELEASE_MASTER_PLAN.md`.
+
+### Known limitations of v2.0.0 (development build)
+
+These are the ones that matter, and they are stated plainly because the previous
+generations of this project overstated their own status:
+
+- **No desktop.** The image boots to systemd and starts `niri`, but the image
+  contains no graphics drivers, so nothing is drawn. This is a package-list gap,
+  not a compositor bug.
+- **No GPU support of any kind.** No Mesa, no Vulkan, no firmware, no kernel
+  driver configuration. There is no accelerated path and no software path yet.
+- **VirtualBox cannot run it.** VirtualBox's `umugfx` is unsupported by Smithay
+  and the boot hangs during graphics initialisation. `virtio-gpu` (QEMU/KVM) or
+  bare metal is required.
+- **No working AI model.** The ISO bakes a `placeholder.gguf`, which is not a
+  model. Local inference does not work.
+- **The 32-stage VirtualBox suite has never run**, because there is no desktop
+  to photograph.
+- **Untested on real hardware.** Nothing in this repository is evidence of
+  physical-hardware support.
+
+The v1.1.0 live ISO booted to a text console because the compositor was not in
+the image at all. v2.0.0 fixes that specific problem — the compositor is now in
+the image and it starts — and then runs into the next one, which is that it has
+nothing to talk to.
 
 ---
 
