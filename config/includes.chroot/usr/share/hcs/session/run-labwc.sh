@@ -19,8 +19,17 @@
 # acceleration and every machine with no supported GPU.
 set -uo pipefail
 LOG=/var/log/hcs/session.log
-log() { printf '[%s] [labwc] %s\n' "$(date -u +%H:%M:%S)" "$*" >>"${LOG}"
-        printf '[%s] [labwc] %s\n' "$(date -u +%H:%M:%S)" "$*"; }
+# ALSO TO THE CONSOLE.
+#
+# The journal, /var/log and the evidence disk are all reachable only from inside
+# a guest that booted far enough to write them. When a unit like this one fails,
+# the reason goes to the journal -- which is exactly where nobody can read it
+# from, because the reason is that the session never came up.
+#
+# So every log line also goes to /dev/console, which a getty maps to tty1 and a
+# screenshot can read. It is a crude instrument and it is the only one that works
+# when the failure is "the desktop did not start".
+log() { printf '[%s] [labwc] %s\n' "$(date -u +%H:%M:%S)" "$*" | tee -a "${LOG}" >/dev/console 2>/dev/null; }
 
 SCREEN="${HCS_QA_WIDTH:-1280}x${HCS_QA_HEIGHT:-800}x24"
 

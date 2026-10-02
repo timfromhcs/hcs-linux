@@ -22,7 +22,17 @@ OUT=/mnt/hcs-diag
 LOG=/var/log/hcs/diag.log
 
 mkdir -p /var/log/hcs
-log() { printf '[diag] %s\n' "$*" | tee -a "${LOG}"; }
+# ALSO TO THE CONSOLE.
+#
+# The journal, /var/log and the evidence disk are all reachable only from inside
+# a guest that booted far enough to write them. When a unit like this one fails,
+# the reason goes to the journal -- which is exactly where nobody can read it
+# from, because the reason is that the session never came up.
+#
+# So every log line also goes to /dev/console, which a getty maps to tty1 and a
+# screenshot can read. It is a crude instrument and it is the only one that works
+# when the failure is "the desktop did not start".
+log() { printf '[diag] %s\n' "$*" | tee -a "${LOG}" >/dev/console 2>/dev/null; }
 
 # Reuse the same discovery the QA agent uses: by label, else by shape. Two
 # components guessing differently about where the disk is would be a bug of
